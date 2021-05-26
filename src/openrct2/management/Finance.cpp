@@ -75,7 +75,7 @@ bool finance_check_money_required(uint32_t flags)
  */
 bool finance_check_affordability(money32 cost, uint32_t flags)
 {
-    return cost <= 0 || !finance_check_money_required(flags) || cost <= gCash;
+    return !finance_check_money_required(flags) || cost <= 0 || cost <= gCash;
 }
 
 /**
@@ -111,7 +111,7 @@ void finance_pay_wages()
         return;
     }
 
-    for (auto peep : EntityList<Staff>(EntityListId::Peep))
+    for (auto peep : EntityList<Staff>())
     {
         finance_payment(GetStaffWage(peep->AssignedStaffType) / 4, ExpenditureType::Wages);
     }
@@ -242,7 +242,7 @@ void finance_update_daily_profit()
     if (!(gParkFlags & PARK_FLAGS_NO_MONEY))
     {
         // Staff costs
-        for (auto peep : EntityList<Staff>(EntityListId::Peep))
+        for (auto peep : EntityList<Staff>())
         {
             current_profit -= GetStaffWage(peep->AssignedStaffType);
         }

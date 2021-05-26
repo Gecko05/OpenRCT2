@@ -128,7 +128,7 @@ private:
     static constexpr size_t MaxGroups = 240;
 
     TabId _selectedTab{};
-    GuestViewType _selectedView;
+    GuestViewType _selectedView{};
     bool _trackingOnly{};
     std::optional<GuestFilterType> _selectedFilter;
     FilterArguments _filterArguments;
@@ -137,7 +137,7 @@ private:
     size_t _numPages{};
     size_t _selectedPage{};
 
-    GuestViewType _lastFindGroupsSelectedView;
+    GuestViewType _lastFindGroupsSelectedView{};
     uint32_t _lastFindGroupsTick{};
     uint32_t _lastFindGroupsWait{};
     std::vector<GuestGroup> _groups;
@@ -186,7 +186,7 @@ public:
                 if (guestRide != nullptr)
                 {
                     ft.Add<rct_string_id>(
-                        ride_type_has_flag(guestRide->type, RIDE_TYPE_FLAG_IN_RIDE) ? STR_IN_RIDE : STR_ON_RIDE);
+                        guestRide->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_IN_RIDE) ? STR_IN_RIDE : STR_ON_RIDE);
                     guestRide->FormatNameTo(ft);
 
                     _selectedFilter = GuestFilterType::Guests;
@@ -472,7 +472,7 @@ public:
 
         {
             Formatter ft(_filterArguments.args);
-            DrawTextEllipsised(&dpi, screenCoords, 310, format, ft, COLOUR_BLACK);
+            DrawTextEllipsised(&dpi, screenCoords, 310, format, ft);
         }
 
         // Number of guests (list items)
@@ -481,9 +481,9 @@ public:
             screenCoords = windowPos + ScreenCoordsXY{ 4, widgets[WIDX_GUEST_LIST].bottom + 2 };
             auto ft = Formatter();
             ft.Add<int32_t>(static_cast<int32_t>(_guestList.size()));
-            gfx_draw_string_left(
-                &dpi, (_guestList.size() == 1 ? STR_FORMAT_NUM_GUESTS_SINGULAR : STR_FORMAT_NUM_GUESTS_PLURAL), ft.Data(),
-                COLOUR_BLACK, screenCoords);
+            DrawTextBasic(
+                &dpi, screenCoords, (_guestList.size() == 1 ? STR_FORMAT_NUM_GUESTS_SINGULAR : STR_FORMAT_NUM_GUESTS_PLURAL),
+                ft);
         }
     }
 
@@ -610,7 +610,7 @@ public:
         {
             _guestList.clear();
 
-            for (auto peep : EntityList<Guest>(EntityListId::Peep))
+            for (auto peep : EntityList<Guest>())
             {
                 sprite_set_flashing(peep, false);
                 if (peep->OutsideOfPark)
@@ -643,12 +643,15 @@ private:
         auto i = (_selectedTab == TabId::Individual ? _tabAnimationIndex & ~3 : 0);
         i += GetPeepAnimation(PeepSpriteType::Normal).base_image + 1;
         i |= 0xA1600000;
-        gfx_draw_sprite(&dpi, i, windowPos + ScreenCoordsXY{ widgets[WIDX_TAB_1].midX(), widgets[WIDX_TAB_1].bottom - 6 }, 0);
+        gfx_draw_sprite(
+            &dpi, ImageId::FromUInt32(i),
+            windowPos + ScreenCoordsXY{ widgets[WIDX_TAB_1].midX(), widgets[WIDX_TAB_1].bottom - 6 });
 
         // Tab 2 image
         i = (_selectedTab == TabId::Summarised ? _tabAnimationIndex / 4 : 0);
         gfx_draw_sprite(
-            &dpi, SPR_TAB_GUESTS_0 + i, windowPos + ScreenCoordsXY{ widgets[WIDX_TAB_2].left, widgets[WIDX_TAB_2].top }, 0);
+            &dpi, ImageId(SPR_TAB_GUESTS_0 + i),
+            windowPos + ScreenCoordsXY{ widgets[WIDX_TAB_2].left, widgets[WIDX_TAB_2].top });
     }
 
     void DrawScrollIndividual(rct_drawpixelinfo& dpi)
@@ -677,22 +680,22 @@ private:
                 }
                 auto ft = Formatter();
                 peep->FormatNameTo(ft);
-                DrawTextEllipsised(&dpi, { 0, y }, 113, format, ft, COLOUR_BLACK);
+                DrawTextEllipsised(&dpi, { 0, y }, 113, format, ft);
 
                 switch (_selectedView)
                 {
                     case GuestViewType::Actions:
                         // Guest face
-                        gfx_draw_sprite(&dpi, get_peep_face_sprite_small(peep), { 118, y + 1 }, 0);
+                        gfx_draw_sprite(&dpi, ImageId(get_peep_face_sprite_small(peep)), { 118, y + 1 });
 
                         // Tracking icon
                         if (peep->PeepFlags & PEEP_FLAGS_TRACKING)
-                            gfx_draw_sprite(&dpi, STR_ENTER_SELECTION_SIZE, { 112, y + 1 }, 0);
+                            gfx_draw_sprite(&dpi, ImageId(STR_ENTER_SELECTION_SIZE), { 112, y + 1 });
 
                         // Action
                         ft = Formatter();
                         peep->FormatActionTo(ft);
-                        DrawTextEllipsised(&dpi, { 133, y }, 314, format, ft, COLOUR_BLACK);
+                        DrawTextEllipsised(&dpi, { 133, y }, 314, format, ft);
                         break;
                     case GuestViewType::Thoughts:
                         // For each thought
@@ -707,7 +710,7 @@ private:
 
                             ft = Formatter();
                             peep_thought_set_format_args(&thought, ft);
-                            DrawTextEllipsised(&dpi, { 118, y }, 329, format, ft, COLOUR_BLACK);
+                            DrawTextEllipsised(&dpi, { 118, y }, 329, format, ft, { FontSpriteBase::SMALL });
                             break;
                         }
                         break;
@@ -743,26 +746,34 @@ private:
                 for (uint32_t j = 0; j < std::size(group.Faces) && j < group.NumGuests; j++)
                 {
                     gfx_draw_sprite(
-                        &dpi, group.Faces[j] + SPR_PEEP_SMALL_FACE_VERY_VERY_UNHAPPY, { static_cast<int32_t>(j) * 8, y + 12 },
-                        0);
+                        &dpi, ImageId(group.Faces[j] + SPR_PEEP_SMALL_FACE_VERY_VERY_UNHAPPY),
+                        { static_cast<int32_t>(j) * 8, y + 12 });
                 }
 
-                // Draw action
+                // Draw action/thoughts
                 Formatter ft(group.Arguments.args);
-                DrawTextEllipsised(&dpi, { 0, y }, 414, format, ft, COLOUR_BLACK);
+                // Draw small font if displaying guests
+                if (_selectedView == GuestViewType::Thoughts)
+                {
+                    DrawTextEllipsised(&dpi, { 0, y }, 414, format, ft, { FontSpriteBase::SMALL });
+                }
+                else
+                {
+                    DrawTextEllipsised(&dpi, { 0, y }, 414, format, ft);
+                }
 
                 // Draw guest count
                 ft = Formatter();
                 ft.Add<rct_string_id>(STR_GUESTS_COUNT_COMMA_SEP);
                 ft.Add<uint32_t>(group.NumGuests);
-                DrawTextBasic(&dpi, { 326, y }, format, ft, COLOUR_BLACK, TextAlignment::RIGHT);
+                DrawTextBasic(&dpi, { 326, y }, format, ft, { TextAlignment::RIGHT });
             }
             y += SUMMARISED_GUEST_ROW_HEIGHT;
             index++;
         }
     }
 
-    bool GuestShouldBeVisible(const Peep& peep)
+    bool GuestShouldBeVisible(const Guest& peep)
     {
         if (_trackingOnly && !(peep.PeepFlags & PEEP_FLAGS_TRACKING))
             return false;
@@ -783,7 +794,7 @@ private:
         return true;
     }
 
-    bool IsPeepInFilter(const Peep& peep)
+    bool IsPeepInFilter(const Guest& peep)
     {
         auto guestViewType = _selectedFilter == GuestFilterType::Guests ? GuestViewType::Actions : GuestViewType::Thoughts;
         auto peepArgs = GetArgumentsFromPeep(peep, guestViewType);
@@ -828,7 +839,7 @@ private:
         _lastFindGroupsWait = 320;
         _groups.clear();
 
-        for (auto peep : EntityList<Guest>(EntityListId::Peep))
+        for (auto peep : EntityList<Guest>())
         {
             if (peep->OutsideOfPark)
                 continue;
@@ -855,13 +866,16 @@ private:
             _groups.begin(), _groups.end(), [](const GuestGroup& a, const GuestGroup& b) { return a.NumGuests > b.NumGuests; });
 
         // Remove up to MaxGroups
-        _groups.resize(MaxGroups);
+        if (_groups.size() > MaxGroups)
+        {
+            _groups.resize(MaxGroups);
+        }
     }
 
     /**
      * Calculates a hash value (arguments) for comparing peep actions/thoughts
      */
-    static FilterArguments GetArgumentsFromPeep(const Peep& peep, GuestViewType type)
+    static FilterArguments GetArgumentsFromPeep(const Guest& peep, GuestViewType type)
     {
         FilterArguments result;
         Formatter ft(result.args);
@@ -916,9 +930,9 @@ private:
         if (peepA != nullptr && peepB != nullptr)
         {
             // Compare types
-            if (peepA->AssignedPeepType != peepB->AssignedPeepType)
+            if (peepA->Type != peepB->Type)
             {
-                return static_cast<int32_t>(peepA->AssignedPeepType) < static_cast<int32_t>(peepB->AssignedPeepType);
+                return static_cast<int32_t>(peepA->Type) < static_cast<int32_t>(peepB->Type);
             }
 
             // Compare name

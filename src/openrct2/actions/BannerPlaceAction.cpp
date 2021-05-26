@@ -13,7 +13,10 @@
 #include "../world/Banner.h"
 #include "../world/MapAnimation.h"
 #include "../world/Scenery.h"
+#include "../world/TileElementsView.h"
 #include "GameAction.h"
+
+using namespace OpenRCT2;
 
 BannerPlaceAction::BannerPlaceAction(const CoordsXYZD& loc, uint8_t bannerType, BannerIndex bannerIndex, uint8_t primaryColour)
     : _loc(loc)
@@ -140,26 +143,22 @@ GameActions::Result::Ptr BannerPlaceAction::Execute() const
         log_error("Banner index in use, bannerIndex = %u", _bannerIndex);
         return MakeResult(GameActions::Status::InvalidParameters, STR_CANT_POSITION_THIS_HERE);
     }
-
-    TileElement* newTileElement = tile_element_insert({ _loc, _loc.z + (2 * COORDS_Z_STEP) }, 0b0000);
-    assert(newTileElement != nullptr);
-
     banner->flags = 0;
     banner->text = {};
     banner->text_colour = 2;
     banner->type = _bannerType; // Banner must be deleted after this point in an early return
     banner->colour = _primaryColour;
     banner->position = TileCoordsXY(_loc);
-    newTileElement->SetType(TILE_ELEMENT_TYPE_BANNER);
-    BannerElement* bannerElement = newTileElement->AsBanner();
+
+    auto* bannerElement = TileElementInsert<BannerElement>({ _loc, _loc.z + (2 * COORDS_Z_STEP) }, 0b0000);
+    Guard::Assert(bannerElement != nullptr);
+
     bannerElement->SetClearanceZ(_loc.z + PATH_CLEARANCE);
     bannerElement->SetPosition(_loc.direction);
     bannerElement->ResetAllowedEdges();
     bannerElement->SetIndex(_bannerIndex);
-    if (GetFlags() & GAME_COMMAND_FLAG_GHOST)
-    {
-        bannerElement->SetGhost(true);
-    }
+    bannerElement->SetGhost(GetFlags() & GAME_COMMAND_FLAG_GHOST);
+
     map_invalidate_tile_full(_loc);
     map_animation_create(MAP_ANIMATION_TYPE_BANNER, CoordsXYZ{ _loc, bannerElement->GetBaseZ() });
 
@@ -169,17 +168,8 @@ GameActions::Result::Ptr BannerPlaceAction::Execute() const
 
 PathElement* BannerPlaceAction::GetValidPathElement() const
 {
-    TileElement* tileElement = map_get_first_element_at(_loc);
-    do
+    for (auto* pathElement : TileElementsView<PathElement>(_loc))
     {
-        if (tileElement == nullptr)
-            break;
-
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_PATH)
-            continue;
-
-        auto pathElement = tileElement->AsPath();
-
         if (pathElement->GetBaseZ() != _loc.z && pathElement->GetBaseZ() != _loc.z - PATH_HEIGHT_STEP)
             continue;
 
@@ -190,6 +180,7 @@ PathElement* BannerPlaceAction::GetValidPathElement() const
             continue;
 
         return pathElement;
-    } while (!(tileElement++)->IsLastForTile());
+    }
+
     return nullptr;
 }

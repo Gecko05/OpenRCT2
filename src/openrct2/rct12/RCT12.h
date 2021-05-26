@@ -18,6 +18,9 @@
 #include <string>
 #include <string_view>
 
+using track_type_t = uint16_t;
+using RCT12TrackType = uint8_t;
+
 constexpr uint8_t RCT2_STRING_FORMAT_ARG_START = 123;
 constexpr uint8_t RCT2_STRING_FORMAT_ARG_END = 141;
 constexpr uint8_t RCT2_STRING_FORMAT_COLOUR_START = 142;
@@ -81,8 +84,6 @@ constexpr const uint16_t RCT12_PEEP_SPAWN_UNDEFINED = 0xFFFF;
 
 constexpr const uint16_t RCT12VehicleTrackDirectionMask = 0b0000000000000011;
 constexpr const uint16_t RCT12VehicleTrackTypeMask = 0b1111111111111100;
-
-enum class SpriteIdentifier : uint8_t;
 
 enum class RCT12TrackDesignVersion : uint8_t
 {
@@ -170,6 +171,11 @@ enum
     RCT12_STATION_STYLE_SPACE,
 
     RCT12_STATION_STYLE_INVISIBLE, // Added by OpenRCT2
+};
+
+enum
+{
+    RCT12_SPRITE_FLAGS_IS_CRASHED_VEHICLE_SPRITE = 1 << 7,
 };
 
 #pragma pack(push, 1)
@@ -689,9 +695,40 @@ enum class RCT12EntityLinkListOffset : uint8_t
     Vehicle = 5 * sizeof(uint16_t),
 };
 
+enum class RCT12SpriteIdentifier : uint8_t
+{
+    Vehicle = 0,
+    Peep = 1,
+    Misc = 2,
+    Litter = 3,
+    Null = 255
+};
+
+enum class RCT12MiscEntityType : uint8_t
+{
+    SteamParticle,
+    MoneyEffect,
+    CrashedVehicleParticle,
+    ExplosionCloud,
+    CrashSplash,
+    ExplosionFlare,
+    JumpingFountainWater,
+    Balloon,
+    Duck,
+    JumpingFountainSnow
+};
+
+enum class RCT12PeepType : uint8_t
+{
+    Guest,
+    Staff,
+
+    Invalid = 0xFF
+};
+
 struct RCT12SpriteBase
 {
-    SpriteIdentifier sprite_identifier;                // 0x00
+    RCT12SpriteIdentifier sprite_identifier;           // 0x00
     uint8_t type;                                      // 0x01
     uint16_t next_in_quadrant;                         // 0x02
     uint16_t next;                                     // 0x04
@@ -893,3 +930,5 @@ std::string RCT12RemoveFormattingUTF8(std::string_view s);
 std::string ConvertFormattedStringToOpenRCT2(std::string_view buffer);
 std::string ConvertFormattedStringToRCT2(std::string_view buffer, size_t maxLength);
 std::string GetTruncatedRCT2String(std::string_view src, size_t maxLength);
+track_type_t RCT12FlatTrackTypeToOpenRCT2(RCT12TrackType origTrackType);
+RCT12TrackType OpenRCT2FlatTrackTypeToRCT12(track_type_t origTrackType);

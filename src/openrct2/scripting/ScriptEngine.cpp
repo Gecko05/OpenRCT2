@@ -24,6 +24,7 @@
 #    include "../platform/Platform2.h"
 #    include "Duktape.hpp"
 #    include "ScCheats.hpp"
+#    include "ScClimate.hpp"
 #    include "ScConsole.hpp"
 #    include "ScContext.hpp"
 #    include "ScDate.hpp"
@@ -43,8 +44,6 @@
 
 using namespace OpenRCT2;
 using namespace OpenRCT2::Scripting;
-
-static constexpr int32_t OPENRCT2_PLUGIN_API_VERSION = 19;
 
 struct ExpressionStringifier final
 {
@@ -73,8 +72,14 @@ private:
         _ss << "\n" << std::string(_indent, ' ');
     }
 
-    void Stringify(const DukValue& val, bool canStartWithNewLine)
+    void Stringify(const DukValue& val, bool canStartWithNewLine, int32_t nestLevel)
     {
+        if (nestLevel >= 8)
+        {
+            _ss << "[...]";
+            return;
+        }
+
         switch (val.type())
         {
             case DukValue::Type::UNDEFINED:
@@ -99,11 +104,11 @@ private:
                 }
                 else if (val.is_array())
                 {
-                    StringifyArray(val, canStartWithNewLine);
+                    StringifyArray(val, canStartWithNewLine, nestLevel);
                 }
                 else
                 {
-                    StringifyObject(val, canStartWithNewLine);
+                    StringifyObject(val, canStartWithNewLine, nestLevel);
                 }
                 break;
             case DukValue::Type::BUFFER:
@@ -118,7 +123,7 @@ private:
         }
     }
 
-    void StringifyArray(const DukValue& val, bool canStartWithNewLine)
+    void StringifyArray(const DukValue& val, bool canStartWithNewLine, int32_t nestLevel)
     {
         constexpr auto maxItemsToShow = 4;
 
@@ -139,7 +144,7 @@ private:
                     {
                         _ss << ", ";
                     }
-                    Stringify(DukValue::take_from_stack(_context), false);
+                    Stringify(DukValue::take_from_stack(_context), false, nestLevel + 1);
                 }
             }
             _ss << " ]";
@@ -177,7 +182,7 @@ private:
                 {
                     if (duk_get_prop_index(_context, -1, i))
                     {
-                        Stringify(DukValue::take_from_stack(_context), false);
+                        Stringify(DukValue::take_from_stack(_context), false, nestLevel + 1);
                     }
                 }
             }
@@ -191,7 +196,7 @@ private:
         duk_pop(_context);
     }
 
-    void StringifyObject(const DukValue& val, bool canStartWithNewLine)
+    void StringifyObject(const DukValue& val, bool canStartWithNewLine, int32_t nestLevel)
     {
         auto numEnumerables = GetNumEnumerablesOnObject(val);
         if (numEnumerables == 0)
@@ -222,7 +227,7 @@ private:
                     // For some reason the key was not a string
                     _ss << "?: ";
                 }
-                Stringify(value, true);
+                Stringify(value, true, nestLevel + 1);
                 index++;
             }
             duk_pop_2(_context);
@@ -261,7 +266,7 @@ private:
                     // For some reason the key was not a string
                     _ss << "?: ";
                 }
-                Stringify(value, true);
+                Stringify(value, true, nestLevel + 1);
                 index++;
             }
             duk_pop_2(_context);
@@ -343,7 +348,7 @@ public:
     static std::string StringifyExpression(const DukValue& val)
     {
         ExpressionStringifier instance(val.context());
-        instance.Stringify(val, false);
+        instance.Stringify(val, false, 0);
         return instance._ss.str();
     }
 };
@@ -373,6 +378,8 @@ void ScriptEngine::Initialise()
 {
     auto ctx = static_cast<duk_context*>(_context);
     ScCheats::Register(ctx);
+    ScClimate::Register(ctx);
+    ScClimateState::Register(ctx);
     ScConfiguration::Register(ctx);
     ScConsole::Register(ctx);
     ScContext::Register(ctx);
@@ -405,6 +412,7 @@ void ScriptEngine::Initialise()
     ScStaff::Register(ctx);
 
     dukglue_register_global(ctx, std::make_shared<ScCheats>(), "cheats");
+    dukglue_register_global(ctx, std::make_shared<ScClimate>(), "climate");
     dukglue_register_global(ctx, std::make_shared<ScConsole>(_console), "console");
     dukglue_register_global(ctx, std::make_shared<ScContext>(_execInfo, _hookEngine), "context");
     dukglue_register_global(ctx, std::make_shared<ScDate>(), "date");
@@ -435,7 +443,7 @@ void ScriptEngine::LoadPlugins()
     if (Path::DirectoryExists(base))
     {
         auto pattern = Path::Combine(base, "*.js");
-        auto scanner = std::unique_ptr<IFileScanner>(Path::ScanDirectory(pattern, true));
+        auto scanner = Path::ScanDirectory(pattern, true);
         while (scanner->Next())
         {
             auto path = std::string(scanner->GetPath());
@@ -528,7 +536,7 @@ void ScriptEngine::SetupHotReloading()
     }
     catch (const std::exception& e)
     {
-        std::fprintf(stderr, "Unable to enable hot reloading of plugins: %s\n", e.what());
+        Console::Error::WriteLine("Unable to enable hot reloading of plugins: %s", e.what());
     }
 }
 
@@ -692,16 +700,26 @@ std::future<void> ScriptEngine::Eval(const std::string& s)
 DukValue ScriptEngine::ExecutePluginCall(
     const std::shared_ptr<Plugin>& plugin, const DukValue& func, const std::vector<DukValue>& args, bool isGameStateMutable)
 {
+    duk_push_undefined(_context);
+    auto dukUndefined = DukValue::take_from_stack(_context);
+    return ExecutePluginCall(plugin, func, dukUndefined, args, isGameStateMutable);
+}
+
+DukValue ScriptEngine::ExecutePluginCall(
+    const std::shared_ptr<Plugin>& plugin, const DukValue& func, const DukValue& thisValue, const std::vector<DukValue>& args,
+    bool isGameStateMutable)
+{
     DukStackFrame frame(_context);
     if (func.is_function())
     {
         ScriptExecutionInfo::PluginScope scope(_execInfo, plugin, isGameStateMutable);
         func.push();
+        thisValue.push();
         for (const auto& arg : args)
         {
             arg.push();
         }
-        auto result = duk_pcall(_context, static_cast<duk_idx_t>(args.size()));
+        auto result = duk_pcall_method(_context, static_cast<duk_idx_t>(args.size()));
         if (result == DUK_EXEC_SUCCESS)
         {
             return DukValue::take_from_stack(_context);
@@ -1199,7 +1217,7 @@ void ScriptEngine::LoadSharedStorage()
     }
     catch (const std::exception&)
     {
-        fprintf(stderr, "Unable to read '%s'\n", path.c_str());
+        Console::Error::WriteLine("Unable to read '%s'", path.c_str());
     }
 }
 
@@ -1216,7 +1234,7 @@ void ScriptEngine::SaveSharedStorage()
     }
     catch (const std::exception&)
     {
-        fprintf(stderr, "Unable to write to '%s'\n", path.c_str());
+        Console::Error::WriteLine("Unable to write to '%s'", path.c_str());
     }
 }
 

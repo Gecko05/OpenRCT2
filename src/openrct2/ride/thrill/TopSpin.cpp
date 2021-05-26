@@ -66,7 +66,7 @@ static void top_spin_paint_vehicle(
         session->InteractionType = ViewportInteractionItem::Entity;
         session->CurrentlyDrawnItem = vehicle;
 
-        armRotation = vehicle->vehicle_sprite_type;
+        armRotation = vehicle->Pitch;
         seatRotation = vehicle->bank_rotation;
     }
 
@@ -317,7 +317,7 @@ static void paint_top_spin(
 /* 0x0076659C */
 TRACK_PAINT_FUNCTION get_track_paint_function_topspin(int32_t trackType)
 {
-    if (trackType != FLAT_TRACK_ELEM_3_X_3)
+    if (trackType != TrackElemType::FlatTrack3x3)
     {
         return nullptr;
     }

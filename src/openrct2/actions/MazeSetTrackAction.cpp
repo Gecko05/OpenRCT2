@@ -87,7 +87,7 @@ GameActions::Result::Ptr MazeSetTrackAction::Query() const
     {
         heightDifference /= COORDS_Z_PER_TINY_Z;
 
-        if (heightDifference > RideTypeDescriptors[RIDE_TYPE_MAZE].Heights.MaxHeight)
+        if (heightDifference > GetRideTypeDescriptor(RIDE_TYPE_MAZE).Heights.MaxHeight)
         {
             res->Error = GameActions::Status::TooHigh;
             res->ErrorMessage = STR_TOO_HIGH_FOR_SUPPORTS;
@@ -134,7 +134,7 @@ GameActions::Result::Ptr MazeSetTrackAction::Query() const
             return res;
         }
 
-        money32 price = (((RideTypeDescriptors[ride->type].BuildCosts.TrackPrice * TrackPricing[TrackElemType::Maze]) >> 16));
+        money32 price = (((ride->GetRideTypeDescriptor().BuildCosts.TrackPrice * TrackPricing[TrackElemType::Maze]) >> 16));
         res->Cost = price / 2 * 10;
 
         return res;
@@ -176,25 +176,21 @@ GameActions::Result::Ptr MazeSetTrackAction::Execute() const
     auto tileElement = map_get_track_element_at_of_type_from_ride(_loc, TrackElemType::Maze, _rideIndex);
     if (tileElement == nullptr)
     {
-        money32 price = (((RideTypeDescriptors[ride->type].BuildCosts.TrackPrice * TrackPricing[TrackElemType::Maze]) >> 16));
+        money32 price = (((ride->GetRideTypeDescriptor().BuildCosts.TrackPrice * TrackPricing[TrackElemType::Maze]) >> 16));
         res->Cost = price / 2 * 10;
 
         auto startLoc = _loc.ToTileStart();
 
-        tileElement = tile_element_insert(_loc, 0b1111);
-        assert(tileElement != nullptr);
+        auto* trackElement = TileElementInsert<TrackElement>(_loc, 0b1111);
+        Guard::Assert(trackElement != nullptr);
 
-        tileElement->SetClearanceZ(_loc.z + MAZE_CLEARANCE_HEIGHT);
-        tileElement->SetType(TILE_ELEMENT_TYPE_TRACK);
+        trackElement->SetClearanceZ(_loc.z + MAZE_CLEARANCE_HEIGHT);
+        trackElement->SetTrackType(TrackElemType::Maze);
+        trackElement->SetRideIndex(_rideIndex);
+        trackElement->SetMazeEntry(0xFFFF);
+        trackElement->SetGhost(flags & GAME_COMMAND_FLAG_GHOST);
 
-        tileElement->AsTrack()->SetTrackType(TrackElemType::Maze);
-        tileElement->AsTrack()->SetRideIndex(_rideIndex);
-        tileElement->AsTrack()->SetMazeEntry(0xFFFF);
-
-        if (flags & GAME_COMMAND_FLAG_GHOST)
-        {
-            tileElement->SetGhost(true);
-        }
+        tileElement = trackElement->as<TileElement>();
 
         map_invalidate_tile_full(startLoc);
 

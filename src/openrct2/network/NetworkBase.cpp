@@ -24,7 +24,9 @@
 #include "../ui/UiContext.h"
 #include "../ui/WindowManager.h"
 #include "../util/SawyerCoding.h"
+#include "../world/EntityList.h"
 #include "../world/Location.hpp"
+#include "../world/Sprite.h"
 #include "network.h"
 
 #include <algorithm>
@@ -34,17 +36,17 @@
 // This string specifies which version of network stream current build uses.
 // It is used for making sure only compatible builds get connected, even within
 // single OpenRCT2 version.
-#define NETWORK_STREAM_VERSION "18"
+#define NETWORK_STREAM_VERSION "16"
 #define NETWORK_STREAM_ID OPENRCT2_VERSION "-" NETWORK_STREAM_VERSION
 
 static Peep* _pickup_peep = nullptr;
 static int32_t _pickup_peep_old_x = LOCATION_NULL;
 
+#ifndef DISABLE_NETWORK
+
 // General chunk size is 63 KiB, this can not be any larger because the packet size is encoded
 // with uint16_t and needs some spare room for other data in the packet.
 static constexpr uint32_t CHUNK_SIZE = 1024 * 63;
-
-#ifndef DISABLE_NETWORK
 
 #    include "../Cheats.h"
 #    include "../ParkImporter.h"
@@ -390,7 +392,8 @@ bool NetworkBase::BeginServer(uint16_t port, const std::string& address)
         _userManager.Save();
     }
 
-    printf("Ready for clients...\n");
+    auto* szAddress = address.empty() ? "*" : address.c_str();
+    Console::WriteLine("Listening for clients on %s:%hu", szAddress, port);
     network_chat_show_connected_message();
     network_chat_show_server_greeting();
 
@@ -501,12 +504,12 @@ void NetworkBase::UpdateServer()
     for (auto& connection : client_connection_list)
     {
         // This can be called multiple times before the connection is removed.
-        if (connection->IsDisconnected)
+        if (!connection->IsValid())
             continue;
 
         if (!ProcessConnection(*connection))
         {
-            connection->IsDisconnected = true;
+            connection->Disconnect();
         }
         else
         {
@@ -713,12 +716,6 @@ void NetworkBase::SendPacketToClients(const NetworkPacket& packet, bool front, b
 {
     for (auto& client_connection : client_connection_list)
     {
-        if (client_connection->IsDisconnected)
-        {
-            // Client will be removed at the end of the tick, don't bother.
-            continue;
-        }
-
         if (gameCmd)
         {
             // If marked as game command we can not send the packet to connections that are not fully connected.
@@ -823,7 +820,7 @@ void NetworkBase::KickPlayer(int32_t playerId)
             char str_disconnect_msg[256];
             format_string(str_disconnect_msg, 256, STR_MULTIPLAYER_KICKED_REASON, nullptr);
             Server_Send_SETDISCONNECTMSG(*client_connection, str_disconnect_msg);
-            client_connection->Socket->Disconnect();
+            client_connection->Disconnect();
             break;
         }
     }
@@ -838,7 +835,7 @@ void NetworkBase::ServerClientDisconnected()
 {
     if (GetMode() == NETWORK_MODE_CLIENT)
     {
-        _serverConnection->Socket->Disconnect();
+        _serverConnection->Disconnect();
     }
 }
 
@@ -1353,7 +1350,7 @@ void NetworkBase::Server_Send_AUTH(NetworkConnection& connection)
     connection.QueuePacket(std::move(packet));
     if (connection.AuthStatus != NetworkAuth::Ok && connection.AuthStatus != NetworkAuth::RequirePassword)
     {
-        connection.Socket->Disconnect();
+        connection.Disconnect();
     }
 }
 
@@ -1379,7 +1376,7 @@ void NetworkBase::Server_Send_MAP(NetworkConnection* connection)
         if (connection)
         {
             connection->SetLastDisconnectReason(STR_MULTIPLAYER_CONNECTION_CLOSED);
-            connection->Socket->Disconnect();
+            connection->Disconnect();
         }
         return;
     }
@@ -1458,7 +1455,7 @@ void NetworkBase::Server_Send_CHAT(const char* text, const std::vector<uint8_t>&
         for (auto playerId : playerIds)
         {
             auto conn = GetPlayerConnection(playerId);
-            if (conn != nullptr && !conn->IsDisconnected)
+            if (conn != nullptr)
             {
                 conn->QueuePacket(packet);
             }
@@ -1671,7 +1668,7 @@ bool NetworkBase::ProcessConnection(NetworkConnection& connection)
             case NetworkReadPacket::Success:
                 // done reading in packet
                 ProcessPacket(connection, connection.InboundPacket);
-                if (connection.Socket == nullptr)
+                if (!connection.IsValid())
                 {
                     return false;
                 }
@@ -1684,8 +1681,6 @@ bool NetworkBase::ProcessConnection(NetworkConnection& connection)
                 break;
         }
     } while (packetStatus == NetworkReadPacket::Success);
-
-    connection.SendQueuedPackets();
 
     if (!connection.ReceivedPacketRecently())
     {
@@ -1917,17 +1912,21 @@ void NetworkBase::ProcessDisconnectedClients()
     for (auto it = client_connection_list.begin(); it != client_connection_list.end();)
     {
         auto& connection = *it;
-        if (connection->IsDisconnected)
-        {
-            ServerClientDisconnected(connection);
-            RemovePlayer(connection);
 
-            it = client_connection_list.erase(it);
-        }
-        else
+        if (!connection->ShouldDisconnect)
         {
             it++;
+            continue;
         }
+
+        // Make sure to send all remaining packets out before disconnecting.
+        connection->SendQueuedPackets();
+        connection->Socket->Disconnect();
+
+        ServerClientDisconnected(connection);
+        RemovePlayer(connection);
+
+        it = client_connection_list.erase(it);
     }
 }
 
@@ -2130,7 +2129,7 @@ void NetworkBase::Client_Handle_TOKEN(NetworkConnection& connection, NetworkPack
     {
         log_error("Failed to load key %s", keyPath);
         connection.SetLastDisconnectReason(STR_MULTIPLAYER_VERIFICATION_FAILURE);
-        connection.Socket->Disconnect();
+        connection.Disconnect();
         return;
     }
 
@@ -2147,7 +2146,7 @@ void NetworkBase::Client_Handle_TOKEN(NetworkConnection& connection, NetworkPack
     {
         log_error("Failed to sign server's challenge.");
         connection.SetLastDisconnectReason(STR_MULTIPLAYER_VERIFICATION_FAILURE);
-        connection.Socket->Disconnect();
+        connection.Disconnect();
         return;
     }
     // Don't keep private key in memory. There's no need and it may get leaked
@@ -2218,37 +2217,37 @@ void NetworkBase::Client_Handle_AUTH(NetworkConnection& connection, NetworkPacke
             break;
         case NetworkAuth::BadName:
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_BAD_PLAYER_NAME);
-            connection.Socket->Disconnect();
+            connection.Disconnect();
             break;
         case NetworkAuth::BadVersion:
         {
             const char* version = packet.ReadString();
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_INCORRECT_SOFTWARE_VERSION, &version);
-            connection.Socket->Disconnect();
+            connection.Disconnect();
             break;
         }
         case NetworkAuth::BadPassword:
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_BAD_PASSWORD);
-            connection.Socket->Disconnect();
+            connection.Disconnect();
             break;
         case NetworkAuth::VerificationFailure:
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_VERIFICATION_FAILURE);
-            connection.Socket->Disconnect();
+            connection.Disconnect();
             break;
         case NetworkAuth::Full:
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_SERVER_FULL);
-            connection.Socket->Disconnect();
+            connection.Disconnect();
             break;
         case NetworkAuth::RequirePassword:
             context_open_window_view(WV_NETWORK_PASSWORD);
             break;
         case NetworkAuth::UnknownKeyDisallowed:
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_UNKNOWN_KEY_DISALLOWED);
-            connection.Socket->Disconnect();
+            connection.Disconnect();
             break;
         default:
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_RECEIVED_INVALID_DATA);
-            connection.Socket->Disconnect();
+            connection.Disconnect();
             break;
     }
 }
@@ -2308,7 +2307,7 @@ void NetworkBase::Client_Handle_OBJECTS_LIST(NetworkConnection& connection, Netw
     if (totalObjects > OBJECT_ENTRY_COUNT)
     {
         connection.SetLastDisconnectReason(STR_MULTIPLAYER_SERVER_INVALID_REQUEST);
-        connection.Socket->Disconnect();
+        connection.Disconnect();
         log_warning("Server sent invalid amount of objects");
         return;
     }
@@ -2457,7 +2456,7 @@ void NetworkBase::Server_Handle_MAPREQUEST(NetworkConnection& connection, Networ
     if (size > OBJECT_ENTRY_COUNT)
     {
         connection.SetLastDisconnectReason(STR_MULTIPLAYER_CLIENT_INVALID_REQUEST);
-        connection.Socket->Disconnect();
+        connection.Disconnect();
         std::string playerName = "(unknown)";
         if (connection.Player)
         {
@@ -2497,6 +2496,8 @@ void NetworkBase::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacke
 {
     if (connection.AuthStatus != NetworkAuth::Ok)
     {
+        const char* hostName = connection.Socket->GetHostName();
+
         const char* gameversion = packet.ReadString();
         const char* name = packet.ReadString();
         const char* password = packet.ReadString();
@@ -2532,10 +2533,10 @@ void NetworkBase::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacke
                 const std::string hash = connection.Key.PublicKeyHash();
                 if (verified)
                 {
-                    log_verbose("Signature verification ok. Hash %s", hash.c_str());
+                    log_verbose("Connection %s: Signature verification ok. Hash %s", hostName, hash.c_str());
                     if (gConfigNetwork.known_keys_only && _userManager.GetUserByHash(hash) == nullptr)
                     {
-                        log_verbose("Hash %s, not known", hash.c_str());
+                        log_verbose("Connection %s: Hash %s, not known", hostName, hash.c_str());
                         connection.AuthStatus = NetworkAuth::UnknownKeyDisallowed;
                     }
                     else
@@ -2546,13 +2547,13 @@ void NetworkBase::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacke
                 else
                 {
                     connection.AuthStatus = NetworkAuth::VerificationFailure;
-                    log_verbose("Signature verification failed!");
+                    log_verbose("Connection %s: Signature verification failed!", hostName);
                 }
             }
             catch (const std::exception&)
             {
                 connection.AuthStatus = NetworkAuth::VerificationFailure;
-                log_verbose("Signature verification failed, invalid data!");
+                log_verbose("Connection %s: Signature verification failed, invalid data!", hostName);
             }
         }
 
@@ -2565,26 +2566,31 @@ void NetworkBase::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacke
         if (!gameversion || network_get_version() != gameversion)
         {
             connection.AuthStatus = NetworkAuth::BadVersion;
+            log_info("Connection %s: Bad version.", hostName);
         }
         else if (!name)
         {
             connection.AuthStatus = NetworkAuth::BadName;
+            log_info("Connection %s: Bad name.", connection.Socket->GetHostName());
         }
         else if (!passwordless)
         {
             if ((!password || strlen(password) == 0) && !_password.empty())
             {
                 connection.AuthStatus = NetworkAuth::RequirePassword;
+                log_info("Connection %s: Requires password.", hostName);
             }
             else if (password && _password != password)
             {
                 connection.AuthStatus = NetworkAuth::BadPassword;
+                log_info("Connection %s: Bad password.", hostName);
             }
         }
 
         if (static_cast<size_t>(gConfigNetwork.maxplayers) <= player_list.size())
         {
             connection.AuthStatus = NetworkAuth::Full;
+            log_info("Connection %s: Server is full.", hostName);
         }
         else if (connection.AuthStatus == NetworkAuth::Verified)
         {
@@ -2597,12 +2603,10 @@ void NetworkBase::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacke
             else
             {
                 connection.AuthStatus = NetworkAuth::VerificationFailure;
+                log_info("Connection %s: Denied by plugin.", hostName);
             }
         }
-        else if (connection.AuthStatus != NetworkAuth::RequirePassword)
-        {
-            log_error("Unknown failure (%d) while authenticating client", connection.AuthStatus);
-        }
+
         Server_Send_AUTH(connection);
     }
 }
@@ -2751,6 +2755,7 @@ bool NetworkBase::LoadMap(IStream* stream)
         gCheatsDisableRideValueAging = stream->ReadValue<uint8_t>() != 0;
         gConfigGeneral.show_real_names_of_guests = stream->ReadValue<uint8_t>() != 0;
         gCheatsIgnoreResearchStatus = stream->ReadValue<uint8_t>() != 0;
+        gAllowEarlyCompletionInNetworkPlay = stream->ReadValue<uint8_t>() != 0;
 
         gLastAutoSaveUpdate = AUTOSAVE_PAUSE;
         result = true;
@@ -2800,6 +2805,7 @@ bool NetworkBase::SaveMap(IStream* stream, const std::vector<const ObjectReposit
         stream->WriteValue<uint8_t>(gCheatsDisableRideValueAging);
         stream->WriteValue<uint8_t>(gConfigGeneral.show_real_names_of_guests);
         stream->WriteValue<uint8_t>(gCheatsIgnoreResearchStatus);
+        stream->WriteValue<uint8_t>(gConfigGeneral.allow_early_completion);
 
         result = true;
     }
@@ -3446,7 +3452,7 @@ const char* network_get_group_name(uint32_t index)
 void network_chat_show_connected_message()
 {
     auto windowManager = GetContext()->GetUiContext()->GetWindowManager();
-    std::string s = windowManager->GetKeyboardShortcutString(41 /* SHORTCUT_OPEN_CHAT_WINDOW */);
+    std::string s = windowManager->GetKeyboardShortcutString("interface.misc.multiplayer_chat");
     const char* sptr = s.c_str();
 
     utf8 buffer[256];

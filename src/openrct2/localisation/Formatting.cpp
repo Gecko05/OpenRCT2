@@ -615,6 +615,7 @@ namespace OpenRCT2
     template void FormatArgument(FormatBuffer&, FormatToken, int16_t);
     template void FormatArgument(FormatBuffer&, FormatToken, int32_t);
     template void FormatArgument(FormatBuffer&, FormatToken, int64_t);
+    template void FormatArgument(FormatBuffer&, FormatToken, uint32_t);
     template void FormatArgument(FormatBuffer&, FormatToken, uint64_t);
     template void FormatArgument(FormatBuffer&, FormatToken, const char*);
 
@@ -679,15 +680,24 @@ namespace OpenRCT2
                 if (argIndex < args.size())
                 {
                     const auto& arg = args[argIndex++];
-                    if (auto stringid = std::get_if<uint16_t>(&arg))
+                    std::optional<rct_string_id> stringId;
+                    if (auto value16 = std::get_if<uint16_t>(&arg))
                     {
-                        if (IsRealNameStringId(*stringid))
+                        stringId = *value16;
+                    }
+                    else if (auto value32 = std::get_if<int32_t>(&arg))
+                    {
+                        stringId = *value32;
+                    }
+                    if (stringId)
+                    {
+                        if (IsRealNameStringId(*stringId))
                         {
-                            FormatRealName(ss, *stringid);
+                            FormatRealName(ss, *stringId);
                         }
                         else
                         {
-                            auto subfmt = GetFmtStringById(*stringid);
+                            auto subfmt = GetFmtStringById(*stringId);
                             FormatStringAny(ss, subfmt, args, argIndex);
                         }
                     }

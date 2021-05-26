@@ -200,11 +200,14 @@ void research_finish_item(ResearchItem* researchItem)
 
         if (rideEntry != nullptr && base_ride_type != RIDE_TYPE_NULL)
         {
+            if (!RideTypeIsValid(base_ride_type))
+            {
+                log_warning("Invalid ride type: %d", base_ride_type);
+                base_ride_type = ride_entry_get_first_non_null_ride_type(rideEntry);
+            }
+
             rct_string_id availabilityString;
-
             ride_type_set_invented(base_ride_type);
-            openrct2_assert(base_ride_type < RIDE_TYPE_COUNT, "Invalid base_ride_type = %d", base_ride_type);
-
             ride_entry_set_invented(rideEntryIndex);
 
             bool seenRideEntry[MAX_RIDE_OBJECTS]{};
@@ -244,7 +247,7 @@ void research_finish_item(ResearchItem* researchItem)
 
             // If a vehicle is the first to be invented for its ride type, show the ride type/group name.
             // Independently listed vehicles (like all flat rides and shops) should always be announced as such.
-            if (RideTypeDescriptors[base_ride_type].HasFlag(RIDE_TYPE_FLAG_LIST_VEHICLES_SEPARATELY)
+            if (GetRideTypeDescriptor(base_ride_type).HasFlag(RIDE_TYPE_FLAG_LIST_VEHICLES_SEPARATELY)
                 || researchItem->flags & RESEARCH_ENTRY_FLAG_FIRST_OF_TYPE)
             {
                 RideNaming naming = get_ride_naming(base_ride_type, rideEntry);
@@ -469,7 +472,7 @@ void research_populate_list_random()
         {
             if (rideType != RIDE_TYPE_NULL)
             {
-                ResearchCategory category = RideTypeDescriptors[rideType].GetResearchCategory();
+                ResearchCategory category = GetRideTypeDescriptor(rideType).GetResearchCategory();
                 research_insert_ride_entry(rideType, i, category, researched);
             }
         }
@@ -508,7 +511,7 @@ void research_insert_ride_entry(ObjectEntryIndex entryIndex, bool researched)
     {
         if (rideType != RIDE_TYPE_NULL)
         {
-            ResearchCategory category = RideTypeDescriptors[rideType].GetResearchCategory();
+            ResearchCategory category = GetRideTypeDescriptor(rideType).GetResearchCategory();
             research_insert_ride_entry(rideType, entryIndex, category, researched);
         }
     }
@@ -528,8 +531,7 @@ bool research_insert_scenery_group_entry(ObjectEntryIndex entryIndex, bool resea
 
 bool ride_type_is_invented(uint32_t rideType)
 {
-    Guard::Assert(rideType < std::size(_researchedRideTypes), GUARD_LINE);
-    return _researchedRideTypes[rideType];
+    return RideTypeIsValid(rideType) ? _researchedRideTypes[rideType] : false;
 }
 
 bool ride_entry_is_invented(int32_t rideEntryIndex)
@@ -539,8 +541,10 @@ bool ride_entry_is_invented(int32_t rideEntryIndex)
 
 void ride_type_set_invented(uint32_t rideType)
 {
-    Guard::Assert(rideType < std::size(_researchedRideTypes), GUARD_LINE);
-    _researchedRideTypes[rideType] = true;
+    if (RideTypeIsValid(rideType))
+    {
+        _researchedRideTypes[rideType] = true;
+    }
 }
 
 void ride_entry_set_invented(int32_t rideEntryIndex)
@@ -945,7 +949,7 @@ static void research_update_first_of_type(ResearchItem* researchItem)
         return;
     }
 
-    const auto& rtd = RideTypeDescriptors[rideType];
+    const auto& rtd = GetRideTypeDescriptor(rideType);
     if (rtd.HasFlag(RIDE_TYPE_FLAG_LIST_VEHICLES_SEPARATELY))
     {
         researchItem->flags |= RESEARCH_ENTRY_FLAG_FIRST_OF_TYPE;
@@ -978,7 +982,7 @@ void research_determine_first_of_type()
         if (rideType >= RIDE_TYPE_COUNT)
             continue;
 
-        const auto& rtd = RideTypeDescriptors[rideType];
+        const auto& rtd = GetRideTypeDescriptor(rideType);
         if (rtd.HasFlag(RIDE_TYPE_FLAG_LIST_VEHICLES_SEPARATELY))
             continue;
 

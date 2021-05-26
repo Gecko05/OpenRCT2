@@ -154,10 +154,10 @@ static void ride_ratings_update_state()
  */
 static void ride_ratings_update_state_0()
 {
-    int32_t currentRide = gRideRatingsCalcData.CurrentRide;
+    ride_id_t currentRide = gRideRatingsCalcData.CurrentRide;
 
     currentRide++;
-    if (currentRide == RIDE_ID_NULL)
+    if (currentRide >= MAX_RIDES)
     {
         currentRide = 0;
     }
@@ -203,7 +203,7 @@ static void ride_ratings_update_state_2()
     }
 
     auto loc = gRideRatingsCalcData.Proximity;
-    int32_t trackType = gRideRatingsCalcData.ProximityTrackType;
+    track_type_t trackType = gRideRatingsCalcData.ProximityTrackType;
 
     TileElement* tileElement = map_get_first_element_at(loc);
     if (tileElement == nullptr)
@@ -222,11 +222,12 @@ static void ride_ratings_update_state_2()
         if (tileElement->AsTrack()->GetRideIndex() != ride->id)
         {
             // Only check that the track belongs to the same ride if ride does not have buildable track
-            if (!ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_HAS_TRACK))
+            if (!ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_HAS_TRACK))
                 continue;
         }
 
-        if (trackType == 255
+        // TODO: Hack to be removed with new save format - trackType 0xFF should not be here.
+        if (trackType == 0xFF || trackType == TrackElemType::None
             || (tileElement->AsTrack()->GetSequenceIndex() == 0 && trackType == tileElement->AsTrack()->GetTrackType()))
         {
             if (trackType == TrackElemType::EndStation)
@@ -309,7 +310,7 @@ static void ride_ratings_update_state_5()
     }
 
     auto loc = gRideRatingsCalcData.Proximity;
-    int32_t trackType = gRideRatingsCalcData.ProximityTrackType;
+    track_type_t trackType = gRideRatingsCalcData.ProximityTrackType;
 
     TileElement* tileElement = map_get_first_element_at(loc);
     if (tileElement == nullptr)
@@ -328,11 +329,12 @@ static void ride_ratings_update_state_5()
         if (tileElement->AsTrack()->GetRideIndex() != ride->id)
         {
             // Only check that the track belongs to the same ride if ride does not have buildable track
-            if (!ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_HAS_TRACK))
+            if (!ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_HAS_TRACK))
                 continue;
         }
 
-        if (trackType == 255 || trackType == tileElement->AsTrack()->GetTrackType())
+        // TODO: Hack to be removed with new save format - trackType 0xFF should not be here.
+        if (trackType == 0xFF || trackType == TrackElemType::None || trackType == tileElement->AsTrack()->GetTrackType())
         {
             ride_ratings_score_close_proximity(tileElement);
 
@@ -390,9 +392,8 @@ static void ride_ratings_begin_proximity_loop()
             }
 
             auto location = ride->stations[i].GetStart();
-
             gRideRatingsCalcData.Proximity = location;
-            gRideRatingsCalcData.ProximityTrackType = 255;
+            gRideRatingsCalcData.ProximityTrackType = TrackElemType::None;
             gRideRatingsCalcData.ProximityStart = location;
             return;
         }
@@ -808,7 +809,7 @@ static void ride_ratings_calculate_value(Ride* ride)
     }
 
     // Start with the base ratings, multiplied by the ride type specific weights for excitement, intensity and nausea.
-    const auto& ratingsMultipliers = RideTypeDescriptors[ride->type].RatingsMultipliers;
+    const auto& ratingsMultipliers = ride->GetRideTypeDescriptor().RatingsMultipliers;
     int32_t value = (((ride->excitement * ratingsMultipliers.Excitement) * 32) >> 15)
         + (((ride->intensity * ratingsMultipliers.Intensity) * 32) >> 15)
         + (((ride->nausea * ratingsMultipliers.Nausea) * 32) >> 15);
@@ -869,9 +870,9 @@ static void ride_ratings_calculate_value(Ride* ride)
 static uint16_t ride_compute_upkeep(Ride* ride)
 {
     // data stored at 0x0057E3A8, incrementing 18 bytes at a time
-    uint16_t upkeep = RideTypeDescriptors[ride->type].UpkeepCosts.BaseCost;
+    uint16_t upkeep = ride->GetRideTypeDescriptor().UpkeepCosts.BaseCost;
 
-    uint16_t trackCost = RideTypeDescriptors[ride->type].UpkeepCosts.CostPerTrackPiece;
+    uint16_t trackCost = ride->GetRideTypeDescriptor().UpkeepCosts.CostPerTrackPiece;
     uint8_t dropFactor = ride->drops;
 
     dropFactor >>= 6;
@@ -884,7 +885,7 @@ static uint16_t ride_compute_upkeep(Ride* ride)
     // rides that had tracks. The 0's were fixed rides like crooked house or
     // dodgems.
     // Data source is 0x0097E3AC
-    totalLength *= RideTypeDescriptors[ride->type].UpkeepCosts.TrackLengthMultiplier;
+    totalLength *= ride->GetRideTypeDescriptor().UpkeepCosts.TrackLengthMultiplier;
     upkeep += static_cast<uint16_t>(totalLength >> 10);
 
     if (ride->lifecycle_flags & RIDE_LIFECYCLE_ON_RIDE_PHOTO)
@@ -911,12 +912,12 @@ static uint16_t ride_compute_upkeep(Ride* ride)
     // various variables set on the ride itself.
 
     // https://gist.github.com/kevinburke/e19b803cd2769d96c540
-    upkeep += RideTypeDescriptors[ride->type].UpkeepCosts.CostPerTrain * ride->num_vehicles;
-    upkeep += RideTypeDescriptors[ride->type].UpkeepCosts.CostPerCar * ride->num_cars_per_train;
+    upkeep += ride->GetRideTypeDescriptor().UpkeepCosts.CostPerTrain * ride->num_vehicles;
+    upkeep += ride->GetRideTypeDescriptor().UpkeepCosts.CostPerCar * ride->num_cars_per_train;
 
     // slight upkeep boosts for some rides - 5 for mini railway, 10 for log
     // flume/rapids, 10 for roller coaster, 28 for giga coaster
-    upkeep += RideTypeDescriptors[ride->type].UpkeepCosts.CostPerStation * ride->num_stations;
+    upkeep += ride->GetRideTypeDescriptor().UpkeepCosts.CostPerStation * ride->num_stations;
 
     if (ride->mode == RideMode::ReverseInclineLaunchedShuttle)
     {
@@ -968,7 +969,7 @@ static void ride_ratings_apply_adjustments(Ride* ride, RatingTuple* ratings)
 
     // Apply total air time
 #ifdef ORIGINAL_RATINGS
-    if (RideTypeDescriptors[ride->type].HasFlag(RIDE_TYPE_FLAG_HAS_AIR_TIME))
+    if (ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_HAS_AIR_TIME))
     {
         uint16_t totalAirTime = ride->total_air_time;
         if (rideEntry->flags & RIDE_ENTRY_FLAG_LIMIT_AIRTIME_BONUS)
@@ -987,7 +988,7 @@ static void ride_ratings_apply_adjustments(Ride* ride, RatingTuple* ratings)
         }
     }
 #else
-    if (RideTypeDescriptors[ride->type].Flags & RIDE_TYPE_FLAG_HAS_AIR_TIME)
+    if (ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_HAS_AIR_TIME))
     {
         int32_t excitementModifier;
         if (rideEntry->flags & RIDE_ENTRY_FLAG_LIMIT_AIRTIME_BONUS)
@@ -1031,7 +1032,7 @@ static void ride_ratings_apply_intensity_penalty(RatingTuple* ratings)
 static void set_unreliability_factor(Ride* ride)
 {
     // The bigger the difference in lift speed and minimum the higher the unreliability
-    uint8_t minLiftSpeed = RideTypeDescriptors[ride->type].LiftData.minimum_speed;
+    uint8_t minLiftSpeed = ride->GetRideTypeDescriptor().LiftData.minimum_speed;
     ride->unreliability_factor += (ride->lift_hill_speed - minLiftSpeed) * 2;
 }
 
@@ -1325,19 +1326,19 @@ static RatingTuple ride_ratings_get_sheltered_ratings(Ride* ride)
     /*eax = (ride->var_11C * 30340) >> 16;*/
     /*nausea += eax;*/
 
-    if (ride->num_sheltered_sections & 0x40)
+    if (ride->num_sheltered_sections & ShelteredSectionsBits::BankingWhileSheltered)
     {
         excitement += 20;
         nausea += 15;
     }
 
-    if (ride->num_sheltered_sections & 0x20)
+    if (ride->num_sheltered_sections & ShelteredSectionsBits::RotatingWhileSheltered)
     {
         excitement += 20;
         nausea += 15;
     }
 
-    uint8_t lowerVal = ride->num_sheltered_sections & 0x1F;
+    uint8_t lowerVal = ride->GetNumShelteredSections();
     lowerVal = std::min<uint8_t>(lowerVal, 11);
     excitement += (lowerVal * 774516) >> 16;
 
@@ -4439,7 +4440,7 @@ void ride_ratings_calculate_single_rail_roller_coaster(Ride* ride)
 
 ride_ratings_calculation ride_ratings_get_calculate_func(uint8_t rideType)
 {
-    return RideTypeDescriptors[rideType].RatingsCalculationFunction;
+    return GetRideTypeDescriptor(rideType).RatingsCalculationFunction;
 }
 
 #pragma endregion

@@ -227,6 +227,7 @@ namespace Config
             model->show_real_names_of_guests = reader->GetBoolean("show_real_names_of_guests", true);
             model->allow_early_completion = reader->GetBoolean("allow_early_completion", false);
             model->transparent_screenshot = reader->GetBoolean("transparent_screenshot", true);
+            model->transparent_water = reader->GetBoolean("transparent_water", true);
             model->last_version_check_time = reader->GetInt64("last_version_check_time", 0);
         }
     }
@@ -304,6 +305,7 @@ namespace Config
         writer->WriteBoolean("allow_early_completion", model->allow_early_completion);
         writer->WriteEnum<VirtualFloorStyles>("virtual_floor_style", model->virtual_floor_style, Enum_VirtualFloorStyle);
         writer->WriteBoolean("transparent_screenshot", model->transparent_screenshot);
+        writer->WriteBoolean("transparent_water", model->transparent_water);
         writer->WriteInt64("last_version_check_time", model->last_version_check_time);
     }
 
@@ -318,6 +320,7 @@ namespace Config
             model->toolbar_show_news = reader->GetBoolean("toolbar_show_news", false);
             model->toolbar_show_mute = reader->GetBoolean("toolbar_show_mute", false);
             model->toolbar_show_chat = reader->GetBoolean("toolbar_show_chat", false);
+            model->toolbar_show_zoom = reader->GetBoolean("toolbar_show_zoom", true);
             model->console_small_font = reader->GetBoolean("console_small_font", false);
             model->current_theme_preset = reader->GetCString("current_theme", "*RCT2");
             model->current_title_sequence_preset = reader->GetCString("current_title_sequence", "*OPENRCT2");
@@ -337,6 +340,7 @@ namespace Config
         writer->WriteBoolean("toolbar_show_news", model->toolbar_show_news);
         writer->WriteBoolean("toolbar_show_mute", model->toolbar_show_mute);
         writer->WriteBoolean("toolbar_show_chat", model->toolbar_show_chat);
+        writer->WriteBoolean("toolbar_show_zoom", model->toolbar_show_zoom);
         writer->WriteBoolean("console_small_font", model->console_small_font);
         writer->WriteString("current_theme", model->current_theme_preset);
         writer->WriteString("current_title_sequence", model->current_title_sequence_preset);
@@ -996,9 +1000,9 @@ bool RCT1DataPresentAtLocation(const utf8* path)
     return Csg1datPresentAtLocation(path) && Csg1idatPresentAtLocation(path) && CsgAtLocationIsUsable(path);
 }
 
-bool CsgIsUsable(rct_gx csg)
+bool CsgIsUsable(const rct_gx& csg)
 {
-    return csg.header.num_entries == RCT1_NUM_LL_CSG_ENTRIES;
+    return csg.header.total_size == RCT1_LL_CSG1_DAT_FILE_SIZE && csg.header.num_entries == RCT1_NUM_LL_CSG_ENTRIES;
 }
 
 bool CsgAtLocationIsUsable(const utf8* path)

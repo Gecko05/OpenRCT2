@@ -185,7 +185,7 @@ static void paint_magic_carpet_structure(
     uint32_t swingImageId = 0;
     if (vehicle != nullptr)
     {
-        swingImageId = vehicle->vehicle_sprite_type;
+        swingImageId = vehicle->Pitch;
         session->InteractionType = ViewportInteractionItem::Entity;
         session->CurrentlyDrawnItem = vehicle;
     }
@@ -276,7 +276,7 @@ TRACK_PAINT_FUNCTION get_track_paint_function_magic_carpet(int32_t trackType)
 {
     switch (trackType)
     {
-        case FLAT_TRACK_ELEM_1_X_4_A:
+        case TrackElemType::FlatTrack1x4A:
             return paint_magic_carpet;
     }
     return nullptr;

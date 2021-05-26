@@ -64,7 +64,7 @@ static void paint_motionsimulator_vehicle(
         }
         else
         {
-            simulatorImageId += vehicle->vehicle_sprite_type * 4;
+            simulatorImageId += vehicle->Pitch * 4;
         }
     }
 
@@ -174,7 +174,7 @@ TRACK_PAINT_FUNCTION get_track_paint_function_motionsimulator(int32_t trackType)
 {
     switch (trackType)
     {
-        case FLAT_TRACK_ELEM_2_X_2:
+        case TrackElemType::FlatTrack2x2:
             return paint_motionsimulator;
     }
     return nullptr;

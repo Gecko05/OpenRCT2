@@ -85,7 +85,7 @@ void Banner::FormatTextTo(Formatter& ft) const
  *
  *  rct2: 0x006B7EAB
  */
-static uint8_t banner_get_ride_index_at(const CoordsXYZ& bannerCoords)
+static ride_id_t banner_get_ride_index_at(const CoordsXYZ& bannerCoords)
 {
     TileElement* tileElement = map_get_first_element_at(bannerCoords);
     ride_id_t resultRideIndex = RIDE_ID_NULL;
@@ -98,7 +98,7 @@ static uint8_t banner_get_ride_index_at(const CoordsXYZ& bannerCoords)
 
         ride_id_t rideIndex = tileElement->AsTrack()->GetRideIndex();
         auto ride = get_ride(rideIndex);
-        if (ride == nullptr || ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_IS_SHOP))
+        if (ride == nullptr || ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_IS_SHOP))
             continue;
 
         if ((tileElement->GetClearanceZ()) + (4 * COORDS_Z_STEP) <= bannerCoords.z)
@@ -217,7 +217,7 @@ WallElement* banner_get_scrolling_wall_tile_element(BannerIndex bannerIndex)
  *
  *  rct2: 0x006B7D86
  */
-uint8_t banner_get_closest_ride_index(const CoordsXYZ& mapPos)
+ride_id_t banner_get_closest_ride_index(const CoordsXYZ& mapPos)
 {
     static constexpr const std::array<CoordsXY, 9> NeighbourCheckOrder = { CoordsXY{ COORDS_XY_STEP, 0 },
                                                                            CoordsXY{ -COORDS_XY_STEP, 0 },
@@ -242,7 +242,7 @@ uint8_t banner_get_closest_ride_index(const CoordsXYZ& mapPos)
     auto resultDistance = std::numeric_limits<int32_t>::max();
     for (auto& ride : GetRideManager())
     {
-        if (ride_type_has_flag(ride.type, RIDE_TYPE_FLAG_IS_SHOP))
+        if (ride.GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_IS_SHOP))
             continue;
 
         auto rideCoords = ride.overall_view;
@@ -288,7 +288,10 @@ void fix_duplicated_banners()
                     // occupy multiple tiles that should both refer to the same banner index.
                     if (tileElement->GetType() == TILE_ELEMENT_TYPE_BANNER)
                     {
-                        uint8_t bannerIndex = tileElement->AsBanner()->GetIndex();
+                        auto bannerIndex = tileElement->AsBanner()->GetIndex();
+                        if (bannerIndex == BANNER_INDEX_NULL)
+                            continue;
+
                         if (activeBanners[bannerIndex])
                         {
                             log_info(
@@ -305,9 +308,13 @@ void fix_duplicated_banners()
                             Guard::Assert(!activeBanners[newBannerIndex]);
 
                             // Copy over the original banner, but update the location
-                            auto& newBanner = *GetBanner(newBannerIndex);
-                            newBanner = *GetBanner(bannerIndex);
-                            newBanner.position = { x, y };
+                            auto newBanner = GetBanner(newBannerIndex);
+                            auto oldBanner = GetBanner(bannerIndex);
+                            if (oldBanner != nullptr && newBanner != nullptr)
+                            {
+                                *newBanner = *oldBanner;
+                                newBanner->position = { x, y };
+                            }
 
                             tileElement->AsBanner()->SetIndex(newBannerIndex);
                         }

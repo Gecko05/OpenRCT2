@@ -52,6 +52,7 @@
 #include "Scenery.h"
 #include "SmallScenery.h"
 #include "Surface.h"
+#include "TileElementsView.h"
 #include "TileInspector.h"
 #include "Wall.h"
 
@@ -215,67 +216,35 @@ void map_set_tile_element(const TileCoordsXY& tilePos, TileElement* elements)
 
 SurfaceElement* map_get_surface_element_at(const CoordsXY& coords)
 {
-    TileElement* tileElement = map_get_first_element_at(coords);
+    auto view = TileElementsView<SurfaceElement>(coords);
 
-    if (tileElement == nullptr)
-        return nullptr;
-
-    // Find the first surface element
-    while (tileElement->GetType() != TILE_ELEMENT_TYPE_SURFACE)
-    {
-        if (tileElement->IsLastForTile())
-            return nullptr;
-
-        tileElement++;
-    }
-
-    return tileElement->AsSurface();
+    return *view.begin();
 }
 
 PathElement* map_get_path_element_at(const TileCoordsXYZ& loc)
 {
-    TileElement* tileElement = map_get_first_element_at(loc.ToCoordsXY());
-
-    if (tileElement == nullptr)
-        return nullptr;
-
-    // Find the path element at known z
-    do
+    for (auto* element : TileElementsView<PathElement>(loc.ToCoordsXY()))
     {
-        if (tileElement->IsGhost())
+        if (element->IsGhost())
             continue;
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_PATH)
+        if (element->base_height != loc.z)
             continue;
-        if (tileElement->base_height != loc.z)
-            continue;
-
-        return tileElement->AsPath();
-    } while (!(tileElement++)->IsLastForTile());
-
+        return element;
+    }
     return nullptr;
 }
 
 BannerElement* map_get_banner_element_at(const CoordsXYZ& bannerPos, uint8_t position)
 {
-    auto bannerTilePos = TileCoordsXYZ{ bannerPos };
-    TileElement* tileElement = map_get_first_element_at(bannerPos);
-
-    if (tileElement == nullptr)
-        return nullptr;
-
-    // Find the banner element at known z and position
-    do
+    const auto bannerTilePos = TileCoordsXYZ{ bannerPos };
+    for (auto* element : TileElementsView<BannerElement>(bannerPos))
     {
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_BANNER)
+        if (element->base_height != bannerTilePos.z)
             continue;
-        if (tileElement->base_height != bannerTilePos.z)
+        if (element->GetPosition() != position)
             continue;
-        if (tileElement->AsBanner()->GetPosition() != position)
-            continue;
-
-        return tileElement->AsBanner();
-    } while (!(tileElement++)->IsLastForTile());
-
+        return element;
+    }
     return nullptr;
 }
 
@@ -299,8 +268,8 @@ void map_init(int32_t size)
         tile_element->AsSurface()->SetGrassLength(GRASS_LENGTH_CLEAR_0);
         tile_element->AsSurface()->SetOwnership(OWNERSHIP_UNOWNED);
         tile_element->AsSurface()->SetParkFences(0);
-        tile_element->AsSurface()->SetSurfaceStyle(TERRAIN_GRASS);
-        tile_element->AsSurface()->SetEdgeStyle(TERRAIN_EDGE_ROCK);
+        tile_element->AsSurface()->SetSurfaceStyle(0);
+        tile_element->AsSurface()->SetEdgeStyle(0);
     }
 
     gGrassSceneryTileLoopPosition = 0;
@@ -1139,7 +1108,7 @@ bool map_check_free_elements_and_reorganise(int32_t numElements)
  *
  *  rct2: 0x0068B1F6
  */
-TileElement* tile_element_insert(const CoordsXYZ& loc, int32_t occupiedQuadrants)
+TileElement* tile_element_insert(const CoordsXYZ& loc, int32_t occupiedQuadrants, TileElementType type)
 {
     const auto& tileLoc = TileCoordsXYZ(loc);
     TileElement *originalTileElement, *newTileElement, *insertedElement;
@@ -1185,6 +1154,7 @@ TileElement* tile_element_insert(const CoordsXYZ& loc, int32_t occupiedQuadrants
     // Insert new map element
     insertedElement = newTileElement;
     newTileElement->type = 0;
+    newTileElement->SetType(static_cast<uint8_t>(type));
     newTileElement->SetBaseZ(loc.z);
     newTileElement->Flags = 0;
     newTileElement->SetLastForTile(isLastForTile);
@@ -1245,7 +1215,8 @@ void map_obstruction_set_error_text(TileElement* tileElement, GameActions::Resul
             sceneryEntry = tileElement->AsSmallScenery()->GetEntry();
             res.ErrorMessage = STR_X_IN_THE_WAY;
             auto ft = Formatter(res.ErrorMessageArgs.data());
-            ft.Add<rct_string_id>(sceneryEntry->name);
+            rct_string_id stringId = sceneryEntry != nullptr ? sceneryEntry->name : static_cast<rct_string_id>(STR_EMPTY);
+            ft.Add<rct_string_id>(stringId);
             break;
         }
         case TILE_ELEMENT_TYPE_ENTRANCE:
@@ -1267,7 +1238,8 @@ void map_obstruction_set_error_text(TileElement* tileElement, GameActions::Resul
             sceneryEntry = tileElement->AsWall()->GetEntry();
             res.ErrorMessage = STR_X_IN_THE_WAY;
             auto ft = Formatter(res.ErrorMessageArgs.data());
-            ft.Add<rct_string_id>(sceneryEntry->name);
+            rct_string_id stringId = sceneryEntry != nullptr ? sceneryEntry->name : static_cast<rct_string_id>(STR_EMPTY);
+            ft.Add<rct_string_id>(stringId);
             break;
         }
         case TILE_ELEMENT_TYPE_LARGE_SCENERY:
@@ -1275,7 +1247,8 @@ void map_obstruction_set_error_text(TileElement* tileElement, GameActions::Resul
             sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
             res.ErrorMessage = STR_X_IN_THE_WAY;
             auto ft = Formatter(res.ErrorMessageArgs.data());
-            ft.Add<rct_string_id>(sceneryEntry->name);
+            rct_string_id stringId = sceneryEntry != nullptr ? sceneryEntry->name : static_cast<rct_string_id>(STR_EMPTY);
+            ft.Add<rct_string_id>(stringId);
             break;
         }
     }
@@ -1542,10 +1515,10 @@ void map_update_tiles()
 
 void map_remove_provisional_elements()
 {
-    if (gFootpathProvisionalFlags & PROVISIONAL_PATH_FLAG_1)
+    if (gProvisionalFootpath.Flags & PROVISIONAL_PATH_FLAG_1)
     {
         footpath_provisional_remove();
-        gFootpathProvisionalFlags |= PROVISIONAL_PATH_FLAG_1;
+        gProvisionalFootpath.Flags |= PROVISIONAL_PATH_FLAG_1;
     }
     if (window_find_by_class(WC_RIDE_CONSTRUCTION) != nullptr)
     {
@@ -1563,10 +1536,10 @@ void map_remove_provisional_elements()
 
 void map_restore_provisional_elements()
 {
-    if (gFootpathProvisionalFlags & PROVISIONAL_PATH_FLAG_1)
+    if (gProvisionalFootpath.Flags & PROVISIONAL_PATH_FLAG_1)
     {
-        gFootpathProvisionalFlags &= ~PROVISIONAL_PATH_FLAG_1;
-        footpath_provisional_set(gFootpathProvisionalType, gFootpathProvisionalPosition, gFootpathProvisionalSlope);
+        gProvisionalFootpath.Flags &= ~PROVISIONAL_PATH_FLAG_1;
+        footpath_provisional_set(gProvisionalFootpath.Type, gProvisionalFootpath.Position, gProvisionalFootpath.Slope);
     }
     if (window_find_by_class(WC_RIDE_CONSTRUCTION) != nullptr)
     {
@@ -1709,8 +1682,8 @@ static void clear_element_at(const CoordsXY& loc, TileElement** elementPtr)
             element->clearance_height = MINIMUM_LAND_HEIGHT;
             element->owner = 0;
             element->AsSurface()->SetSlope(TILE_ELEMENT_SLOPE_FLAT);
-            element->AsSurface()->SetSurfaceStyle(TERRAIN_GRASS);
-            element->AsSurface()->SetEdgeStyle(TERRAIN_EDGE_ROCK);
+            element->AsSurface()->SetSurfaceStyle(0);
+            element->AsSurface()->SetEdgeStyle(0);
             element->AsSurface()->SetGrassLength(GRASS_LENGTH_CLEAR_0);
             element->AsSurface()->SetOwnership(OWNERSHIP_UNOWNED);
             element->AsSurface()->SetParkFences(0);

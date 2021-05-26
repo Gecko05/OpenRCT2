@@ -22,6 +22,7 @@
 #include "../ui/UiContext.h"
 #include "../ui/WindowManager.h"
 #include "../world/Banner.h"
+#include "../world/EntityList.h"
 #include "../world/Park.h"
 #include "../world/Sprite.h"
 #include "MazeSetTrackAction.h"
@@ -87,7 +88,7 @@ GameActions::Result::Ptr RideDemolishAction::Query() const
         }
 
         if (!(ride->lifecycle_flags & RIDE_LIFECYCLE_EVER_BEEN_OPENED)
-            || RideTypeDescriptors[ride->type].AvailableBreakdowns == 0)
+            || ride->GetRideTypeDescriptor().AvailableBreakdowns == 0)
         {
             return std::make_unique<GameActions::Result>(
                 GameActions::Status::Disallowed, STR_CANT_REFURBISH_RIDE, STR_CANT_REFURBISH_NOT_NEEDED);
@@ -142,7 +143,7 @@ GameActions::Result::Ptr RideDemolishAction::DemolishRide(Ride* ride) const
         }
     }
 
-    for (auto peep : EntityList<Guest>(EntityListId::Peep))
+    for (auto peep : EntityList<Guest>())
     {
         uint8_t ride_id_bit = _rideIndex % 8;
         uint8_t ride_id_offset = _rideIndex / 8;

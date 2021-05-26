@@ -397,24 +397,16 @@ GameActions::Result::Ptr WallPlaceAction::Execute() const
         }
     }
 
-    TileElement* tileElement = tile_element_insert(targetLoc, 0b0000);
-    assert(tileElement != nullptr);
+    auto* wallElement = TileElementInsert<WallElement>(targetLoc, 0b0000);
+    Guard::Assert(wallElement != nullptr);
 
-    map_animation_create(MAP_ANIMATION_TYPE_WALL, targetLoc);
-
-    tileElement->SetType(TILE_ELEMENT_TYPE_WALL);
-    WallElement* wallElement = tileElement->AsWall();
     wallElement->clearance_height = clearanceHeight;
     wallElement->SetDirection(_edge);
     wallElement->SetSlope(edgeSlope);
 
     wallElement->SetPrimaryColour(_primaryColour);
     wallElement->SetSecondaryColour(_secondaryColour);
-
-    if (wallAcrossTrack)
-    {
-        wallElement->SetAcrossTrack(true);
-    }
+    wallElement->SetAcrossTrack(wallAcrossTrack);
 
     wallElement->SetEntryIndex(_wallType);
     if (_bannerId != BANNER_INDEX_NULL)
@@ -427,12 +419,11 @@ GameActions::Result::Ptr WallPlaceAction::Execute() const
         wallElement->SetTertiaryColour(_tertiaryColour);
     }
 
-    if (GetFlags() & GAME_COMMAND_FLAG_GHOST)
-    {
-        wallElement->SetGhost(true);
-    }
+    wallElement->SetGhost(GetFlags() & GAME_COMMAND_FLAG_GHOST);
 
-    res->tileElement = tileElement;
+    res->tileElement = wallElement->as<TileElement>();
+
+    map_animation_create(MAP_ANIMATION_TYPE_WALL, targetLoc);
     map_invalidate_tile_zoom1({ _loc, wallElement->GetBaseZ(), wallElement->GetBaseZ() + 72 });
 
     res->Cost = wallEntry->wall.price;
@@ -465,7 +456,7 @@ bool WallPlaceAction::WallCheckObstructionWithTrack(
         return false;
     }
 
-    if (!(RideTypeDescriptors[ride->type].Flags & RIDE_TYPE_FLAG_ALLOW_DOORS_ON_TRACK))
+    if (!ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_ALLOW_DOORS_ON_TRACK))
     {
         return false;
     }
@@ -627,21 +618,11 @@ GameActions::Result::Ptr WallPlaceAction::WallCheckObstruction(
 bool WallPlaceAction::TrackIsAllowedWallEdges(
     uint8_t rideType, track_type_t trackType, uint8_t trackSequence, uint8_t direction)
 {
-    if (!ride_type_has_flag(rideType, RIDE_TYPE_FLAG_TRACK_NO_WALLS))
+    if (!GetRideTypeDescriptor(rideType).HasFlag(RIDE_TYPE_FLAG_TRACK_NO_WALLS))
     {
-        if (ride_type_has_flag(rideType, RIDE_TYPE_FLAG_FLAT_RIDE))
+        if (TrackSequenceElementAllowedWallEdges[trackType][trackSequence] & (1 << direction))
         {
-            if (FlatRideTrackSequenceElementAllowedWallEdges[trackType][trackSequence] & (1 << direction))
-            {
-                return true;
-            }
-        }
-        else
-        {
-            if (TrackSequenceElementAllowedWallEdges[trackType][trackSequence] & (1 << direction))
-            {
-                return true;
-            }
+            return true;
         }
     }
     return false;

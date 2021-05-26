@@ -44,7 +44,7 @@ static void paint_twist_structure(
     if (vehicle != nullptr)
     {
         frameNum += (vehicle->sprite_direction >> 3) << 4;
-        frameNum += vehicle->vehicle_sprite_type;
+        frameNum += vehicle->Pitch;
         frameNum = frameNum % 216;
     }
 
@@ -165,7 +165,7 @@ static void paint_twist(
  */
 TRACK_PAINT_FUNCTION get_track_paint_function_twist(int32_t trackType)
 {
-    if (trackType != FLAT_TRACK_ELEM_3_X_3)
+    if (trackType != TrackElemType::FlatTrack3x3)
     {
         return nullptr;
     }

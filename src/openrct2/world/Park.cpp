@@ -36,8 +36,8 @@
 #include "../util/Util.h"
 #include "../windows/Intent.h"
 #include "Entrance.h"
+#include "Litter.h"
 #include "Map.h"
-#include "Sprite.h"
 #include "Surface.h"
 
 #include <algorithm>
@@ -383,7 +383,7 @@ int32_t Park::CalculateParkRating() const
         // Find the number of happy peeps and the number of peeps who can't find the park exit
         uint32_t happyGuestCount = 0;
         uint32_t lostGuestCount = 0;
-        for (auto peep : EntityList<Guest>(EntityListId::Peep))
+        for (auto peep : EntityList<Guest>())
         {
             if (!peep->OutsideOfPark)
             {
@@ -466,7 +466,7 @@ int32_t Park::CalculateParkRating() const
     // Litter
     {
         int32_t litterCount = 0;
-        for (auto litter : EntityList<Litter>(EntityListId::Litter))
+        for (auto litter : EntityList<Litter>())
         {
             // Ignore recently dropped litter
             if (litter->creationTick - gScenarioTicks >= 7680)
@@ -563,7 +563,7 @@ uint32_t Park::CalculateSuggestedMaxGuests() const
             continue;
 
         // Add guest score for ride type
-        suggestedMaxGuests += RideTypeDescriptors[ride.type].BonusValue;
+        suggestedMaxGuests += ride.GetRideTypeDescriptor().BonusValue;
     }
 
     // If difficult guest generation, extra guests are available for good rides
@@ -578,9 +578,9 @@ uint32_t Park::CalculateSuggestedMaxGuests() const
                 continue;
             if (!(ride.lifecycle_flags & RIDE_LIFECYCLE_TESTED))
                 continue;
-            if (!ride_type_has_flag(ride.type, RIDE_TYPE_FLAG_HAS_TRACK))
+            if (!ride.GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_HAS_TRACK))
                 continue;
-            if (!ride_type_has_flag(ride.type, RIDE_TYPE_FLAG_HAS_DATA_LOGGING))
+            if (!ride.GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_HAS_DATA_LOGGING))
                 continue;
             if (ride.stations[0].SegmentLength < (600 << 16))
                 continue;
@@ -588,7 +588,7 @@ uint32_t Park::CalculateSuggestedMaxGuests() const
                 continue;
 
             // Bonus guests for good ride
-            suggestedMaxGuests += RideTypeDescriptors[ride.type].BonusValue * 2;
+            suggestedMaxGuests += ride.GetRideTypeDescriptor().BonusValue * 2;
         }
     }
 
@@ -699,7 +699,7 @@ void Park::GenerateGuests()
     }
 }
 
-Peep* Park::GenerateGuestFromCampaign(int32_t campaign)
+Guest* Park::GenerateGuestFromCampaign(int32_t campaign)
 {
     auto peep = GenerateGuest();
     if (peep != nullptr)
@@ -709,23 +709,20 @@ Peep* Park::GenerateGuestFromCampaign(int32_t campaign)
     return peep;
 }
 
-Peep* Park::GenerateGuest()
+Guest* Park::GenerateGuest()
 {
-    Peep* peep = nullptr;
+    Guest* peep = nullptr;
     const auto spawn = get_random_peep_spawn();
     if (spawn != nullptr)
     {
         auto direction = direction_reverse(spawn->direction);
-        peep = Peep::Generate({ spawn->x, spawn->y, spawn->z });
+        peep = Guest::Generate({ spawn->x, spawn->y, spawn->z });
         if (peep != nullptr)
         {
             peep->sprite_direction = direction << 3;
 
-            // Get the centre point of the tile the peep is on
-            peep->DestinationX = (peep->x & 0xFFE0) + 16;
-            peep->DestinationY = (peep->y & 0xFFE0) + 16;
-
-            peep->DestinationTolerance = 5;
+            auto destination = peep->GetLocation().ToTileCentre();
+            peep->SetDestination(destination, 5);
             peep->PeepDirection = direction;
             peep->Var37 = 0;
             peep->State = PeepState::EnteringPark;

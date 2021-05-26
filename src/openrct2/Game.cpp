@@ -22,6 +22,7 @@
 #include "actions/LoadOrQuitAction.h"
 #include "audio/audio.h"
 #include "config/Config.h"
+#include "core/Console.hpp"
 #include "core/FileScanner.h"
 #include "core/Path.hpp"
 #include "interface/Colour.h"
@@ -409,7 +410,7 @@ void game_fix_save_vars()
     // Recalculates peep count after loading a save to fix corrupted files
     uint32_t guestCount = 0;
     {
-        for (auto guest : EntityList<Guest>(EntityListId::Peep))
+        for (auto guest : EntityList<Guest>())
         {
             if (!guest->OutsideOfPark)
             {
@@ -424,7 +425,7 @@ void game_fix_save_vars()
     std::vector<Peep*> peepsToRemove;
 
     // Fix possibly invalid field values
-    for (auto peep : EntityList<Guest>(EntityListId::Peep))
+    for (auto peep : EntityList<Guest>())
     {
         if (peep->CurrentRideStation >= MAX_STATIONS)
         {
@@ -481,13 +482,12 @@ void game_fix_save_vars()
             if (surfaceElement == nullptr)
             {
                 log_error("Null map element at x = %d and y = %d. Fixing...", x, y);
-                auto tileElement = tile_element_insert(TileCoordsXYZ{ x, y, 14 }.ToCoordsXYZ(), 0b0000);
-                if (tileElement == nullptr)
+                surfaceElement = TileElementInsert<SurfaceElement>(TileCoordsXYZ{ x, y, 14 }.ToCoordsXYZ(), 0b0000);
+                if (surfaceElement == nullptr)
                 {
                     log_error("Unable to fix: Map element limit reached.");
                     return;
                 }
-                surfaceElement = tileElement->AsSurface();
             }
 
             // Fix the invisible border tiles.
@@ -588,10 +588,10 @@ void game_unload_scripts()
  */
 void reset_all_sprite_quadrant_placements()
 {
-    for (size_t i = 0; i < MAX_SPRITES; i++)
+    for (size_t i = 0; i < MAX_ENTITIES; i++)
     {
         auto* spr = GetEntity(i);
-        if (spr != nullptr && spr->sprite_identifier != SpriteIdentifier::Null)
+        if (spr != nullptr && spr->Type != EntityType::Null)
         {
             spr->MoveTo({ spr->x, spr->y, spr->z });
         }
@@ -678,7 +678,7 @@ static void limit_autosave_count(const size_t numberOfFilesToKeep, bool processL
 
     // At first, count how many autosaves there are
     {
-        auto scanner = std::unique_ptr<IFileScanner>(Path::ScanDirectory(filter, false));
+        auto scanner = Path::ScanDirectory(filter, false);
         while (scanner->Next())
         {
             autosavesCount++;
@@ -693,7 +693,7 @@ static void limit_autosave_count(const size_t numberOfFilesToKeep, bool processL
 
     auto autosaveFiles = std::vector<std::string>(autosavesCount);
     {
-        auto scanner = std::unique_ptr<IFileScanner>(Path::ScanDirectory(filter, false));
+        auto scanner = Path::ScanDirectory(filter, false);
         for (size_t i = 0; i < autosavesCount; i++)
         {
             autosaveFiles[i].resize(MAX_PATH, 0);
@@ -763,7 +763,7 @@ void game_autosave()
     }
 
     if (!scenario_save(path, saveFlags))
-        std::fprintf(stderr, "Could not autosave the scenario. Is the save folder writeable?\n");
+        Console::Error::WriteLine("Could not autosave the scenario. Is the save folder writeable?");
 }
 
 static void game_load_or_quit_no_save_prompt_callback(int32_t result, const utf8* path)
@@ -837,7 +837,7 @@ void start_silent_record()
         safe_strcpy(gSilentRecordingName, info.FilePath.c_str(), MAX_PATH);
 
         const char* logFmt = "Silent replay recording started: (%s) %s\n";
-        printf(logFmt, info.Name.c_str(), info.FilePath.c_str());
+        Console::WriteLine(logFmt, info.Name.c_str(), info.FilePath.c_str());
     }
 }
 
@@ -859,7 +859,7 @@ bool stop_silent_record()
                              "  Commands: %u\n"
                              "  Checksums: %u";
 
-        printf(logFmt, info.Name.c_str(), info.FilePath.c_str(), info.Ticks, info.NumCommands, info.NumChecksums);
+        Console::WriteLine(logFmt, info.Name.c_str(), info.FilePath.c_str(), info.Ticks, info.NumCommands, info.NumChecksums);
 
         return true;
     }

@@ -21,9 +21,9 @@
 #include "../ride/RideRatings.h"
 #include "../world/Banner.h"
 #include "../world/Climate.h"
+#include "../world/EntityList.h"
 #include "../world/Map.h"
 #include "../world/MapAnimation.h"
-#include "../world/Sprite.h"
 
 using random_engine_t = Random::Rct2::Engine;
 
@@ -318,7 +318,7 @@ enum
 #define S6_RCT2_VERSION 120001
 #define S6_MAGIC_NUMBER 0x00031144
 
-enum
+enum SCENARIO_CATEGORY
 {
     // RCT2 categories (keep order)
     SCENARIO_CATEGORY_BEGINNER,
@@ -431,7 +431,7 @@ extern uint32_t gScenarioTicks;
 extern random_engine_t gScenarioRand;
 
 extern Objective gScenarioObjective;
-
+extern bool gAllowEarlyCompletionInNetworkPlay;
 extern uint16_t gScenarioParkRatingWarningDays;
 extern money32 gScenarioCompletedCompanyValue;
 extern money32 gScenarioCompanyValueRecord;
@@ -452,6 +452,7 @@ void load_from_sc6(const char* path);
 void scenario_begin();
 void scenario_update();
 bool scenario_create_ducks();
+bool AllowEarlyCompletion();
 
 const random_engine_t::state_type& scenario_rand_state();
 void scenario_rand_seed(random_engine_t::result_type s0, random_engine_t::result_type s1);

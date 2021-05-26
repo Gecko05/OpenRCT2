@@ -130,9 +130,7 @@ void window_update_all_viewports()
  */
 void window_update_all()
 {
-    // gfx_draw_all_dirty_blocks();
     // window_update_all_viewports();
-    // gfx_draw_all_dirty_blocks();
 
     // 1000 tick update
     gWindowUpdateTicks += gCurrentDeltaTime;
@@ -1404,9 +1402,10 @@ void window_event_mouse_up_call(rct_window* w, rct_widgetindex widgetIndex)
 
 void window_event_resize_call(rct_window* w)
 {
-    if (w->event_handlers != nullptr)
-        if (w->event_handlers->resize != nullptr)
-            w->event_handlers->resize(w);
+    if (w->event_handlers == nullptr)
+        w->OnResize();
+    else if (w->event_handlers->resize != nullptr)
+        w->event_handlers->resize(w);
 }
 
 void window_event_mouse_down_call(rct_window* w, rct_widgetindex widgetIndex)
@@ -1449,9 +1448,10 @@ void window_event_update_call(rct_window* w)
 
 void window_event_periodic_update_call(rct_window* w)
 {
-    if (w->event_handlers != nullptr)
-        if (w->event_handlers->periodic_update != nullptr)
-            w->event_handlers->periodic_update(w);
+    if (w->event_handlers == nullptr)
+        w->OnPeriodicUpdate();
+    else if (w->event_handlers->periodic_update != nullptr)
+        w->event_handlers->periodic_update(w);
 }
 
 void window_event_unknown_08_call(rct_window* w)
@@ -1531,9 +1531,10 @@ void window_event_scroll_mousedown_call(rct_window* w, int32_t scrollIndex, cons
 
 void window_event_scroll_mousedrag_call(rct_window* w, int32_t scrollIndex, const ScreenCoordsXY& screenCoords)
 {
-    if (w->event_handlers != nullptr)
-        if (w->event_handlers->scroll_mousedrag != nullptr)
-            w->event_handlers->scroll_mousedrag(w, scrollIndex, screenCoords);
+    if (w->event_handlers == nullptr)
+        w->OnScrollMouseDrag(scrollIndex, screenCoords);
+    else if (w->event_handlers->scroll_mousedrag != nullptr)
+        w->event_handlers->scroll_mousedrag(w, scrollIndex, screenCoords);
 }
 
 void window_event_scroll_mouseover_call(rct_window* w, int32_t scrollIndex, const ScreenCoordsXY& screenCoords)
@@ -1561,7 +1562,9 @@ void window_event_textinput_call(rct_window* w, rct_widgetindex widgetIndex, cha
 
 void window_event_viewport_rotate_call(rct_window* w)
 {
-    if (w->event_handlers != nullptr)
+    if (w->event_handlers == nullptr)
+        w->OnViewportRotate();
+    else if (w->event_handlers != nullptr)
         if (w->event_handlers->viewport_rotate != nullptr)
             w->event_handlers->viewport_rotate(w);
 }
@@ -2142,7 +2145,7 @@ void window_init_all()
 
 void window_follow_sprite(rct_window* w, size_t spriteIndex)
 {
-    if (spriteIndex < MAX_SPRITES || spriteIndex == SPRITE_INDEX_NULL)
+    if (spriteIndex < MAX_ENTITIES || spriteIndex == SPRITE_INDEX_NULL)
     {
         w->viewport_smart_follow_sprite = static_cast<uint16_t>(spriteIndex);
     }

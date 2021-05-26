@@ -20,7 +20,10 @@
 #include "../world/Park.h"
 #include "../world/Scenery.h"
 #include "../world/Surface.h"
+#include "../world/TileElementsView.h"
 #include "../world/Wall.h"
+
+using namespace OpenRCT2;
 
 FootpathPlaceAction::FootpathPlaceAction(const CoordsXYZ& loc, uint8_t slope, ObjectEntryIndex type, Direction direction)
     : _loc(loc)
@@ -340,34 +343,25 @@ GameActions::Result::Ptr FootpathPlaceAction::ElementInsertExecute(GameActions::
     }
     else
     {
-        auto tileElement = tile_element_insert(_loc, 0b1111);
-        assert(tileElement != nullptr);
-        tileElement->SetType(TILE_ELEMENT_TYPE_PATH);
-        PathElement* pathElement = tileElement->AsPath();
+        auto* pathElement = TileElementInsert<PathElement>(_loc, 0b1111);
+        Guard::Assert(pathElement != nullptr);
+
         pathElement->SetClearanceZ(zHigh);
         pathElement->SetSurfaceEntryIndex(_type & ~FOOTPATH_ELEMENT_INSERT_QUEUE);
         pathElement->SetSlopeDirection(_slope & FOOTPATH_PROPERTIES_SLOPE_DIRECTION_MASK);
-        if (_slope & FOOTPATH_PROPERTIES_FLAG_IS_SLOPED)
-        {
-            pathElement->SetSloped(true);
-        }
-        if (_type & FOOTPATH_ELEMENT_INSERT_QUEUE)
-        {
-            pathElement->SetIsQueue(true);
-        }
+        pathElement->SetSloped(_slope & FOOTPATH_PROPERTIES_FLAG_IS_SLOPED);
+        pathElement->SetIsQueue(_type & FOOTPATH_ELEMENT_INSERT_QUEUE);
         pathElement->SetAddition(0);
         pathElement->SetRideIndex(RIDE_ID_NULL);
         pathElement->SetAdditionStatus(255);
         pathElement->SetIsBroken(false);
-        if (GetFlags() & GAME_COMMAND_FLAG_GHOST)
-        {
-            pathElement->SetGhost(true);
-        }
+        pathElement->SetGhost(GetFlags() & GAME_COMMAND_FLAG_GHOST);
+
         footpath_queue_chain_reset();
 
         if (!(GetFlags() & GAME_COMMAND_FLAG_PATH_SCENERY))
         {
-            footpath_remove_edges_at(_loc, tileElement);
+            footpath_remove_edges_at(_loc, pathElement->as<TileElement>());
         }
         if ((gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR) && !(GetFlags() & GAME_COMMAND_FLAG_GHOST))
         {
@@ -444,20 +438,19 @@ void FootpathPlaceAction::RemoveIntersectingWalls(PathElement* pathElement) cons
 
 PathElement* FootpathPlaceAction::map_get_footpath_element_slope(const CoordsXYZ& footpathPos, int32_t slope) const
 {
-    TileElement* tileElement;
-    bool isSloped = slope & FOOTPATH_PROPERTIES_FLAG_IS_SLOPED;
+    const bool isSloped = slope & FOOTPATH_PROPERTIES_FLAG_IS_SLOPED;
+    const auto slopeDirection = slope & FOOTPATH_PROPERTIES_SLOPE_DIRECTION_MASK;
 
-    tileElement = map_get_first_element_at(footpathPos);
-    do
+    for (auto* pathElement : TileElementsView<PathElement>(footpathPos))
     {
-        if (tileElement == nullptr)
-            break;
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_PATH && tileElement->GetBaseZ() == footpathPos.z
-            && (tileElement->AsPath()->IsSloped() == isSloped)
-            && (tileElement->AsPath()->GetSlopeDirection() == (slope & FOOTPATH_PROPERTIES_SLOPE_DIRECTION_MASK)))
-        {
-            return tileElement->AsPath();
-        }
-    } while (!(tileElement++)->IsLastForTile());
+        if (pathElement->GetBaseZ() != footpathPos.z)
+            continue;
+        if (pathElement->IsSloped() != isSloped)
+            continue;
+        if (pathElement->GetSlopeDirection() != slopeDirection)
+            continue;
+        return pathElement;
+    }
+
     return nullptr;
 }

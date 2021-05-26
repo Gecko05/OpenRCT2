@@ -26,6 +26,8 @@
 #include <openrct2/localisation/Localisation.h>
 #include <openrct2/ride/RideData.h>
 #include <openrct2/ride/Track.h>
+#include <openrct2/ride/TrainManager.h>
+#include <openrct2/world/EntityList.h>
 #include <openrct2/world/Entrance.h>
 #include <openrct2/world/Footpath.h>
 #include <openrct2/world/Scenery.h>
@@ -818,8 +820,9 @@ static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
     // Draw land tool size
     if (WidgetIsActiveTool(w, WIDX_SET_LAND_RIGHTS) && _landRightsToolSize > MAX_TOOL_SIZE_WITH_SPRITE)
     {
-        gfx_draw_string_centred(
-            dpi, STR_LAND_TOOL_SIZE_VALUE, screenCoords - ScreenCoordsXY{ 0, 2 }, COLOUR_BLACK, &_landRightsToolSize);
+        DrawTextBasic(
+            dpi, screenCoords - ScreenCoordsXY{ 0, 2 }, STR_LAND_TOOL_SIZE_VALUE, &_landRightsToolSize,
+            { TextAlignment::CENTRE });
     }
     screenCoords.y = w->windowPos.y + window_map_widgets[WIDX_LAND_TOOL].bottom + 5;
 
@@ -829,9 +832,7 @@ static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
         screenCoords = w->windowPos
             + ScreenCoordsXY{ w->widgets[WIDX_PEOPLE_STARTING_POSITION].left + 12,
                               w->widgets[WIDX_PEOPLE_STARTING_POSITION].top + 18 };
-        gfx_draw_sprite(
-            dpi, IMAGE_TYPE_REMAP | IMAGE_TYPE_REMAP_2_PLUS | (COLOUR_LIGHT_BROWN << 24) | (COLOUR_BRIGHT_RED << 19) | SPR_6410,
-            screenCoords, 0);
+        gfx_draw_sprite(dpi, ImageId(SPR_6410, COLOUR_BRIGHT_RED, COLOUR_LIGHT_BROWN), screenCoords);
     }
 
     if (!(gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR) && !gCheatsSandboxMode)
@@ -850,7 +851,7 @@ static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
             {
                 gfx_fill_rect(
                     dpi, { screenCoords + ScreenCoordsXY{ 0, 2 }, screenCoords + ScreenCoordsXY{ 6, 8 } }, RideKeyColours[i]);
-                gfx_draw_string_left(dpi, mapLabels[i], w, COLOUR_BLACK, screenCoords + ScreenCoordsXY{ LIST_ROW_HEIGHT, 0 });
+                DrawTextBasic(dpi, screenCoords + ScreenCoordsXY{ LIST_ROW_HEIGHT, 0 }, mapLabels[i], w);
                 screenCoords.y += LIST_ROW_HEIGHT;
                 if (i == 3)
                 {
@@ -861,9 +862,9 @@ static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
     }
     else if (!WidgetIsActiveTool(w, WIDX_SET_LAND_RIGHTS))
     {
-        gfx_draw_string_left(
-            dpi, STR_MAP_SIZE, nullptr, w->colours[1],
-            w->windowPos + ScreenCoordsXY{ 4, w->widgets[WIDX_MAP_SIZE_SPINNER].top + 1 });
+        DrawTextBasic(
+            dpi, w->windowPos + ScreenCoordsXY{ 4, w->widgets[WIDX_MAP_SIZE_SPINNER].top + 1 }, STR_MAP_SIZE, {},
+            { w->colours[1] });
     }
 }
 
@@ -883,7 +884,7 @@ static void window_map_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_
     g1temp.y_offset = -8;
     gfx_set_g1_element(SPR_TEMP, &g1temp);
     drawing_engine_invalidate_image(SPR_TEMP);
-    gfx_draw_sprite(dpi, SPR_TEMP, { 0, 0 }, 0);
+    gfx_draw_sprite(dpi, ImageId(SPR_TEMP), { 0, 0 });
 
     if (w->selected_tab == PAGE_PEEPS)
     {
@@ -1004,7 +1005,8 @@ static void window_map_draw_tab_images(rct_window* w, rct_drawpixelinfo* dpi)
         image += w->list_information_type / 4;
 
     gfx_draw_sprite(
-        dpi, image, w->windowPos + ScreenCoordsXY{ w->widgets[WIDX_PEOPLE_TAB].left, w->widgets[WIDX_PEOPLE_TAB].top }, 0);
+        dpi, ImageId(image),
+        w->windowPos + ScreenCoordsXY{ w->widgets[WIDX_PEOPLE_TAB].left, w->widgets[WIDX_PEOPLE_TAB].top });
 
     // Ride/stall tab image (animated)
     image = SPR_TAB_RIDE_0;
@@ -1012,7 +1014,7 @@ static void window_map_draw_tab_images(rct_window* w, rct_drawpixelinfo* dpi)
         image += w->list_information_type / 4;
 
     gfx_draw_sprite(
-        dpi, image, w->windowPos + ScreenCoordsXY{ w->widgets[WIDX_RIDES_TAB].left, w->widgets[WIDX_RIDES_TAB].top }, 0);
+        dpi, ImageId(image), w->windowPos + ScreenCoordsXY{ w->widgets[WIDX_RIDES_TAB].left, w->widgets[WIDX_RIDES_TAB].top });
 }
 
 /**
@@ -1099,12 +1101,12 @@ static uint8_t MapGetStaffFlashColour()
 static void window_map_paint_peep_overlay(rct_drawpixelinfo* dpi)
 {
     auto flashColour = MapGetGuestFlashColour();
-    for (auto guest : EntityList<Guest>(EntityListId::Peep))
+    for (auto guest : EntityList<Guest>())
     {
         DrawMapPeepPixel(guest, flashColour, dpi);
     }
     flashColour = MapGetStaffFlashColour();
-    for (auto staff : EntityList<Staff>(EntityListId::Peep))
+    for (auto staff : EntityList<Staff>())
     {
         DrawMapPeepPixel(staff, flashColour, dpi);
     }
@@ -1116,7 +1118,7 @@ static void window_map_paint_peep_overlay(rct_drawpixelinfo* dpi)
  */
 static void window_map_paint_train_overlay(rct_drawpixelinfo* dpi)
 {
-    for (auto train : EntityList<Vehicle>(EntityListId::TrainHead))
+    for (auto train : TrainManager::View())
     {
         for (Vehicle* vehicle = train; vehicle != nullptr; vehicle = GetEntity<Vehicle>(vehicle->next_vehicle_on_train))
         {
@@ -1325,7 +1327,7 @@ static void window_map_place_park_entrance_tool_down(const ScreenCoordsXY& scree
     CoordsXYZD parkEntrancePosition = place_park_entrance_get_map_position(screenCoords);
     if (!parkEntrancePosition.isNull())
     {
-        auto gameAction = PlaceParkEntranceAction(parkEntrancePosition);
+        auto gameAction = PlaceParkEntranceAction(parkEntrancePosition, gFootpathSelectedId);
         auto result = GameActions::Execute(&gameAction);
         if (result->Error == GameActions::Status::Ok)
         {
@@ -1515,7 +1517,7 @@ static uint16_t map_window_get_pixel_colour_ride(const CoordsXY& c)
                 ride = get_ride(tileElement->AsEntrance()->GetRideIndex());
                 if (ride != nullptr)
                 {
-                    const auto& colourKey = RideTypeDescriptors[ride->type].ColourKey;
+                    const auto& colourKey = ride->GetRideTypeDescriptor().ColourKey;
                     colourA = RideKeyColours[static_cast<size_t>(colourKey)];
                 }
                 break;
@@ -1523,7 +1525,7 @@ static uint16_t map_window_get_pixel_colour_ride(const CoordsXY& c)
                 ride = get_ride(tileElement->AsTrack()->GetRideIndex());
                 if (ride != nullptr)
                 {
-                    const auto& colourKey = RideTypeDescriptors[ride->type].ColourKey;
+                    const auto& colourKey = ride->GetRideTypeDescriptor().ColourKey;
                     colourA = RideKeyColours[static_cast<size_t>(colourKey)];
                 }
 

@@ -139,7 +139,7 @@ static void window_music_credits_mouseup(rct_window* w, rct_widgetindex widgetIn
  */
 static void window_music_credits_scrollgetsize(rct_window* w, int32_t scrollIndex, int32_t* width, int32_t* height)
 {
-    int32_t lineHeight = font_get_line_height(gCurrentFontSpriteBase);
+    int32_t lineHeight = font_get_line_height(FontSpriteBase::MEDIUM);
     *height = static_cast<int32_t>(std::size(music_credits) + std::size(music_credits_rct2)) * lineHeight + 12;
 }
 
@@ -158,29 +158,29 @@ static void window_music_credits_paint(rct_window* w, rct_drawpixelinfo* dpi)
  */
 static void window_music_credits_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_t scrollIndex)
 {
-    int32_t lineHeight = font_get_line_height(gCurrentFontSpriteBase);
+    int32_t lineHeight = font_get_line_height(FontSpriteBase::MEDIUM);
 
     auto screenCoords = ScreenCoordsXY{ 245, 2 };
 
     for (size_t i = 0; i < std::size(music_credits); i++)
     {
-        gfx_draw_string_centred(dpi, music_credits[i], screenCoords, COLOUR_BLACK, nullptr);
+        DrawTextBasic(dpi, screenCoords, music_credits[i], nullptr, { TextAlignment::CENTRE });
         screenCoords.y += lineHeight;
     }
 
     // Add 4 more space before "Original recordings ...".
     screenCoords.y += 4;
-    gfx_draw_string_centred(dpi, STR_MUSIC_ACKNOWLEDGEMENTS_ORIGINAL_RECORDINGS, screenCoords, COLOUR_BLACK, nullptr);
+    DrawTextBasic(dpi, screenCoords, STR_MUSIC_ACKNOWLEDGEMENTS_ORIGINAL_RECORDINGS, nullptr, { TextAlignment::CENTRE });
     screenCoords.y += lineHeight;
 
     // Draw the separator
     screenCoords.y += 5;
-    gfx_fill_rect_inset(dpi, 4, screenCoords.y, 484, screenCoords.y + 1, w->colours[1], INSET_RECT_FLAG_BORDER_INSET);
+    gfx_fill_rect_inset(dpi, { 4, screenCoords.y, 484, screenCoords.y + 1 }, w->colours[1], INSET_RECT_FLAG_BORDER_INSET);
     screenCoords.y += lineHeight + 1;
 
     for (size_t i = 0; i < std::size(music_credits_rct2); i++)
     {
-        gfx_draw_string_centred(dpi, music_credits_rct2[i], screenCoords, COLOUR_BLACK, nullptr);
+        DrawTextBasic(dpi, screenCoords, music_credits_rct2[i], nullptr, { TextAlignment::CENTRE });
         screenCoords.y += lineHeight;
     }
 }

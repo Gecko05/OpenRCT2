@@ -18,7 +18,6 @@
 #include "../world/Banner.h"
 #include "../world/Climate.h"
 #include "../world/MapAnimation.h"
-#include "../world/Sprite.h"
 
 constexpr const uint16_t RCT1_MAX_TILE_ELEMENTS = 0xC000;
 constexpr const uint16_t RCT1_MAX_SPRITES = 5000;
@@ -30,6 +29,9 @@ constexpr const uint16_t RCT1_MAX_ANIMATED_OBJECTS = 1000;
 constexpr const uint8_t RCT1_MAX_BANNERS = 100;
 constexpr int32_t RCT1_COORDS_Z_STEP = 4;
 constexpr const uint32_t RCT1_NUM_LL_CSG_ENTRIES = 69917;
+constexpr const uint32_t RCT1_LL_CSG1_DAT_FILE_SIZE = 41402869;
+constexpr const uint32_t RCT1_NUM_TERRAIN_SURFACES = 16;
+constexpr const uint32_t RCT1_NUM_TERRAIN_EDGES = 15;
 
 struct ParkLoadResult;
 
@@ -222,8 +224,8 @@ struct rct1_unk_sprite : RCT12SpriteBase
 
 struct rct1_vehicle : RCT12SpriteBase
 {
-    uint8_t vehicle_sprite_type; // 0x1F
-    uint8_t bank_rotation;       // 0x20
+    uint8_t Pitch;         // 0x1F
+    uint8_t bank_rotation; // 0x20
     uint8_t pad_21[3];
     int32_t remaining_distance; // 0x24
     int32_t velocity;           // 0x28
@@ -1238,6 +1240,8 @@ enum
     WATER_COASTER_BOAT = 99,
     WATER_COASTER_INVISIBLE = 101,
     RIVER_RAFT = 103,
+    MINIATURE_RAILWAY_AMERICAN_TENDER = 104,
+    MINIATURE_RAILWAY_AMERICAN_LOCOMOTIVE = 105,
 };
 
 enum
@@ -1283,5 +1287,7 @@ enum
 
 void load_from_sv4(const char* path);
 void load_from_sc4(const char* path);
+
+track_type_t RCT1TrackTypeToOpenRCT2(RCT12TrackType origTrackType, uint8_t rideType);
 
 #endif

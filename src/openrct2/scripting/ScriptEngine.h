@@ -46,6 +46,8 @@ namespace OpenRCT2
 
 namespace OpenRCT2::Scripting
 {
+    static constexpr int32_t OPENRCT2_PLUGIN_API_VERSION = 30;
+
 #    ifndef DISABLE_NETWORK
     class ScSocketBase;
 #    endif
@@ -202,6 +204,9 @@ namespace OpenRCT2::Scripting
         DukValue ExecutePluginCall(
             const std::shared_ptr<Plugin>& plugin, const DukValue& func, const std::vector<DukValue>& args,
             bool isGameStateMutable);
+        DukValue ExecutePluginCall(
+            const std::shared_ptr<Plugin>& plugin, const DukValue& func, const DukValue& thisValue,
+            const std::vector<DukValue>& args, bool isGameStateMutable);
 
         void LogPluginInfo(const std::shared_ptr<Plugin>& plugin, std::string_view message);
 

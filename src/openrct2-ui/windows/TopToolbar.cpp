@@ -127,19 +127,22 @@ enum FILE_MENU_DDIDX {
 
 enum TOP_TOOLBAR_VIEW_MENU_DDIDX {
     DDIDX_UNDERGROUND_INSIDE = 0,
-    DDIDX_HIDE_BASE = 1,
-    DDIDX_HIDE_VERTICAL = 2,
-    DDIDX_SEETHROUGH_RIDES = 4,
-    DDIDX_SEETHROUGH_SCENARY = 5,
-    DDIDX_SEETHROUGH_PATHS = 6,
-    DDIDX_INVISIBLE_SUPPORTS = 7,
-    DDIDX_INVISIBLE_PEEPS = 8,
-    DDIDX_LAND_HEIGHTS = 10,
-    DDIDX_TRACK_HEIGHTS = 11,
-    DDIDX_PATH_HEIGHTS = 12,
-    // 13 is a separator
-    DDIDX_VIEW_CLIPPING = 14,
-    DDIDX_HIGHLIGHT_PATH_ISSUES = 15,
+    DDIDX_TRANSPARENT_WATER = 1,
+    DDIDX_HIDE_BASE = 2,
+    DDIDX_HIDE_VERTICAL = 3,
+    // separator
+    DDIDX_SEETHROUGH_RIDES = 5,
+    DDIDX_SEETHROUGH_SCENERY = 6,
+    DDIDX_SEETHROUGH_PATHS = 7,
+    DDIDX_INVISIBLE_SUPPORTS = 8,
+    DDIDX_INVISIBLE_PEEPS = 9,
+    // separator
+    DDIDX_LAND_HEIGHTS = 11,
+    DDIDX_TRACK_HEIGHTS = 12,
+    DDIDX_PATH_HEIGHTS = 13,
+    // separator
+    DDIDX_VIEW_CLIPPING = 15,
+    DDIDX_HIGHLIGHT_PATH_ISSUES = 16,
 
     TOP_TOOLBAR_VIEW_MENU_COUNT
 };
@@ -153,8 +156,7 @@ enum TOP_TOOLBAR_DEBUG_DDIDX {
 
 enum TOP_TOOLBAR_NETWORK_DDIDX {
     DDIDX_MULTIPLAYER = 0,
-    DDIDX_NETWORK = 1,
-    DDIDX_MULTIPLAYER_RECONNECT = 2,
+    DDIDX_MULTIPLAYER_RECONNECT = 1,
 
     TOP_TOOLBAR_NETWORK_COUNT
 };
@@ -723,6 +725,12 @@ static void window_top_toolbar_invalidate(rct_window* w)
         if (!gConfigInterface.toolbar_show_news)
             window_top_toolbar_widgets[WIDX_NEWS].type = WindowWidgetType::Empty;
 
+        if (!gConfigInterface.toolbar_show_zoom)
+        {
+            window_top_toolbar_widgets[WIDX_ZOOM_IN].type = WindowWidgetType::Empty;
+            window_top_toolbar_widgets[WIDX_ZOOM_OUT].type = WindowWidgetType::Empty;
+        }
+
         switch (network_get_mode())
         {
             case NETWORK_MODE_NONE:
@@ -818,11 +826,18 @@ static void window_top_toolbar_invalidate(rct_window* w)
     }
 
     // Zoomed out/in disable. Not sure where this code is in the original.
-    if (window_get_main()->viewport->zoom == ZoomLevel::min())
+    const auto* mainWindow = window_get_main();
+    if (mainWindow == nullptr || mainWindow->viewport == nullptr)
+    {
+        log_error("mainWindow or mainWindow->viewport is null!");
+        return;
+    }
+
+    if (mainWindow->viewport->zoom == ZoomLevel::min())
     {
         w->disabled_widgets |= (1 << WIDX_ZOOM_IN);
     }
-    else if (window_get_main()->viewport->zoom >= ZoomLevel::max())
+    else if (mainWindow->viewport->zoom >= ZoomLevel::max())
     {
         w->disabled_widgets |= (1 << WIDX_ZOOM_OUT);
     }
@@ -851,8 +866,7 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
         imgId = SPR_TOOLBAR_STAFF;
         if (WidgetIsPressed(w, WIDX_STAFF))
             imgId++;
-        imgId |= SPRITE_ID_PALETTE_COLOUR_2(gStaffHandymanColour, gStaffMechanicColour);
-        gfx_draw_sprite(dpi, imgId, screenPos, 0);
+        gfx_draw_sprite(dpi, ImageId(imgId, gStaffHandymanColour, gStaffMechanicColour), screenPos);
     }
 
     // Draw fast forward button
@@ -862,16 +876,15 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
                       w->windowPos.y + window_top_toolbar_widgets[WIDX_FASTFORWARD].top + 0 };
         if (WidgetIsPressed(w, WIDX_FASTFORWARD))
             screenPos.y++;
-        imgId = SPR_G2_FASTFORWARD;
-        gfx_draw_sprite(dpi, imgId, screenPos + ScreenCoordsXY{ 6, 3 }, 0);
+        gfx_draw_sprite(dpi, ImageId(SPR_G2_FASTFORWARD), screenPos + ScreenCoordsXY{ 6, 3 });
 
         for (int32_t i = 0; i < gGameSpeed && gGameSpeed <= 4; i++)
         {
-            gfx_draw_sprite(dpi, SPR_G2_SPEED_ARROW, screenPos + ScreenCoordsXY{ 5 + i * 5, 15 }, 0);
+            gfx_draw_sprite(dpi, ImageId(SPR_G2_SPEED_ARROW), screenPos + ScreenCoordsXY{ 5 + i * 5, 15 });
         }
         for (int32_t i = 0; i < 3 && i < gGameSpeed - 4 && gGameSpeed >= 5; i++)
         {
-            gfx_draw_sprite(dpi, SPR_G2_HYPER_ARROW, screenPos + ScreenCoordsXY{ 5 + i * 6, 15 }, 0);
+            gfx_draw_sprite(dpi, ImageId(SPR_G2_HYPER_ARROW), screenPos + ScreenCoordsXY{ 5 + i * 6, 15 });
         }
     }
 
@@ -883,15 +896,14 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
                               window_top_toolbar_widgets[WIDX_CHEATS].top - 1 };
         if (WidgetIsPressed(w, WIDX_CHEATS))
             screenPos.y++;
-        imgId = SPR_G2_SANDBOX;
-        gfx_draw_sprite(dpi, imgId, screenPos, 3);
+        gfx_draw_sprite(dpi, ImageId(SPR_G2_SANDBOX), screenPos);
 
         // Draw an overlay if clearance checks are disabled
         if (gCheatsDisableClearanceChecks)
         {
             DrawTextBasic(
                 dpi, screenPos + ScreenCoordsXY{ 26, 2 }, STR_OVERLAY_CLEARANCE_CHECKS_DISABLED, {},
-                COLOUR_DARK_ORANGE | COLOUR_FLAG_OUTLINE, TextAlignment::RIGHT);
+                { COLOUR_DARK_ORANGE | COLOUR_FLAG_OUTLINE, TextAlignment::RIGHT });
         }
     }
 
@@ -902,8 +914,7 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
             + ScreenCoordsXY{ window_top_toolbar_widgets[WIDX_CHAT].left, window_top_toolbar_widgets[WIDX_CHAT].top - 2 };
         if (WidgetIsPressed(w, WIDX_CHAT))
             screenPos.y++;
-        imgId = SPR_G2_CHAT;
-        gfx_draw_sprite(dpi, imgId, screenPos, 3);
+        gfx_draw_sprite(dpi, ImageId(SPR_G2_CHAT), screenPos);
     }
 
     // Draw debug button
@@ -913,8 +924,7 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
             + ScreenCoordsXY{ window_top_toolbar_widgets[WIDX_DEBUG].left, window_top_toolbar_widgets[WIDX_DEBUG].top - 1 };
         if (WidgetIsPressed(w, WIDX_DEBUG))
             screenPos.y++;
-        imgId = SPR_TAB_GEARS_0;
-        gfx_draw_sprite(dpi, imgId, screenPos, 3);
+        gfx_draw_sprite(dpi, ImageId(SPR_TAB_GEARS_0), screenPos);
     }
 
     // Draw research button
@@ -925,8 +935,7 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
                               window_top_toolbar_widgets[WIDX_RESEARCH].top };
         if (WidgetIsPressed(w, WIDX_RESEARCH))
             screenPos.y++;
-        imgId = SPR_TAB_FINANCES_RESEARCH_0;
-        gfx_draw_sprite(dpi, imgId, screenPos, 0);
+        gfx_draw_sprite(dpi, ImageId(SPR_TAB_FINANCES_RESEARCH_0), screenPos);
     }
 
     // Draw finances button
@@ -937,8 +946,7 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
                               window_top_toolbar_widgets[WIDX_FINANCES].top + 1 };
         if (WidgetIsPressed(w, WIDX_FINANCES))
             screenPos.y++;
-        imgId = SPR_FINANCE;
-        gfx_draw_sprite(dpi, imgId, screenPos, 0);
+        gfx_draw_sprite(dpi, ImageId(SPR_FINANCE), screenPos);
     }
 
     // Draw news button
@@ -948,8 +956,7 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
             + ScreenCoordsXY{ window_top_toolbar_widgets[WIDX_NEWS].left + 3, window_top_toolbar_widgets[WIDX_NEWS].top + 0 };
         if (WidgetIsPressed(w, WIDX_NEWS))
             screenPos.y++;
-        imgId = SPR_G2_TAB_NEWS;
-        gfx_draw_sprite(dpi, imgId, screenPos, 0);
+        gfx_draw_sprite(dpi, ImageId(SPR_G2_TAB_NEWS), screenPos);
     }
 
     // Draw network button
@@ -963,15 +970,14 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
 
         // Draw (de)sync icon.
         imgId = (network_is_desynchronised() ? SPR_G2_MULTIPLAYER_DESYNC : SPR_G2_MULTIPLAYER_SYNC);
-        gfx_draw_sprite(dpi, imgId, screenPos + ScreenCoordsXY{ 3, 11 }, 0);
+        gfx_draw_sprite(dpi, ImageId(imgId), screenPos + ScreenCoordsXY{ 3, 11 });
 
         // Draw number of players.
         auto ft = Formatter();
         ft.Add<int32_t>(network_get_num_players());
-        gCurrentFontSpriteBase = FONT_SPRITE_BASE_MEDIUM;
         DrawTextBasic(
-            dpi, screenPos + ScreenCoordsXY{ 23, 1 }, STR_COMMA16, ft, COLOUR_WHITE | COLOUR_FLAG_OUTLINE,
-            TextAlignment::RIGHT);
+            dpi, screenPos + ScreenCoordsXY{ 23, 1 }, STR_COMMA16, ft,
+            { COLOUR_WHITE | COLOUR_FLAG_OUTLINE, TextAlignment::RIGHT });
     }
 }
 
@@ -981,12 +987,10 @@ static void window_top_toolbar_paint(rct_window* w, rct_drawpixelinfo* dpi)
  */
 static void repaint_scenery_tool_down(const ScreenCoordsXY& windowPos, rct_widgetindex widgetIndex)
 {
-    auto flags = VIEWPORT_INTERACTION_MASK_SCENERY & VIEWPORT_INTERACTION_MASK_WALL & VIEWPORT_INTERACTION_MASK_LARGE_SCENERY
-        & VIEWPORT_INTERACTION_MASK_BANNER;
-    // This is -2 as banner is 12 but flags are offset different
-
+    auto flags = EnumsToFlags(
+        ViewportInteractionItem::Scenery, ViewportInteractionItem::Wall, ViewportInteractionItem::LargeScenery,
+        ViewportInteractionItem::Banner);
     auto info = get_map_coordinates_from_pos(windowPos, flags);
-
     switch (info.SpriteType)
     {
         case ViewportInteractionItem::Scenery:
@@ -1060,11 +1064,10 @@ static void repaint_scenery_tool_down(const ScreenCoordsXY& windowPos, rct_widge
 
 static void scenery_eyedropper_tool_down(const ScreenCoordsXY& windowPos, rct_widgetindex widgetIndex)
 {
-    auto flags = VIEWPORT_INTERACTION_MASK_SCENERY & VIEWPORT_INTERACTION_MASK_WALL & VIEWPORT_INTERACTION_MASK_LARGE_SCENERY
-        & VIEWPORT_INTERACTION_MASK_BANNER & VIEWPORT_INTERACTION_MASK_FOOTPATH_ITEM;
-
+    auto flags = EnumsToFlags(
+        ViewportInteractionItem::Scenery, ViewportInteractionItem::Wall, ViewportInteractionItem::LargeScenery,
+        ViewportInteractionItem::Banner, ViewportInteractionItem::FootpathItem);
     auto info = get_map_coordinates_from_pos(windowPos, flags);
-
     switch (info.SpriteType)
     {
         case ViewportInteractionItem::Scenery:
@@ -1164,9 +1167,9 @@ static void sub_6E1F34_update_screen_coords_and_buttons_pressed(bool canRaiseIte
             if (InputTestPlaceObjectModifier(PLACE_OBJECT_MODIFIER_COPY_Z))
             {
                 // CTRL pressed
-                auto flags = VIEWPORT_INTERACTION_MASK_TERRAIN & VIEWPORT_INTERACTION_MASK_RIDE
-                    & VIEWPORT_INTERACTION_MASK_SCENERY & VIEWPORT_INTERACTION_MASK_FOOTPATH & VIEWPORT_INTERACTION_MASK_WALL
-                    & VIEWPORT_INTERACTION_MASK_LARGE_SCENERY;
+                auto flags = EnumsToFlags(
+                    ViewportInteractionItem::Terrain, ViewportInteractionItem::Ride, ViewportInteractionItem::Scenery,
+                    ViewportInteractionItem::Footpath, ViewportInteractionItem::Wall, ViewportInteractionItem::LargeScenery);
                 auto info = get_map_coordinates_from_pos(screenPos, flags);
 
                 if (info.SpriteType != ViewportInteractionItem::None)
@@ -1334,7 +1337,7 @@ static void sub_6E1F34_small_scenery(
     // If CTRL not pressed
     if (!gSceneryCtrlPressed)
     {
-        auto flags = VIEWPORT_INTERACTION_MASK_TERRAIN & VIEWPORT_INTERACTION_MASK_WATER;
+        auto flags = EnumsToFlags(ViewportInteractionItem::Terrain, ViewportInteractionItem::Water);
 
         auto info = get_map_coordinates_from_pos(screenPos, flags);
         gridPos = info.Loc;
@@ -1428,8 +1431,7 @@ static void sub_6E1F34_path_item(
     sub_6E1F34_update_screen_coords_and_buttons_pressed(false, screenPos);
 
     // Path bits
-    auto flags = VIEWPORT_INTERACTION_MASK_FOOTPATH & VIEWPORT_INTERACTION_MASK_FOOTPATH_ITEM;
-
+    auto flags = EnumsToFlags(ViewportInteractionItem::Footpath, ViewportInteractionItem::FootpathItem);
     auto info = get_map_coordinates_from_pos(screenPos, flags);
     gridPos = info.Loc;
 
@@ -1651,8 +1653,7 @@ static void sub_6E1F34_banner(
     sub_6E1F34_update_screen_coords_and_buttons_pressed(false, screenPos);
 
     // Banner
-    auto flags = VIEWPORT_INTERACTION_MASK_FOOTPATH & VIEWPORT_INTERACTION_MASK_FOOTPATH_ITEM;
-
+    auto flags = EnumsToFlags(ViewportInteractionItem::Footpath, ViewportInteractionItem::FootpathItem);
     auto info = get_map_coordinates_from_pos(screenPos, flags);
     gridPos = info.Loc;
 
@@ -2111,7 +2112,7 @@ static void top_toolbar_tool_update_land(const ScreenCoordsXY& screenPos)
 
     int16_t tool_size = gLandToolSize;
     std::optional<CoordsXY> mapTile;
-    uint8_t side;
+    uint8_t side{};
 
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE;
     if (tool_size == 1)
@@ -2355,7 +2356,8 @@ static void top_toolbar_tool_update_water(const ScreenCoordsXY& screenPos)
 
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE;
 
-    auto info = get_map_coordinates_from_pos(screenPos, VIEWPORT_INTERACTION_MASK_TERRAIN & VIEWPORT_INTERACTION_MASK_WATER);
+    auto info = get_map_coordinates_from_pos(
+        screenPos, EnumsToFlags(ViewportInteractionItem::Terrain, ViewportInteractionItem::Water));
 
     if (info.SpriteType == ViewportInteractionItem::None)
     {
@@ -3546,7 +3548,6 @@ static void top_toolbar_init_debug_menu(rct_window* w, rct_widget* widget)
 static void top_toolbar_init_network_menu(rct_window* w, rct_widget* widget)
 {
     gDropdownItemsFormat[DDIDX_MULTIPLAYER] = STR_MULTIPLAYER;
-    gDropdownItemsFormat[DDIDX_NETWORK] = STR_NETWORK;
     gDropdownItemsFormat[DDIDX_MULTIPLAYER_RECONNECT] = STR_MULTIPLAYER_RECONNECT;
 
     WindowDropdownShowText(
@@ -3595,9 +3596,6 @@ static void top_toolbar_network_menu_dropdown(int16_t dropdownIndex)
             case DDIDX_MULTIPLAYER:
                 context_open_window(WC_MULTIPLAYER);
                 break;
-            case DDIDX_NETWORK:
-                context_open_window(WC_NETWORK);
-                break;
             case DDIDX_MULTIPLAYER_RECONNECT:
                 network_reconnect();
                 break;
@@ -3612,14 +3610,14 @@ static void top_toolbar_network_menu_dropdown(int16_t dropdownIndex)
 static void top_toolbar_init_view_menu(rct_window* w, rct_widget* widget)
 {
     using namespace Dropdown;
-
     constexpr Item items[] = {
         ToggleOption(DDIDX_UNDERGROUND_INSIDE, STR_UNDERGROUND_VIEW),
+        ToggleOption(DDIDX_TRANSPARENT_WATER, STR_VIEWPORT_TRANSPARENT_WATER),
         ToggleOption(DDIDX_HIDE_BASE, STR_REMOVE_BASE_LAND),
         ToggleOption(DDIDX_HIDE_VERTICAL, STR_REMOVE_VERTICAL_FACES),
         Separator(),
         ToggleOption(DDIDX_SEETHROUGH_RIDES, STR_SEE_THROUGH_RIDES),
-        ToggleOption(DDIDX_SEETHROUGH_SCENARY, STR_SEE_THROUGH_SCENERY),
+        ToggleOption(DDIDX_SEETHROUGH_SCENERY, STR_SEE_THROUGH_SCENERY),
         ToggleOption(DDIDX_SEETHROUGH_PATHS, STR_SEE_THROUGH_PATHS),
         ToggleOption(DDIDX_INVISIBLE_SUPPORTS, STR_INVISIBLE_SUPPORTS),
         ToggleOption(DDIDX_INVISIBLE_PEEPS, STR_INVISIBLE_PEOPLE),
@@ -3631,6 +3629,7 @@ static void top_toolbar_init_view_menu(rct_window* w, rct_widget* widget)
         ToggleOption(DDIDX_VIEW_CLIPPING, STR_VIEW_CLIPPING_MENU),
         ToggleOption(DDIDX_HIGHLIGHT_PATH_ISSUES, STR_HIGHLIGHT_PATH_ISSUES_MENU),
     };
+
     static_assert(ItemIDsMatchIndices(items));
 
     SetItems(items);
@@ -3642,33 +3641,41 @@ static void top_toolbar_init_view_menu(rct_window* w, rct_widget* widget)
     // Set checkmarks
     rct_viewport* mainViewport = window_get_main()->viewport;
     if (mainViewport->flags & VIEWPORT_FLAG_UNDERGROUND_INSIDE)
-        Dropdown::SetChecked(0, true);
+        Dropdown::SetChecked(DDIDX_UNDERGROUND_INSIDE, true);
+    if (gConfigGeneral.transparent_water)
+        Dropdown::SetChecked(DDIDX_TRANSPARENT_WATER, true);
     if (mainViewport->flags & VIEWPORT_FLAG_HIDE_BASE)
-        Dropdown::SetChecked(1, true);
+        Dropdown::SetChecked(DDIDX_HIDE_BASE, true);
     if (mainViewport->flags & VIEWPORT_FLAG_HIDE_VERTICAL)
-        Dropdown::SetChecked(2, true);
+        Dropdown::SetChecked(DDIDX_HIDE_VERTICAL, true);
     if (mainViewport->flags & VIEWPORT_FLAG_SEETHROUGH_RIDES)
-        Dropdown::SetChecked(4, true);
+        Dropdown::SetChecked(DDIDX_SEETHROUGH_RIDES, true);
     if (mainViewport->flags & VIEWPORT_FLAG_SEETHROUGH_SCENERY)
-        Dropdown::SetChecked(5, true);
+        Dropdown::SetChecked(DDIDX_SEETHROUGH_SCENERY, true);
     if (mainViewport->flags & VIEWPORT_FLAG_SEETHROUGH_PATHS)
-        Dropdown::SetChecked(6, true);
+        Dropdown::SetChecked(DDIDX_SEETHROUGH_PATHS, true);
     if (mainViewport->flags & VIEWPORT_FLAG_INVISIBLE_SUPPORTS)
-        Dropdown::SetChecked(7, true);
+        Dropdown::SetChecked(DDIDX_INVISIBLE_SUPPORTS, true);
     if (mainViewport->flags & VIEWPORT_FLAG_INVISIBLE_PEEPS)
-        Dropdown::SetChecked(8, true);
+        Dropdown::SetChecked(DDIDX_INVISIBLE_PEEPS, true);
     if (mainViewport->flags & VIEWPORT_FLAG_LAND_HEIGHTS)
-        Dropdown::SetChecked(10, true);
+        Dropdown::SetChecked(DDIDX_LAND_HEIGHTS, true);
     if (mainViewport->flags & VIEWPORT_FLAG_TRACK_HEIGHTS)
-        Dropdown::SetChecked(11, true);
+        Dropdown::SetChecked(DDIDX_TRACK_HEIGHTS, true);
     if (mainViewport->flags & VIEWPORT_FLAG_PATH_HEIGHTS)
-        Dropdown::SetChecked(12, true);
+        Dropdown::SetChecked(DDIDX_PATH_HEIGHTS, true);
     if (mainViewport->flags & VIEWPORT_FLAG_CLIP_VIEW)
         Dropdown::SetChecked(DDIDX_VIEW_CLIPPING, true);
     if (mainViewport->flags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES)
         Dropdown::SetChecked(DDIDX_HIGHLIGHT_PATH_ISSUES, true);
 
     gDropdownDefaultIndex = DDIDX_UNDERGROUND_INSIDE;
+
+    // Opaque water relies on RCT1 sprites.
+    if (!is_csg_loaded())
+    {
+        Dropdown::SetDisabled(DDIDX_TRANSPARENT_WATER, true);
+    }
 }
 
 /**
@@ -3685,6 +3692,10 @@ static void top_toolbar_view_menu_dropdown(int16_t dropdownIndex)
             case DDIDX_UNDERGROUND_INSIDE:
                 w->viewport->flags ^= VIEWPORT_FLAG_UNDERGROUND_INSIDE;
                 break;
+            case DDIDX_TRANSPARENT_WATER:
+                gConfigGeneral.transparent_water ^= 1;
+                config_save_default();
+                break;
             case DDIDX_HIDE_BASE:
                 w->viewport->flags ^= VIEWPORT_FLAG_HIDE_BASE;
                 break;
@@ -3694,7 +3705,7 @@ static void top_toolbar_view_menu_dropdown(int16_t dropdownIndex)
             case DDIDX_SEETHROUGH_RIDES:
                 w->viewport->flags ^= VIEWPORT_FLAG_SEETHROUGH_RIDES;
                 break;
-            case DDIDX_SEETHROUGH_SCENARY:
+            case DDIDX_SEETHROUGH_SCENERY:
                 w->viewport->flags ^= VIEWPORT_FLAG_SEETHROUGH_SCENERY;
                 break;
             case DDIDX_SEETHROUGH_PATHS:

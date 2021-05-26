@@ -58,6 +58,7 @@ struct GeneralConfiguration
     bool disable_lightning_effect;
     bool show_guest_purchases;
     bool transparent_screenshot;
+    bool transparent_water;
 
     // Localisation
     int32_t language;
@@ -117,6 +118,7 @@ struct InterfaceConfiguration
     bool toolbar_show_news;
     bool toolbar_show_mute;
     bool toolbar_show_chat;
+    bool toolbar_show_zoom;
     bool console_small_font;
     bool random_title_sequence;
     utf8* current_theme_preset;
@@ -257,5 +259,5 @@ std::string FindCsg1datAtLocation(const utf8* path);
 bool Csg1datPresentAtLocation(const utf8* path);
 std::string FindCsg1idatAtLocation(const utf8* path);
 bool Csg1idatPresentAtLocation(const utf8* path);
-bool CsgIsUsable(rct_gx csg);
+bool CsgIsUsable(const rct_gx& csg);
 bool CsgAtLocationIsUsable(const utf8* path);

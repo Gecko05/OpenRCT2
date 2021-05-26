@@ -232,7 +232,7 @@ GameActions::Result::Ptr SetCheatAction::Execute() const
             CreateDucks(_param1);
             break;
         case CheatType::RemoveDucks:
-            duck_remove_all();
+            Duck::RemoveAll();
             break;
         case CheatType::AllowTrackPlaceInvalidHeights:
             gCheatsAllowTrackPlaceInvalidHeights = _param1 != 0;
@@ -410,7 +410,7 @@ void SetCheatAction::FixVandalism() const
 
 void SetCheatAction::RemoveLitter() const
 {
-    for (auto litter : EntityList<Litter>(EntityListId::Litter))
+    for (auto litter : EntityList<Litter>())
     {
         sprite_remove(litter);
     }
@@ -553,7 +553,7 @@ void SetCheatAction::GenerateGuests(int32_t count) const
 
 void SetCheatAction::SetGuestParameter(int32_t parameter, int32_t value) const
 {
-    for (auto peep : EntityList<Guest>(EntityListId::Peep))
+    for (auto peep : EntityList<Guest>())
     {
         switch (parameter)
         {
@@ -597,7 +597,7 @@ void SetCheatAction::SetGuestParameter(int32_t parameter, int32_t value) const
 
 void SetCheatAction::GiveObjectToGuests(int32_t object) const
 {
-    for (auto peep : EntityList<Guest>(EntityListId::Peep))
+    for (auto peep : EntityList<Guest>())
     {
         switch (object)
         {
@@ -644,7 +644,11 @@ void SetCheatAction::RemoveAllGuests() const
                     auto peep = TryGetEntity<Guest>(peepInTrainIndex);
                     if (peep != nullptr)
                     {
-                        vehicle->mass -= peep->Mass;
+                        if ((peep->State == PeepState::OnRide && peep->RideSubState == PeepRideSubState::OnRide)
+                            || (peep->State == PeepState::LeavingRide && peep->RideSubState == PeepRideSubState::LeaveVehicle))
+                        {
+                            vehicle->ApplyMass(-peep->Mass);
+                        }
                     }
                     peepInTrainIndex = SPRITE_INDEX_NULL;
                 }
@@ -657,7 +661,7 @@ void SetCheatAction::RemoveAllGuests() const
 
     // Do not use the FOR_ALL_PEEPS macro for this as next sprite index
     // will be fetched on a deleted guest.
-    for (auto guest : EntityList<Guest>(EntityListId::Peep))
+    for (auto guest : EntityList<Guest>())
     {
         guest->Remove();
     }
@@ -668,7 +672,7 @@ void SetCheatAction::RemoveAllGuests() const
 
 void SetCheatAction::SetStaffSpeed(uint8_t value) const
 {
-    for (auto peep : EntityList<Staff>(EntityListId::Peep))
+    for (auto peep : EntityList<Staff>())
     {
         peep->Energy = value;
         peep->EnergyTarget = value;

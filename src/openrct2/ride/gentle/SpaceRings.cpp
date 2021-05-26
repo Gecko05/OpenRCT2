@@ -49,7 +49,7 @@ static void paint_space_rings_structure(paint_session* session, Ride* ride, uint
         {
             session->InteractionType = ViewportInteractionItem::Entity;
             session->CurrentlyDrawnItem = vehicle;
-            frameNum += static_cast<int8_t>(vehicle->vehicle_sprite_type) * 4;
+            frameNum += static_cast<int8_t>(vehicle->Pitch) * 4;
         }
 
         uint32_t imageColourFlags = session->TrackColours[SCHEME_MISC];
@@ -181,7 +181,7 @@ static void paint_space_rings(
  */
 TRACK_PAINT_FUNCTION get_track_paint_function_space_rings(int32_t trackType)
 {
-    if (trackType != FLAT_TRACK_ELEM_3_X_3)
+    if (trackType != TrackElemType::FlatTrack3x3)
     {
         return nullptr;
     }

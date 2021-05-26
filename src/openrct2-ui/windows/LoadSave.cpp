@@ -126,7 +126,7 @@ struct LoadSaveListItem
     bool loaded;
 };
 
-static loadsave_callback _loadSaveCallback;
+static std::function<void(int32_t result, std::string_view)> _loadSaveCallback;
 static TrackDesign* _trackDesign;
 
 static std::vector<LoadSaveListItem> _listItems;
@@ -134,7 +134,7 @@ static char _directory[MAX_PATH];
 static char _shortenedDirectory[MAX_PATH];
 static char _parentDirectory[MAX_PATH];
 static char _extension[256];
-static char _defaultName[MAX_PATH];
+static std::string _defaultPath;
 static int32_t _type;
 
 static int32_t maxDateWidth = 0;
@@ -234,17 +234,14 @@ static int32_t window_loadsave_get_dir(const int32_t type, char* path, size_t pa
 
 static bool browse(bool isSave, char* path, size_t pathSize);
 
-rct_window* window_loadsave_open(int32_t type, const char* defaultName, loadsave_callback callback, TrackDesign* trackDesign)
+rct_window* window_loadsave_open(
+    int32_t type, std::string_view defaultPath, std::function<void(int32_t result, std::string_view)> callback,
+    TrackDesign* trackDesign)
 {
     _loadSaveCallback = callback;
     _trackDesign = trackDesign;
     _type = type;
-    _defaultName[0] = '\0';
-
-    if (!str_is_null_or_empty(defaultName))
-    {
-        safe_strcpy(_defaultName, defaultName, sizeof(_defaultName));
-    }
+    _defaultPath = defaultPath;
 
     bool isSave = (type & 0x01) == LOADSAVETYPE_SAVE;
     char path[MAX_PATH];
@@ -394,9 +391,9 @@ static bool browse(bool isSave, char* path, size_t pathSize)
     if (isSave)
     {
         // The file browser requires a file path instead of just a directory
-        if (String::SizeOf(_defaultName) > 0)
+        if (!_defaultPath.empty())
         {
-            safe_strcat_path(path, _defaultName, pathSize);
+            safe_strcat_path(path, _defaultPath.c_str(), pathSize);
         }
         else
         {
@@ -454,11 +451,11 @@ static void window_loadsave_mouseup(rct_window* w, rct_widgetindex widgetIndex)
         case WIDX_NEW_FILE:
             window_text_input_open(
                 w, WIDX_NEW_FILE, STR_NONE, STR_FILEBROWSER_FILE_NAME_PROMPT, STR_STRING,
-                reinterpret_cast<uintptr_t>(&_defaultName), 64);
+                reinterpret_cast<uintptr_t>(_defaultPath.c_str()), 64);
             break;
 
         case WIDX_NEW_FOLDER:
-            window_text_input_raw_open(w, WIDX_NEW_FOLDER, STR_NONE, STR_FILEBROWSER_FOLDER_NAME_PROMPT, nullptr, 64);
+            window_text_input_raw_open(w, WIDX_NEW_FOLDER, STR_NONE, STR_FILEBROWSER_FOLDER_NAME_PROMPT, "", 64);
             break;
 
         case WIDX_BROWSE:
@@ -646,7 +643,7 @@ static void window_loadsave_compute_max_date_width()
 
     // Check how this date is represented (e.g. 2000-02-20, or 00/02/20)
     std::string date = Platform::FormatShortDate(long_time);
-    maxDateWidth = gfx_get_string_width(date.c_str()) + DATE_TIME_GAP;
+    maxDateWidth = gfx_get_string_width(date.c_str(), FontSpriteBase::MEDIUM) + DATE_TIME_GAP;
 
     // Some locales do not use leading zeros for months and days, so let's try October, too.
     tm.tm_mon = 10;
@@ -655,11 +652,11 @@ static void window_loadsave_compute_max_date_width()
 
     // Again, check how this date is represented (e.g. 2000-10-20, or 00/10/20)
     date = Platform::FormatShortDate(long_time);
-    maxDateWidth = std::max(maxDateWidth, gfx_get_string_width(date.c_str()) + DATE_TIME_GAP);
+    maxDateWidth = std::max(maxDateWidth, gfx_get_string_width(date.c_str(), FontSpriteBase::MEDIUM) + DATE_TIME_GAP);
 
     // Time appears to be universally represented with two digits for minutes, so 12:00 or 00:00 should be representable.
     std::string time = Platform::FormatTime(long_time);
-    maxTimeWidth = gfx_get_string_width(time.c_str()) + DATE_TIME_GAP;
+    maxTimeWidth = gfx_get_string_width(time.c_str(), FontSpriteBase::MEDIUM) + DATE_TIME_GAP;
 }
 
 static void window_loadsave_invalidate(rct_window* w)
@@ -695,18 +692,18 @@ static void window_loadsave_paint(rct_window* w, rct_drawpixelinfo* dpi)
 
     if (_shortenedDirectory[0] == '\0')
     {
-        shorten_path(_shortenedDirectory, sizeof(_shortenedDirectory), _directory, w->width - 8);
+        shorten_path(_shortenedDirectory, sizeof(_shortenedDirectory), _directory, w->width - 8, FontSpriteBase::MEDIUM);
     }
 
     // Format text
     thread_local std::string buffer;
-    buffer.assign("{MEDIUMFONT}{BLACK}");
+    buffer.assign("{BLACK}");
     buffer += _shortenedDirectory;
 
     // Draw path text
     auto ft = Formatter();
     ft.Add<const char*>(Platform::StrDecompToPrecomp(buffer.data()));
-    DrawTextEllipsised(dpi, { w->windowPos.x + 4, w->windowPos.y + 20 }, w->width - 8, STR_STRING, ft, COLOUR_BLACK);
+    DrawTextEllipsised(dpi, { w->windowPos.x + 4, w->windowPos.y + 20 }, w->width - 8, STR_STRING, ft);
 
     // Name button text
     rct_string_id id = STR_NONE;
@@ -717,8 +714,9 @@ static void window_loadsave_paint(rct_window* w, rct_drawpixelinfo* dpi)
 
     // Draw name button indicator.
     rct_widget sort_name_widget = window_loadsave_widgets[WIDX_SORT_NAME];
-    gfx_draw_string_left(
-        dpi, STR_NAME, &id, COLOUR_GREY, w->windowPos + ScreenCoordsXY{ sort_name_widget.left + 11, sort_name_widget.top + 1 });
+    DrawTextBasic(
+        dpi, w->windowPos + ScreenCoordsXY{ sort_name_widget.left + 11, sort_name_widget.top + 1 }, STR_NAME, &id,
+        { COLOUR_GREY });
 
     // Date button text
     if (gConfigGeneral.load_save_sort == Sort::DateAscending)
@@ -729,8 +727,9 @@ static void window_loadsave_paint(rct_window* w, rct_drawpixelinfo* dpi)
         id = STR_NONE;
 
     rct_widget sort_date_widget = window_loadsave_widgets[WIDX_SORT_DATE];
-    gfx_draw_string_left(
-        dpi, STR_DATE, &id, COLOUR_GREY, w->windowPos + ScreenCoordsXY{ sort_date_widget.left + 5, sort_date_widget.top + 1 });
+    DrawTextBasic(
+        dpi, w->windowPos + ScreenCoordsXY{ sort_date_widget.left + 5, sort_date_widget.top + 1 }, STR_DATE, &id,
+        { COLOUR_GREY });
 }
 
 static void window_loadsave_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_t scrollIndex)
@@ -763,7 +762,7 @@ static void window_loadsave_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, i
         {
             auto ft = Formatter();
             ft.Add<rct_string_id>(STR_RIGHTGUILLEMET);
-            gfx_draw_string_left(dpi, stringId, ft.Data(), COLOUR_BLACK, { 0, y });
+            DrawTextBasic(dpi, { 0, y }, stringId, ft);
         }
 
         // Print filename
@@ -771,7 +770,7 @@ static void window_loadsave_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, i
         ft.Add<rct_string_id>(STR_STRING);
         ft.Add<char*>(_listItems[i].name.c_str());
         int32_t max_file_width = w->widgets[WIDX_SORT_NAME].width() - 10;
-        DrawTextEllipsised(dpi, { 10, y }, max_file_width, stringId, ft, COLOUR_BLACK);
+        DrawTextEllipsised(dpi, { 10, y }, max_file_width, stringId, ft);
 
         // Print formatted modified date, if this is a file
         if (_listItems[i].type == TYPE_FILE)
@@ -779,13 +778,12 @@ static void window_loadsave_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, i
             ft = Formatter();
             ft.Add<rct_string_id>(STR_STRING);
             ft.Add<char*>(_listItems[i].date_formatted.c_str());
-            DrawTextEllipsised(
-                dpi, { dateAnchor - DATE_TIME_GAP, y }, maxDateWidth, stringId, ft, COLOUR_BLACK, TextAlignment::RIGHT);
+            DrawTextEllipsised(dpi, { dateAnchor - DATE_TIME_GAP, y }, maxDateWidth, stringId, ft, { TextAlignment::RIGHT });
 
             ft = Formatter();
             ft.Add<rct_string_id>(STR_STRING);
             ft.Add<char*>(_listItems[i].time_formatted.c_str());
-            DrawTextEllipsised(dpi, { dateAnchor + DATE_TIME_GAP, y }, maxTimeWidth, stringId, ft, COLOUR_BLACK);
+            DrawTextEllipsised(dpi, { dateAnchor + DATE_TIME_GAP, y }, maxTimeWidth, stringId, ft);
         }
     }
 }
@@ -915,7 +913,7 @@ static void window_loadsave_populate_list(rct_window* w, int32_t includeNewItem,
             safe_strcat_path(filter, "*", std::size(filter));
             path_append_extension(filter, extToken, std::size(filter));
 
-            auto scanner = std::unique_ptr<IFileScanner>(Path::ScanDirectory(filter, false));
+            auto scanner = Path::ScanDirectory(filter, false);
             while (scanner->Next())
             {
                 LoadSaveListItem newListItem;
@@ -1207,7 +1205,7 @@ static void window_overwrite_prompt_paint(rct_window* w, rct_drawpixelinfo* dpi)
     ft.Add<char*>(_window_overwrite_prompt_name);
 
     ScreenCoordsXY stringCoords(w->windowPos.x + w->width / 2, w->windowPos.y + (w->height / 2) - 3);
-    gfx_draw_string_centred_wrapped(dpi, ft.Data(), stringCoords, w->width - 4, STR_FILEBROWSER_OVERWRITE_PROMPT, COLOUR_BLACK);
+    DrawTextWrapped(dpi, stringCoords, w->width - 4, STR_FILEBROWSER_OVERWRITE_PROMPT, ft, { TextAlignment::CENTRE });
 }
 
 #pragma endregion

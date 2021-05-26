@@ -77,6 +77,7 @@ namespace WIDGET_FLAGS
     const WidgetFlags IS_DISABLED = 1 << 3;
     const WidgetFlags TOOLTIP_IS_STRING = 1 << 4;
     const WidgetFlags IS_HIDDEN = 1 << 5;
+    const WidgetFlags IS_HOLDABLE = 1 << 6;
 } // namespace WIDGET_FLAGS
 
 enum class WindowWidgetType : uint8_t;
@@ -171,6 +172,8 @@ struct rct_viewport
     }
 
     [[nodiscard]] ScreenCoordsXY ScreenToViewportCoord(const ScreenCoordsXY& screenCoord) const;
+
+    void Invalidate() const;
 };
 
 /**
@@ -482,7 +485,6 @@ enum
     WC_DEBUG_PAINT = 130,
     WC_VIEW_CLIPPING = 131,
     WC_OBJECT_LOAD_ERROR = 132,
-    WC_NETWORK = 133,
 
     // Only used for colour schemes
     WC_STAFF = 220,
@@ -708,6 +710,16 @@ T* WindowCreate(rct_windowclass cls, int32_t width, int32_t height, uint32_t fla
     return static_cast<T*>(WindowCreate(std::make_unique<T>(), cls, {}, width, height, flags | WF_AUTO_POSITION));
 }
 template<typename T, typename std::enable_if<std::is_base_of<rct_window, T>::value>::type* = nullptr>
+T* WindowFocusOrCreate(rct_windowclass cls, const ScreenCoordsXY& pos, int32_t width, int32_t height, uint32_t flags = 0)
+{
+    auto* w = window_bring_to_front_by_class(cls);
+    if (w == nullptr)
+    {
+        w = WindowCreate<T>(cls, pos, width, height, flags);
+    }
+    return static_cast<T*>(w);
+}
+template<typename T, typename std::enable_if<std::is_base_of<rct_window, T>::value>::type* = nullptr>
 T* WindowFocusOrCreate(rct_windowclass cls, int32_t width, int32_t height, uint32_t flags = 0)
 {
     auto* w = window_bring_to_front_by_class(cls);
@@ -863,6 +875,13 @@ void window_ride_construction_keyboard_shortcut_previous_track();
 void window_ride_construction_keyboard_shortcut_next_track();
 void window_ride_construction_keyboard_shortcut_build_current();
 void window_ride_construction_keyboard_shortcut_demolish_current();
+
+void window_footpath_keyboard_shortcut_turn_left();
+void window_footpath_keyboard_shortcut_turn_right();
+void window_footpath_keyboard_shortcut_slope_down();
+void window_footpath_keyboard_shortcut_slope_up();
+void window_footpath_keyboard_shortcut_build_current();
+void window_footpath_keyboard_shortcut_demolish_current();
 
 void window_follow_sprite(rct_window* w, size_t spriteIndex);
 void window_unfollow_sprite(rct_window* w);

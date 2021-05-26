@@ -18,6 +18,7 @@
 #include "../ride/Track.h"
 #include "../world/Wall.h"
 #include "Banner.h"
+#include "EntityList.h"
 #include "Footpath.h"
 #include "LargeScenery.h"
 #include "Map.h"
@@ -198,7 +199,7 @@ static bool map_animation_invalidate_small_scenery(const CoordsXYZ& loc)
                         continue;
                     if (peep->z != loc.z)
                         continue;
-                    if (peep->Action < PeepActionType::None1)
+                    if (peep->Action < PeepActionType::Idle)
                         continue;
 
                     peep->Action = PeepActionType::CheckTime;
@@ -495,7 +496,7 @@ static bool map_animation_invalidate_wall_door(const CoordsXYZ& loc)
             continue;
 
         sceneryEntry = tileElement->AsWall()->GetEntry();
-        if (!(sceneryEntry->wall.flags & WALL_SCENERY_IS_DOOR))
+        if (sceneryEntry == nullptr || !(sceneryEntry->wall.flags & WALL_SCENERY_IS_DOOR))
             continue;
 
         if (game_is_paused())

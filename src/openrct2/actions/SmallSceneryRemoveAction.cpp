@@ -21,8 +21,11 @@
 #include "../world/Park.h"
 #include "../world/SmallScenery.h"
 #include "../world/Sprite.h"
+#include "../world/TileElementsView.h"
 #include "GameAction.h"
 #include "SmallSceneryPlaceAction.h"
+
+using namespace OpenRCT2;
 
 SmallSceneryRemoveAction::SmallSceneryRemoveAction(const CoordsXYZ& location, uint8_t quadrant, ObjectEntryIndex sceneryType)
     : _loc(location)
@@ -132,26 +135,23 @@ GameActions::Result::Ptr SmallSceneryRemoveAction::Execute() const
 
 TileElement* SmallSceneryRemoveAction::FindSceneryElement() const
 {
-    TileElement* tileElement = map_get_first_element_at(_loc);
-    if (!tileElement)
-        return nullptr;
-
-    do
+    const bool isGhost = GetFlags() & GAME_COMMAND_FLAG_GHOST;
+    for (auto* sceneryElement : TileElementsView<SmallSceneryElement>(_loc))
     {
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_SMALL_SCENERY)
-            continue;
-        if ((tileElement->AsSmallScenery()->GetSceneryQuadrant()) != _quadrant)
-            continue;
-        if (tileElement->GetBaseZ() != _loc.z)
-            continue;
-        if (tileElement->AsSmallScenery()->GetEntryIndex() != _sceneryType)
-            continue;
-        if ((GetFlags() & GAME_COMMAND_FLAG_GHOST) && tileElement->IsGhost() == false)
+        // If we are removing ghost elements
+        if (isGhost && sceneryElement->IsGhost() == false)
             continue;
 
-        return tileElement;
+        if (sceneryElement->GetSceneryQuadrant() != _quadrant)
+            continue;
 
-    } while (!(tileElement++)->IsLastForTile());
+        if (sceneryElement->GetBaseZ() != _loc.z)
+            continue;
 
+        if (sceneryElement->GetEntryIndex() != _sceneryType)
+            continue;
+
+        return sceneryElement->as<TileElement>();
+    }
     return nullptr;
 }

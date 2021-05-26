@@ -42,6 +42,11 @@ namespace OpenRCT2::Scripting
         }
 
     private:
+        int32_t apiVersion_get()
+        {
+            return OPENRCT2_PLUGIN_API_VERSION;
+        }
+
         std::shared_ptr<ScConfiguration> configuration_get()
         {
             return std::make_shared<ScConfiguration>();
@@ -62,6 +67,7 @@ namespace OpenRCT2::Scripting
                 captureOptions.Filename = fs::u8path(AsOrDefault(options["filename"], ""));
                 captureOptions.Rotation = options["rotation"].as_int() & 3;
                 captureOptions.Zoom = ZoomLevel(options["zoom"].as_int());
+                captureOptions.Transparent = AsOrDefault(options["transparent"], false);
 
                 auto dukPosition = options["position"];
                 if (dukPosition.type() == DukValue::Type::OBJECT)
@@ -372,6 +378,7 @@ namespace OpenRCT2::Scripting
     public:
         static void Register(duk_context* ctx)
         {
+            dukglue_register_property(ctx, &ScContext::apiVersion_get, nullptr, "apiVersion");
             dukglue_register_property(ctx, &ScContext::configuration_get, nullptr, "configuration");
             dukglue_register_property(ctx, &ScContext::sharedStorage_get, nullptr, "sharedStorage");
             dukglue_register_method(ctx, &ScContext::captureImage, "captureImage");

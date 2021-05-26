@@ -68,7 +68,7 @@ static void paint_swinging_inverter_ship_structure(
     uint32_t vehicleImageId = rideEntry->vehicles[0].base_image_id + swinging_inverter_ship_base_sprite_offset[direction];
     if (vehicle != nullptr)
     {
-        int32_t rotation = static_cast<int8_t>(vehicle->vehicle_sprite_type);
+        int32_t rotation = static_cast<int8_t>(vehicle->Pitch);
         if (rotation != 0)
         {
             vehicleImageId = rideEntry->vehicles[0].base_image_id
@@ -194,7 +194,7 @@ static void paint_swinging_inverter_ship(
  */
 TRACK_PAINT_FUNCTION get_track_paint_function_swinging_inverter_ship(int32_t trackType)
 {
-    if (trackType != FLAT_TRACK_ELEM_1_X_4_B)
+    if (trackType != TrackElemType::FlatTrack1x4B)
     {
         return nullptr;
     }

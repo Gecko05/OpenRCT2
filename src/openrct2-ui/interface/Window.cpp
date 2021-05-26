@@ -632,8 +632,15 @@ void WindowDrawWidgets(rct_window* w, rct_drawpixelinfo* dpi)
         {
             // Check if widget is outside the draw region
             if (w->windowPos.x + widget->left < dpi->x + dpi->width && w->windowPos.x + widget->right >= dpi->x)
+            {
                 if (w->windowPos.y + widget->top < dpi->y + dpi->height && w->windowPos.y + widget->bottom >= dpi->y)
-                    WidgetDraw(dpi, w, widgetIndex);
+                {
+                    if (w->IsLegacy())
+                        WidgetDraw(dpi, w, widgetIndex);
+                    else
+                        w->OnDrawWidget(widgetIndex, *dpi);
+                }
+            }
         }
         widgetIndex++;
     }
@@ -643,7 +650,7 @@ void WindowDrawWidgets(rct_window* w, rct_drawpixelinfo* dpi)
     if (w->flags & WF_WHITE_BORDER_MASK)
     {
         gfx_fill_rect_inset(
-            dpi, w->windowPos.x, w->windowPos.y, w->windowPos.x + w->width - 1, w->windowPos.y + w->height - 1, COLOUR_WHITE,
+            dpi, { w->windowPos, w->windowPos + ScreenCoordsXY{ w->width - 1, w->height - 1 } }, COLOUR_WHITE,
             INSET_RECT_FLAG_FILL_NONE);
     }
 }
@@ -679,6 +686,21 @@ void InvalidateAllWindowsAfterInput()
         WindowInvalidatePressedImageButton(w);
         window_event_resize_call(w);
     });
+}
+
+bool Window::IsLegacy()
+{
+    return false;
+}
+
+void Window::OnDraw(rct_drawpixelinfo& dpi)
+{
+    WindowDrawWidgets(this, &dpi);
+}
+
+void Window::OnDrawWidget(rct_widgetindex widgetIndex, rct_drawpixelinfo& dpi)
+{
+    WidgetDraw(&dpi, this, widgetIndex);
 }
 
 void Window::InvalidateWidget(rct_widgetindex widgetIndex)

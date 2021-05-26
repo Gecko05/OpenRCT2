@@ -25,6 +25,7 @@
 #include <openrct2/sprites.h>
 #include <openrct2/util/Util.h>
 #include <openrct2/windows/Intent.h>
+#include <openrct2/world/EntityList.h>
 #include <openrct2/world/Footpath.h>
 #include <openrct2/world/Park.h>
 #include <openrct2/world/Sprite.h>
@@ -188,7 +189,7 @@ public:
             if (window_find_by_class(WC_MAP) != nullptr)
             {
                 gWindowMapFlashingFlags |= MapFlashingFlags::StaffListOpen;
-                for (auto peep : EntityList<Staff>(EntityListId::Peep))
+                for (auto peep : EntityList<Staff>())
                 {
                     sprite_set_flashing(peep, false);
                     if (peep->AssignedStaffType == GetSelectedStaffType())
@@ -286,15 +287,14 @@ public:
         {
             auto ft = Formatter();
             ft.Add<money32>(GetStaffWage(GetSelectedStaffType()));
-            gfx_draw_string_left(
-                &dpi, STR_COST_PER_MONTH, ft.Data(), COLOUR_BLACK, windowPos + ScreenCoordsXY{ width - 155, 32 });
+            DrawTextBasic(&dpi, windowPos + ScreenCoordsXY{ width - 155, 32 }, STR_COST_PER_MONTH, ft);
         }
 
         if (GetSelectedStaffType() != StaffType::Entertainer)
         {
-            gfx_draw_string_left(
-                &dpi, STR_UNIFORM_COLOUR, nullptr, COLOUR_BLACK,
-                windowPos + ScreenCoordsXY{ 6, widgets[WIDX_STAFF_LIST_UNIFORM_COLOUR_PICKER].top + 1 });
+            DrawTextBasic(
+                &dpi, windowPos + ScreenCoordsXY{ 6, widgets[WIDX_STAFF_LIST_UNIFORM_COLOUR_PICKER].top + 1 },
+                STR_UNIFORM_COLOUR);
         }
 
         auto namingConvention = GetStaffNamingConvention(GetSelectedStaffType());
@@ -304,9 +304,8 @@ public:
         ft.Add<uint16_t>(_staffList.size());
         ft.Add<rct_string_id>(staffTypeStringId);
 
-        gfx_draw_string_left(
-            &dpi, STR_STAFF_LIST_COUNTER, ft.Data(), COLOUR_BLACK,
-            windowPos + ScreenCoordsXY{ 4, widgets[WIDX_STAFF_LIST_LIST].bottom + 2 });
+        DrawTextBasic(
+            &dpi, windowPos + ScreenCoordsXY{ 4, widgets[WIDX_STAFF_LIST_LIST].bottom + 2 }, STR_STAFF_LIST_COUNTER, ft);
     }
 
     ScreenSize OnScrollGetSize(int32_t scrollIndex) override
@@ -408,16 +407,16 @@ public:
 
                 auto ft = Formatter();
                 peep->FormatNameTo(ft);
-                DrawTextEllipsised(&dpi, { 0, y }, nameColumnSize, format, ft, COLOUR_BLACK);
+                DrawTextEllipsised(&dpi, { 0, y }, nameColumnSize, format, ft);
 
                 ft = Formatter();
                 peep->FormatActionTo(ft);
-                DrawTextEllipsised(&dpi, { actionOffset, y }, actionColumnSize, format, ft, COLOUR_BLACK);
+                DrawTextEllipsised(&dpi, { actionOffset, y }, actionColumnSize, format, ft);
 
                 // True if a patrol path is set for the worker
                 if (gStaffModes[peep->StaffId] == StaffMode::Patrol)
                 {
-                    gfx_draw_sprite(&dpi, SPR_STAFF_PATROL_PATH, { nameColumnSize + 5, y }, 0);
+                    gfx_draw_sprite(&dpi, ImageId(SPR_STAFF_PATROL_PATH), { nameColumnSize + 5, y });
                 }
 
                 auto staffOrderIcon_x = nameColumnSize + 20;
@@ -430,7 +429,7 @@ public:
                     {
                         if (staffOrders & 1)
                         {
-                            gfx_draw_sprite(&dpi, staffOrderSprite, { staffOrderIcon_x, y }, 0);
+                            gfx_draw_sprite(&dpi, ImageId(staffOrderSprite), { staffOrderIcon_x, y });
                         }
                         staffOrders = staffOrders >> 1;
                         staffOrderIcon_x += 9;
@@ -440,7 +439,7 @@ public:
                 }
                 else
                 {
-                    gfx_draw_sprite(&dpi, GetEntertainerCostumeSprite(peep->SpriteType), { staffOrderIcon_x, y }, 0);
+                    gfx_draw_sprite(&dpi, ImageId(GetEntertainerCostumeSprite(peep->SpriteType)), { staffOrderIcon_x, y });
                 }
             }
 
@@ -484,7 +483,7 @@ public:
     {
         _staffList.clear();
 
-        for (auto peep : EntityList<Staff>(EntityListId::Peep))
+        for (auto peep : EntityList<Staff>())
         {
             sprite_set_flashing(peep, false);
             if (peep->AssignedStaffType == GetSelectedStaffType())
@@ -518,8 +517,8 @@ private:
         const auto& widget = widgets[widgetIndex];
         auto imageId = (_selectedTab == tabIndex ? (_tabAnimationIndex & ~3) : 0);
         imageId += GetPeepAnimation(type).base_image + 1;
-        imageId |= SPRITE_ID_PALETTE_COLOUR_1(colour);
-        gfx_draw_sprite(&dpi, imageId, windowPos + ScreenCoordsXY{ (widget.left + widget.right) / 2, widget.bottom - 6 }, 0);
+        gfx_draw_sprite(
+            &dpi, ImageId(imageId, colour), windowPos + ScreenCoordsXY{ (widget.left + widget.right) / 2, widget.bottom - 6 });
     }
 
     void DrawTabImage(rct_drawpixelinfo& dpi, int32_t tabIndex, PeepSpriteType type) const
@@ -533,7 +532,7 @@ private:
         {
             auto imageId = (_selectedTab == 3 ? (_tabAnimationIndex & ~3) : 0);
             imageId += GetPeepAnimation(type).base_image + 1;
-            gfx_draw_sprite(&clippedDpi, imageId, { 15, 23 }, 0);
+            gfx_draw_sprite(&clippedDpi, ImageId(imageId), { 15, 23 });
         }
     }
 
@@ -560,7 +559,7 @@ private:
 
         Peep* closestPeep = nullptr;
         auto closestPeepDistance = std::numeric_limits<int32_t>::max();
-        for (auto peep : EntityList<Staff>(EntityListId::Peep))
+        for (auto peep : EntityList<Staff>())
         {
             if (peep->AssignedStaffType != GetSelectedStaffType())
                 continue;
@@ -571,7 +570,7 @@ private:
                 {
                     continue;
                 }
-                if (!peep->AsStaff()->IsLocationInPatrol(footpathCoords))
+                if (!peep->IsLocationInPatrol(footpathCoords))
                 {
                     continue;
                 }

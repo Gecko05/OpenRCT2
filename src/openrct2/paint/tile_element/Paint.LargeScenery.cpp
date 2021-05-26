@@ -11,6 +11,7 @@
 #include "../../config/Config.h"
 #include "../../interface/Viewport.h"
 #include "../../localisation/Localisation.h"
+#include "../../object/LargeSceneryObject.h"
 #include "../../ride/Ride.h"
 #include "../../ride/TrackDesign.h"
 #include "../../util/Util.h"
@@ -27,7 +28,7 @@
 // 6B8172:
 static void large_scenery_paint_supports(
     paint_session* session, uint8_t direction, uint16_t height, const TileElement* tileElement, uint32_t dword_F4387C,
-    rct_large_scenery_tile* tile)
+    const rct_large_scenery_tile* tile)
 {
     if (tile->flags & LARGE_SCENERY_TILE_FLAG_NO_SUPPORTS)
     {
@@ -227,12 +228,19 @@ void large_scenery_paint(paint_session* session, uint8_t direction, uint16_t hei
     }
     session->InteractionType = ViewportInteractionItem::LargeScenery;
     uint32_t sequenceNum = tileElement->AsLargeScenery()->GetSequenceIndex();
-    rct_scenery_entry* entry = tileElement->AsLargeScenery()->GetEntry();
+    const LargeSceneryObject* object = tileElement->AsLargeScenery()->GetObject();
+    if (object == nullptr)
+        return;
+
+    const rct_scenery_entry* entry = tileElement->AsLargeScenery()->GetEntry();
     if (entry == nullptr)
         return;
 
     uint32_t image_id = (sequenceNum << 2) + entry->image + 4 + direction;
-    rct_large_scenery_tile* tile = &entry->large_scenery.tiles[sequenceNum];
+    const rct_large_scenery_tile* tile = object->GetTileForSequence(sequenceNum);
+    if (tile == nullptr)
+        return;
+
     uint32_t dword_F4387C = 0;
     image_id |= SPRITE_ID_PALETTE_COLOUR_2(
         tileElement->AsLargeScenery()->GetPrimaryColour(), tileElement->AsLargeScenery()->GetSecondaryColour());
@@ -440,9 +448,7 @@ void large_scenery_paint(paint_session* session, uint8_t direction, uint16_t hei
             format_string(signString, sizeof(signString), STR_SCROLLING_SIGN_TEXT, ft.Data());
         }
 
-        gCurrentFontSpriteBase = FONT_SPRITE_BASE_TINY;
-
-        uint16_t stringWidth = gfx_get_string_width(signString);
+        uint16_t stringWidth = gfx_get_string_width(signString, FontSpriteBase::TINY);
         uint16_t scroll = stringWidth > 0 ? (gCurrentTicks / 2) % stringWidth : 0;
         PaintAddImageAsChild(
             session, scrolling_text_setup(session, STR_SCROLLING_SIGN_TEXT, ft, scroll, scrollMode, textColour), 0, 0, 1, 1, 21,

@@ -23,6 +23,7 @@
 #include "../scripting/ScriptEngine.h"
 #include "../ui/UiContext.h"
 #include "../ui/WindowManager.h"
+#include "../world/MoneyEffect.h"
 #include "../world/Park.h"
 #include "../world/Scenery.h"
 

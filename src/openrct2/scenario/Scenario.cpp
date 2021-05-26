@@ -73,6 +73,7 @@ random_engine_t gScenarioRand;
 
 Objective gScenarioObjective;
 
+bool gAllowEarlyCompletionInNetworkPlay;
 uint16_t gScenarioParkRatingWarningDays;
 money32 gScenarioCompletedCompanyValue;
 money32 gScenarioCompanyValueRecord;
@@ -152,7 +153,7 @@ void scenario_begin()
     award_reset();
     reset_all_ride_build_dates();
     date_reset();
-    duck_remove_all();
+    Duck::RemoveAll();
     park_calculate_size();
     map_count_remaining_land_rights();
     Staff::ResetStats();
@@ -298,7 +299,7 @@ static void scenario_day_update()
             scenario_objective_check();
             break;
         default:
-            if (gConfigGeneral.allow_early_completion)
+            if (AllowEarlyCompletion())
                 scenario_objective_check();
             break;
     }
@@ -477,7 +478,7 @@ bool scenario_create_ducks()
         CoordsXY targetPos{ centrePos.x + innerPos.x - SquareRadiusSize, centrePos.y + innerPos.y - SquareRadiusSize };
 
         Guard::Assert(map_is_location_valid(targetPos));
-        create_duck(targetPos);
+        Duck::Create(targetPos);
     }
 
     return true;
@@ -713,7 +714,7 @@ ObjectiveStatus Objective::CheckGuestsBy() const
     int16_t parkRating = gParkRating;
     int32_t currentMonthYear = gDateMonthsElapsed;
 
-    if (currentMonthYear == MONTH_COUNT * Year || gConfigGeneral.allow_early_completion)
+    if (currentMonthYear == MONTH_COUNT * Year || AllowEarlyCompletion())
     {
         if (parkRating >= 600 && gNumGuestsInPark >= NumGuests)
         {
@@ -734,7 +735,7 @@ ObjectiveStatus Objective::CheckParkValueBy() const
     money32 objectiveParkValue = Currency;
     money32 parkValue = gParkValue;
 
-    if (currentMonthYear == MONTH_COUNT * Year || gConfigGeneral.allow_early_completion)
+    if (currentMonthYear == MONTH_COUNT * Year || AllowEarlyCompletion())
     {
         if (parkValue >= objectiveParkValue)
         {
@@ -760,7 +761,7 @@ ObjectiveStatus Objective::Check10RollerCoasters() const
     std::bitset<MAX_RIDE_OBJECTS> type_already_counted;
     for (const auto& ride : GetRideManager())
     {
-        if (ride.status == RIDE_STATUS_OPEN && ride.excitement >= RIDE_RATING(6, 00) && ride.subtype != RIDE_ENTRY_INDEX_NULL)
+        if (ride.status == RIDE_STATUS_OPEN && ride.excitement >= RIDE_RATING(6, 00) && ride.subtype != OBJECT_ENTRY_INDEX_NULL)
         {
             auto rideEntry = ride.GetRideEntry();
             if (rideEntry != nullptr)
@@ -860,7 +861,7 @@ ObjectiveStatus Objective::Check10RollerCoastersLength() const
     auto rcs = 0;
     for (const auto& ride : GetRideManager())
     {
-        if (ride.status == RIDE_STATUS_OPEN && ride.excitement >= RIDE_RATING(7, 00) && ride.subtype != RIDE_ENTRY_INDEX_NULL)
+        if (ride.status == RIDE_STATUS_OPEN && ride.excitement >= RIDE_RATING(7, 00) && ride.subtype != OBJECT_ENTRY_INDEX_NULL)
         {
             auto rideEntry = ride.GetRideEntry();
             if (rideEntry != nullptr)
@@ -939,6 +940,23 @@ ObjectiveStatus Objective::CheckMonthlyFoodIncome() const
     }
 
     return ObjectiveStatus::Undecided;
+}
+
+/*
+ * Returns the AllowEarlyCompletion-Option to be used
+ * depending on the Current Network-Mode.
+ */
+bool AllowEarlyCompletion()
+{
+    switch (network_get_mode())
+    {
+        case NETWORK_MODE_CLIENT:
+            return gAllowEarlyCompletionInNetworkPlay;
+        case NETWORK_MODE_NONE:
+        case NETWORK_MODE_SERVER:
+        default:
+            return gConfigGeneral.allow_early_completion;
+    }
 }
 
 static void scenario_objective_check()
