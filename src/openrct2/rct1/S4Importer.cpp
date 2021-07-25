@@ -38,17 +38,25 @@
 #include "../ride/Station.h"
 #include "../ride/Track.h"
 #include "../ride/TrainManager.h"
+#include "../ride/Vehicle.h"
 #include "../scenario/Scenario.h"
 #include "../scenario/ScenarioRepository.h"
 #include "../scenario/ScenarioSources.h"
 #include "../util/SawyerCoding.h"
 #include "../util/Util.h"
+#include "../world/Balloon.h"
 #include "../world/Climate.h"
+#include "../world/Duck.h"
+#include "../world/EntityList.h"
 #include "../world/Entrance.h"
 #include "../world/Footpath.h"
+#include "../world/Fountain.h"
 #include "../world/LargeScenery.h"
+#include "../world/Litter.h"
 #include "../world/MapAnimation.h"
+#include "../world/MoneyEffect.h"
 #include "../world/Park.h"
+#include "../world/Particle.h"
 #include "../world/Scenery.h"
 #include "../world/SmallScenery.h"
 #include "../world/Sprite.h"
@@ -746,7 +754,7 @@ private:
             dst->custom_name = GetUserString(src->name);
         }
 
-        dst->status = src->status;
+        dst->status = static_cast<RideStatus>(src->status);
 
         // Flags
         dst->lifecycle_flags = src->lifecycle_flags;
@@ -1475,38 +1483,44 @@ private:
         // Build tile pointer cache (needed to get the first element at a certain location)
         auto tilePointerIndex = TilePointerIndex<RCT12TileElement>(RCT1_MAX_MAP_SIZE, _s4.tile_elements);
 
-        TileElement* dstElement = gTileElements;
-
+        std::vector<TileElement> tileElements;
         for (TileCoordsXY coords = { 0, 0 }; coords.y < MAXIMUM_MAP_SIZE_TECHNICAL; coords.y++)
         {
             for (coords.x = 0; coords.x < MAXIMUM_MAP_SIZE_TECHNICAL; coords.x++)
             {
                 if (coords.x >= RCT1_MAX_MAP_SIZE || coords.y >= RCT1_MAX_MAP_SIZE)
                 {
-                    dstElement->ClearAs(TILE_ELEMENT_TYPE_SURFACE);
-                    dstElement->SetLastForTile(true);
-                    dstElement++;
-                    continue;
+                    auto& dstElement = tileElements.emplace_back();
+                    dstElement.ClearAs(TILE_ELEMENT_TYPE_SURFACE);
+                    dstElement.SetLastForTile(true);
                 }
-
-                // This is the equivalent of map_get_first_element_at(x, y), but on S4 data.
-                RCT12TileElement* srcElement = tilePointerIndex.GetFirstElementAt(coords);
-                do
+                else
                 {
-                    if (srcElement->base_height == RCT12_MAX_ELEMENT_HEIGHT)
-                        continue;
+                    // This is the equivalent of map_get_first_element_at(x, y), but on S4 data.
+                    RCT12TileElement* srcElement = tilePointerIndex.GetFirstElementAt(coords);
+                    do
+                    {
+                        if (srcElement->base_height == RCT12_MAX_ELEMENT_HEIGHT)
+                            continue;
 
-                    auto numAddedElements = ImportTileElement(dstElement, srcElement);
-                    dstElement += numAddedElements;
-                } while (!(srcElement++)->IsLastForTile());
+                        // Reserve 8 elements for import
+                        auto originalSize = tileElements.size();
+                        tileElements.resize(originalSize + 16);
+                        auto dstElement = tileElements.data() + originalSize;
+                        auto numAddedElements = ImportTileElement(dstElement, srcElement);
+                        tileElements.resize(originalSize + numAddedElements);
+                    } while (!(srcElement++)->IsLastForTile());
 
-                // Set last element flag in case the original last element was never added
-                (dstElement - 1)->SetLastForTile(true);
+                    // Set last element flag in case the original last element was never added
+                    if (tileElements.size() > 0)
+                    {
+                        tileElements.back().SetLastForTile(true);
+                    }
+                }
             }
         }
 
-        map_update_tile_pointers();
-
+        SetTileElements(std::move(tileElements));
         FixEntrancePositions();
     }
 

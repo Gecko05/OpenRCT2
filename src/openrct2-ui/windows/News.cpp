@@ -18,7 +18,7 @@
 #include <openrct2/peep/Peep.h>
 #include <openrct2/peep/Staff.h>
 #include <openrct2/sprites.h>
-#include <openrct2/world/Sprite.h>
+#include <openrct2/world/Entity.h>
 
 static constexpr const rct_string_id WINDOW_TITLE = STR_RECENT_MESSAGES;
 static constexpr const int32_t WH = 300;
@@ -44,7 +44,7 @@ static rct_widget window_news_widgets[] = {
 class NewsWindow final : public Window
 {
 private:
-    int32_t _pressedNewsItemIndex, _pressedButtonIndex, _suspendUpdateTicks;
+    int32_t _pressedNewsItemIndex{}, _pressedButtonIndex{}, _suspendUpdateTicks{};
     static int32_t CalculateItemHeight()
     {
         return 4 * font_get_line_height(FontSpriteBase::SMALL) + 2;
@@ -54,7 +54,7 @@ public:
     void OnOpen() override
     {
         widgets = window_news_widgets;
-        enabled_widgets = (1 << WIDX_CLOSE) | (1 << WIDX_SETTINGS);
+        enabled_widgets = (1ULL << WIDX_CLOSE) | (1ULL << WIDX_SETTINGS);
         WindowInitScrollWidgets(this);
         _pressedNewsItemIndex = -1;
 

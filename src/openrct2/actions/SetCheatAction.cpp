@@ -19,12 +19,14 @@
 #include "../localisation/StringIds.h"
 #include "../network/network.h"
 #include "../ride/Ride.h"
+#include "../ride/Vehicle.h"
 #include "../scenario/Scenario.h"
 #include "../ui/UiContext.h"
 #include "../util/Util.h"
 #include "../windows/Intent.h"
 #include "../world/Banner.h"
 #include "../world/Climate.h"
+#include "../world/Duck.h"
 #include "../world/Footpath.h"
 #include "../world/Location.hpp"
 #include "../world/Map.h"
@@ -107,7 +109,7 @@ GameActions::Result::Ptr SetCheatAction::Execute() const
             gCheatsShowVehiclesFromOtherTrackTypes = _param1 != 0;
             break;
         case CheatType::FastLiftHill:
-            gCheatsFastLiftHill = _param1 != 0;
+            gCheatsUnlockOperatingLimits = _param1 != 0;
             break;
         case CheatType::DisableBrakesFailure:
             gCheatsDisableBrakesFailure = _param1 != 0;
@@ -415,21 +417,20 @@ void SetCheatAction::RemoveLitter() const
         sprite_remove(litter);
     }
 
-    tile_element_iterator it;
-    rct_scenery_entry* sceneryEntry;
-
+    tile_element_iterator it{};
     tile_element_iterator_begin(&it);
     do
     {
         if (it.element->GetType() != TILE_ELEMENT_TYPE_PATH)
             continue;
 
-        if (!(it.element)->AsPath()->HasAddition())
+        auto* path = it.element->AsPath();
+        if (path->HasAddition())
             continue;
 
-        sceneryEntry = it.element->AsPath()->GetAdditionEntry();
-        if (sceneryEntry->path_bit.flags & PATH_BIT_FLAG_IS_BIN)
-            it.element->AsPath()->SetAdditionStatus(0xFF);
+        auto* pathBitEntry = path->GetAdditionEntry();
+        if (pathBitEntry != nullptr && pathBitEntry->flags & PATH_BIT_FLAG_IS_BIN)
+            path->SetAdditionStatus(0xFF);
 
     } while (tile_element_iterator_next(&it));
 

@@ -73,8 +73,8 @@ public:
     void OnOpen() override
     {
         widgets = window_sign_widgets;
-        enabled_widgets = (1 << WIDX_CLOSE) | (1 << WIDX_SIGN_TEXT) | (1 << WIDX_SIGN_DEMOLISH) | (1 << WIDX_MAIN_COLOUR)
-            | (1 << WIDX_TEXT_COLOUR);
+        enabled_widgets = (1ULL << WIDX_CLOSE) | (1ULL << WIDX_SIGN_TEXT) | (1ULL << WIDX_SIGN_DEMOLISH)
+            | (1ULL << WIDX_MAIN_COLOUR) | (1ULL << WIDX_TEXT_COLOUR);
 
         WindowInitScrollWidgets(this);
     }
@@ -102,15 +102,25 @@ public:
 
         if (_isSmall)
         {
-            list_information_type = tileElement->AsWall()->GetPrimaryColour();
-            var_492 = tileElement->AsWall()->GetSecondaryColour();
-            SceneryEntry = tileElement->AsWall()->GetEntryIndex();
+            auto* wallElement = tileElement->AsWall();
+            if (wallElement == nullptr)
+            {
+                return false;
+            }
+            list_information_type = wallElement->GetPrimaryColour();
+            var_492 = wallElement->GetSecondaryColour();
+            SceneryEntry = wallElement->GetEntryIndex();
         }
         else
         {
-            list_information_type = tileElement->AsLargeScenery()->GetPrimaryColour();
-            var_492 = tileElement->AsLargeScenery()->GetSecondaryColour();
-            SceneryEntry = tileElement->AsLargeScenery()->GetEntryIndex();
+            auto* sceneryElement = tileElement->AsLargeScenery();
+            if (sceneryElement == nullptr)
+            {
+                return false;
+            }
+            list_information_type = sceneryElement->GetPrimaryColour();
+            var_492 = sceneryElement->GetSecondaryColour();
+            SceneryEntry = sceneryElement->GetEntryIndex();
         }
 
         // Create viewport
@@ -222,32 +232,32 @@ public:
 
         if (_isSmall)
         {
-            rct_scenery_entry* scenery_entry = get_wall_entry(SceneryEntry);
+            auto* wallEntry = get_wall_entry(SceneryEntry);
 
             main_colour_btn->type = WindowWidgetType::Empty;
             text_colour_btn->type = WindowWidgetType::Empty;
 
-            if (scenery_entry->wall.flags & WALL_SCENERY_HAS_PRIMARY_COLOUR)
+            if (wallEntry->flags & WALL_SCENERY_HAS_PRIMARY_COLOUR)
             {
                 main_colour_btn->type = WindowWidgetType::ColourBtn;
             }
-            if (scenery_entry->wall.flags & WALL_SCENERY_HAS_SECONDARY_COLOUR)
+            if (wallEntry->flags & WALL_SCENERY_HAS_SECONDARY_COLOUR)
             {
                 text_colour_btn->type = WindowWidgetType::ColourBtn;
             }
         }
         else
         {
-            rct_scenery_entry* scenery_entry = get_large_scenery_entry(SceneryEntry);
+            auto* sceneryEntry = get_large_scenery_entry(SceneryEntry);
 
             main_colour_btn->type = WindowWidgetType::Empty;
             text_colour_btn->type = WindowWidgetType::Empty;
 
-            if (scenery_entry->large_scenery.flags & LARGE_SCENERY_FLAG_HAS_PRIMARY_COLOUR)
+            if (sceneryEntry->flags & LARGE_SCENERY_FLAG_HAS_PRIMARY_COLOUR)
             {
                 main_colour_btn->type = WindowWidgetType::ColourBtn;
             }
-            if (scenery_entry->large_scenery.flags & LARGE_SCENERY_FLAG_HAS_SECONDARY_COLOUR)
+            if (sceneryEntry->flags & LARGE_SCENERY_FLAG_HAS_SECONDARY_COLOUR)
             {
                 text_colour_btn->type = WindowWidgetType::ColourBtn;
             }

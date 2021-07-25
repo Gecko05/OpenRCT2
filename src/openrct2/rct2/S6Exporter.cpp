@@ -31,6 +31,7 @@
 #include "../object/ObjectLimits.h"
 #include "../object/ObjectManager.h"
 #include "../object/ObjectRepository.h"
+#include "../peep/Peep.h"
 #include "../peep/Staff.h"
 #include "../rct12/SawyerChunkWriter.h"
 #include "../ride/Ride.h"
@@ -39,12 +40,20 @@
 #include "../ride/ShopItem.h"
 #include "../ride/Station.h"
 #include "../ride/TrackData.h"
+#include "../ride/Vehicle.h"
 #include "../scenario/Scenario.h"
 #include "../util/SawyerCoding.h"
 #include "../util/Util.h"
+#include "../world/Balloon.h"
 #include "../world/Climate.h"
+#include "../world/Duck.h"
+#include "../world/EntityList.h"
+#include "../world/Fountain.h"
+#include "../world/Litter.h"
 #include "../world/MapAnimation.h"
+#include "../world/MoneyEffect.h"
 #include "../world/Park.h"
+#include "../world/Particle.h"
 #include "../world/Sprite.h"
 
 #include <algorithm>
@@ -186,7 +195,7 @@ void S6Exporter::Export()
     _s6.scenario_srand_1 = state.s1;
 
     // Map elements must be reorganised prior to saving otherwise save may be invalid
-    map_reorganise_elements();
+    ReorganiseTileElements();
     ExportTileElements();
     ExportEntities();
     ExportParkName();
@@ -410,8 +419,8 @@ void S6Exporter::Export()
 
     // pad_13CE730
     // rct1_scenario_flags
-    _s6.wide_path_tile_loop_x = gWidePathTileLoopX;
-    _s6.wide_path_tile_loop_y = gWidePathTileLoopY;
+    _s6.wide_path_tile_loop_x = gWidePathTileLoopPosition.x;
+    _s6.wide_path_tile_loop_y = gWidePathTileLoopPosition.y;
     // pad_13CE778
 
     String::Set(_s6.scenario_filename, sizeof(_s6.scenario_filename), gScenarioFileName);
@@ -512,7 +521,7 @@ void S6Exporter::ExportRide(rct2_ride* dst, const Ride* src)
     }
 
     // pad_046;
-    dst->status = src->status;
+    dst->status = EnumValue(src->status);
 
     bool useDefaultName = true;
     if (!src->custom_name.empty())
@@ -770,7 +779,7 @@ void S6Exporter::ExportRide(rct2_ride* dst, const Ride* src)
 
 void S6Exporter::ExportRideRatingsCalcData()
 {
-    const auto& src = gRideRatingsCalcData;
+    const auto& src = gRideRatingUpdateState;
     auto& dst = _s6.ride_ratings_calc_data;
     dst.proximity_x = src.Proximity.x;
     dst.proximity_y = src.Proximity.y;
@@ -1571,10 +1580,16 @@ void S6Exporter::ExportMapAnimations()
 
 void S6Exporter::ExportTileElements()
 {
+    const auto& tileElements = GetTileElements();
     for (uint32_t index = 0; index < RCT2_MAX_TILE_ELEMENTS; index++)
     {
-        auto src = &gTileElements[index];
         auto dst = &_s6.tile_elements[index];
+        if (index >= tileElements.size())
+        {
+            dst = {};
+            continue;
+        }
+        auto src = &tileElements[index];
         if (src->base_height == MAX_ELEMENT_HEIGHT)
         {
             std::memcpy(dst, src, sizeof(*dst));
@@ -1589,10 +1604,10 @@ void S6Exporter::ExportTileElements()
                 ExportTileElement(dst, src);
         }
     }
-    _s6.next_free_tile_element_pointer_index = gNextFreeTileElementPointerIndex;
+    _s6.next_free_tile_element_pointer_index = static_cast<uint32_t>(tileElements.size());
 }
 
-void S6Exporter::ExportTileElement(RCT12TileElement* dst, TileElement* src)
+void S6Exporter::ExportTileElement(RCT12TileElement* dst, const TileElement* src)
 {
     // Todo: allow for changing definition of OpenRCT2 tile element types - replace with a map
     uint8_t tileElementType = src->GetType();
@@ -1739,7 +1754,7 @@ void S6Exporter::ExportTileElement(RCT12TileElement* dst, TileElement* src)
             dst2->SetAnimationIsBackwards(src2->AnimationIsBackwards());
 
             auto entry = src2->GetEntry();
-            if (entry != nullptr && entry->wall.scrolling_mode != SCROLLING_MODE_NONE)
+            if (entry != nullptr && entry->scrolling_mode != SCROLLING_MODE_NONE)
             {
                 auto bannerIndex = src2->GetBannerIndex();
                 if (bannerIndex != BANNER_INDEX_NULL)
@@ -1761,7 +1776,7 @@ void S6Exporter::ExportTileElement(RCT12TileElement* dst, TileElement* src)
             dst2->SetSecondaryColour(src2->GetSecondaryColour());
 
             auto entry = src2->GetEntry();
-            if (entry != nullptr && entry->large_scenery.scrolling_mode != SCROLLING_MODE_NONE)
+            if (entry != nullptr && entry->scrolling_mode != SCROLLING_MODE_NONE)
             {
                 auto bannerIndex = src2->GetBannerIndex();
                 if (bannerIndex != BANNER_INDEX_NULL)
@@ -1843,7 +1858,6 @@ int32_t scenario_save(const utf8* path, int32_t flags)
         window_close_construction_windows();
     }
 
-    map_reorganise_elements();
     viewport_set_saved_view();
 
     bool result = false;

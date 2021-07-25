@@ -25,6 +25,7 @@
 #include "../ui/WindowManager.h"
 #include "../util/SawyerCoding.h"
 #include "../world/EntityList.h"
+#include "../world/EntityTweener.h"
 #include "../world/Location.hpp"
 #include "../world/Sprite.h"
 #include "network.h"
@@ -36,7 +37,7 @@
 // This string specifies which version of network stream current build uses.
 // It is used for making sure only compatible builds get connected, even within
 // single OpenRCT2 version.
-#define NETWORK_STREAM_VERSION "16"
+#define NETWORK_STREAM_VERSION "0"
 #define NETWORK_STREAM_ID OPENRCT2_VERSION "-" NETWORK_STREAM_VERSION
 
 static Peep* _pickup_peep = nullptr;
@@ -2741,7 +2742,7 @@ bool NetworkBase::LoadMap(IStream* stream)
         gCheatsEnableChainLiftOnAllTrack = stream->ReadValue<uint8_t>() != 0;
         gCheatsShowAllOperatingModes = stream->ReadValue<uint8_t>() != 0;
         gCheatsShowVehiclesFromOtherTrackTypes = stream->ReadValue<uint8_t>() != 0;
-        gCheatsFastLiftHill = stream->ReadValue<uint8_t>() != 0;
+        gCheatsUnlockOperatingLimits = stream->ReadValue<uint8_t>() != 0;
         gCheatsDisableBrakesFailure = stream->ReadValue<uint8_t>() != 0;
         gCheatsDisableAllBreakdowns = stream->ReadValue<uint8_t>() != 0;
         gCheatsBuildInPauseMode = stream->ReadValue<uint8_t>() != 0;
@@ -2769,7 +2770,6 @@ bool NetworkBase::LoadMap(IStream* stream)
 bool NetworkBase::SaveMap(IStream* stream, const std::vector<const ObjectRepositoryItem*>& objects) const
 {
     bool result = false;
-    map_reorganise_elements();
     viewport_set_saved_view();
     try
     {
@@ -2791,7 +2791,7 @@ bool NetworkBase::SaveMap(IStream* stream, const std::vector<const ObjectReposit
         stream->WriteValue<uint8_t>(gCheatsEnableChainLiftOnAllTrack);
         stream->WriteValue<uint8_t>(gCheatsShowAllOperatingModes);
         stream->WriteValue<uint8_t>(gCheatsShowVehiclesFromOtherTrackTypes);
-        stream->WriteValue<uint8_t>(gCheatsFastLiftHill);
+        stream->WriteValue<uint8_t>(gCheatsUnlockOperatingLimits);
         stream->WriteValue<uint8_t>(gCheatsDisableBrakesFailure);
         stream->WriteValue<uint8_t>(gCheatsDisableAllBreakdowns);
         stream->WriteValue<uint8_t>(gCheatsBuildInPauseMode);

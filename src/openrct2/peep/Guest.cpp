@@ -25,16 +25,20 @@
 #include "../ride/ShopItem.h"
 #include "../ride/Station.h"
 #include "../ride/Track.h"
+#include "../ride/Vehicle.h"
 #include "../scenario/Scenario.h"
 #include "../scripting/HookEngine.h"
 #include "../scripting/ScriptEngine.h"
 #include "../util/Util.h"
 #include "../windows/Intent.h"
+#include "../world/Balloon.h"
 #include "../world/Climate.h"
 #include "../world/Footpath.h"
 #include "../world/LargeScenery.h"
 #include "../world/Map.h"
+#include "../world/MoneyEffect.h"
 #include "../world/Park.h"
+#include "../world/Particle.h"
 #include "../world/Scenery.h"
 #include "../world/Sprite.h"
 #include "../world/Surface.h"
@@ -44,6 +48,7 @@
 #include "Staff.h"
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 
 using namespace OpenRCT2;
@@ -428,11 +433,11 @@ template<> bool SpriteBase::Is<Guest>() const
     return Type == EntityType::Guest;
 }
 
-bool Guest::GuestHasValidXY() const
+static bool IsValidLocation(const CoordsXYZ& coords)
 {
-    if (x != LOCATION_NULL)
+    if (coords.x != LOCATION_NULL)
     {
-        if (map_is_location_valid({ x, y }))
+        if (map_is_location_valid(coords))
         {
             return true;
         }
@@ -441,17 +446,23 @@ bool Guest::GuestHasValidXY() const
     return false;
 }
 
-void Guest::ApplyEasterEggToNearbyGuests(easter_egg_function easter_egg)
+template<void (Guest::*EasterEggFunc)(Guest*)> static void ApplyEasterEggToNearbyGuests(Guest* guest)
 {
-    if (!GuestHasValidXY())
+    const auto guestLoc = guest->GetLocation();
+    if (!IsValidLocation(guestLoc))
         return;
 
-    for (auto* otherGuest : EntityTileList<Guest>({ x, y }))
+    for (auto* otherGuest : EntityTileList<Guest>(guestLoc))
     {
-        auto zDiff = std::abs(otherGuest->z - z);
+        if (otherGuest == guest)
+        {
+            // Can not apply effect on self.
+            continue;
+        }
+        auto zDiff = std::abs(otherGuest->z - guestLoc.z);
         if (zDiff <= 32)
         {
-            (*this.*easter_egg)(otherGuest);
+            std::invoke(EasterEggFunc, *guest, otherGuest);
         }
     }
 }
@@ -486,8 +497,6 @@ void Guest::GivePassingPeepsPizza(Guest* passingPeep)
 
 void Guest::MakePassingPeepsSick(Guest* passingPeep)
 {
-    if (this == passingPeep)
-        return;
     if (passingPeep->State != PeepState::Walking)
         return;
 
@@ -502,8 +511,6 @@ void Guest::MakePassingPeepsSick(Guest* passingPeep)
 
 void Guest::GivePassingPeepsIceCream(Guest* passingPeep)
 {
-    if (this == passingPeep)
-        return;
     if (passingPeep->HasItem(ShopItem::IceCream))
         return;
 
@@ -519,17 +526,22 @@ void Guest::UpdateEasterEggInteractions()
 {
     if (PeepFlags & PEEP_FLAGS_PURPLE)
     {
-        ApplyEasterEggToNearbyGuests(&Guest::GivePassingPeepsPurpleClothes);
+        ApplyEasterEggToNearbyGuests<&Guest::GivePassingPeepsPurpleClothes>(this);
     }
 
     if (PeepFlags & PEEP_FLAGS_PIZZA)
     {
-        ApplyEasterEggToNearbyGuests(&Guest::GivePassingPeepsPizza);
+        ApplyEasterEggToNearbyGuests<&Guest::GivePassingPeepsPizza>(this);
     }
 
     if (PeepFlags & PEEP_FLAGS_CONTAGIOUS)
     {
-        ApplyEasterEggToNearbyGuests(&Guest::MakePassingPeepsSick);
+        ApplyEasterEggToNearbyGuests<&Guest::MakePassingPeepsSick>(this);
+    }
+
+    if (PeepFlags & PEEP_FLAGS_ICE_CREAM)
+    {
+        ApplyEasterEggToNearbyGuests<&Guest::GivePassingPeepsIceCream>(this);
     }
 
     if (PeepFlags & PEEP_FLAGS_JOY)
@@ -544,11 +556,6 @@ void Guest::UpdateEasterEggInteractions()
                 UpdateCurrentActionSpriteType();
             }
         }
-    }
-
-    if (PeepFlags & PEEP_FLAGS_ICE_CREAM)
-    {
-        ApplyEasterEggToNearbyGuests(&Guest::GivePassingPeepsIceCream);
     }
 }
 
@@ -891,8 +898,8 @@ void Guest::Tick128UpdateGuest(int32_t index)
             {
                 OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::Crash, { x, y, z });
 
-                sprite_misc_explosion_cloud_create({ x, y, z + 16 });
-                sprite_misc_explosion_flare_create({ x, y, z + 16 });
+                ExplosionCloud::Create({ x, y, z + 16 });
+                ExplosionFlare::Create({ x, y, z + 16 });
 
                 Remove();
                 return;
@@ -1144,9 +1151,8 @@ void Guest::Tick128UpdateGuest(int32_t index)
                         // Check if the footpath has a queue line TV monitor on it
                         if (pathElement->HasAddition() && !pathElement->AdditionIsGhost())
                         {
-                            auto pathSceneryIndex = pathElement->GetAdditionEntryIndex();
-                            rct_scenery_entry* sceneryEntry = get_footpath_item_entry(pathSceneryIndex);
-                            if (sceneryEntry != nullptr && (sceneryEntry->path_bit.flags & PATH_BIT_FLAG_IS_QUEUE_SCREEN))
+                            auto* pathAddEntry = pathElement->GetAdditionEntry();
+                            if (pathAddEntry != nullptr && (pathAddEntry->flags & PATH_BIT_FLAG_IS_QUEUE_SCREEN))
                             {
                                 found = true;
                             }
@@ -1688,9 +1694,8 @@ bool Guest::DecideAndBuyItem(Ride* ride, ShopItem shopItem, money32 price)
  * ride's satisfaction value.
  *  rct2: 0x0069545B
  */
-void Guest::OnEnterRide(ride_id_t rideIndex)
+void Guest::OnEnterRide(Ride* ride)
 {
-    auto ride = get_ride(rideIndex);
     if (ride == nullptr)
         return;
 
@@ -1722,13 +1727,12 @@ void Guest::OnEnterRide(ride_id_t rideIndex)
  *
  *  rct2: 0x0069576E
  */
-void Guest::OnExitRide(ride_id_t rideIndex)
+void Guest::OnExitRide(Ride* ride)
 {
-    auto ride = get_ride(rideIndex);
     if (PeepFlags & PEEP_FLAGS_RIDE_SHOULD_BE_MARKED_AS_FAVOURITE)
     {
         PeepFlags &= ~PEEP_FLAGS_RIDE_SHOULD_BE_MARKED_AS_FAVOURITE;
-        FavouriteRide = rideIndex;
+        FavouriteRide = ride->id;
         // TODO fix this flag name or add another one
         WindowInvalidateFlags |= PEEP_INVALIDATE_STAFF_STATS;
     }
@@ -1741,7 +1745,7 @@ void Guest::OnExitRide(ride_id_t rideIndex)
 
     if (ride != nullptr && peep_should_go_on_ride_again(this, ride))
     {
-        GuestHeadingToRideId = rideIndex;
+        GuestHeadingToRideId = ride->id;
         GuestIsLostCountdown = 200;
         ResetPathfindGoal();
         WindowInvalidateFlags |= PEEP_INVALIDATE_PEEP_ACTION;
@@ -1757,7 +1761,7 @@ void Guest::OnExitRide(ride_id_t rideIndex)
 
     if (ride != nullptr && peep_really_liked_ride(this, ride))
     {
-        InsertNewThought(PeepThoughtType::WasGreat, rideIndex);
+        InsertNewThought(PeepThoughtType::WasGreat, ride->id);
 
         static constexpr OpenRCT2::Audio::SoundId laughs[3] = { OpenRCT2::Audio::SoundId::Laugh1,
                                                                 OpenRCT2::Audio::SoundId::Laugh2,
@@ -1898,7 +1902,7 @@ bool Guest::ShouldGoOnRide(Ride* ride, int32_t entranceNum, bool atQueue, bool t
     // Indicates whether a peep is physically at the ride, or is just thinking about going on the ride.
     bool peepAtRide = !thinking;
 
-    if (ride->status == RIDE_STATUS_OPEN && !(ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN))
+    if (ride->status == RideStatus::Open && !(ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN))
     {
         // Peeps that are leaving the park will refuse to go on any rides, with the exception of free transport rides.
         assert(ride->type < std::size(RideTypeDescriptors));
@@ -2883,24 +2887,23 @@ static PeepThoughtType peep_assess_surroundings(int16_t centre_x, int16_t centre
             for (auto* tileElement : TileElementsView({ x, y }))
             {
                 Ride* ride;
-                rct_scenery_entry* scenery;
 
                 switch (tileElement->GetType())
                 {
                     case TILE_ELEMENT_TYPE_PATH:
+                    {
                         if (!tileElement->AsPath()->HasAddition())
                             break;
 
-                        scenery = tileElement->AsPath()->GetAdditionEntry();
-                        if (scenery == nullptr)
+                        auto* pathAddEntry = tileElement->AsPath()->GetAdditionEntry();
+                        if (pathAddEntry == nullptr)
                         {
                             return PeepThoughtType::None;
                         }
                         if (tileElement->AsPath()->AdditionIsGhost())
                             break;
 
-                        if (scenery->path_bit.flags
-                            & (PATH_BIT_FLAG_JUMPING_FOUNTAIN_WATER | PATH_BIT_FLAG_JUMPING_FOUNTAIN_SNOW))
+                        if (pathAddEntry->flags & (PATH_BIT_FLAG_JUMPING_FOUNTAIN_WATER | PATH_BIT_FLAG_JUMPING_FOUNTAIN_SNOW))
                         {
                             num_fountains++;
                             break;
@@ -2910,6 +2913,7 @@ static PeepThoughtType peep_assess_surroundings(int16_t centre_x, int16_t centre
                             num_rubbish++;
                         }
                         break;
+                    }
                     case TILE_ELEMENT_TYPE_LARGE_SCENERY:
                     case TILE_ELEMENT_TYPE_SMALL_SCENERY:
                         num_scenery++;
@@ -2918,7 +2922,7 @@ static PeepThoughtType peep_assess_surroundings(int16_t centre_x, int16_t centre
                         ride = get_ride(tileElement->AsTrack()->GetRideIndex());
                         if (ride != nullptr)
                         {
-                            if (ride->lifecycle_flags & RIDE_LIFECYCLE_MUSIC && ride->status != RIDE_STATUS_CLOSED
+                            if (ride->lifecycle_flags & RIDE_LIFECYCLE_MUSIC && ride->status != RideStatus::Closed
                                 && !(ride->lifecycle_flags & (RIDE_LIFECYCLE_BROKEN_DOWN | RIDE_LIFECYCLE_CRASHED)))
                             {
                                 if (ride->type == RIDE_TYPE_MERRY_GO_ROUND)
@@ -3282,7 +3286,7 @@ void Guest::UpdateBuying()
         return;
 
     auto ride = get_ride(CurrentRide);
-    if (ride == nullptr || ride->status != RIDE_STATUS_OPEN)
+    if (ride == nullptr || ride->status != RideStatus::Open)
     {
         SetState(PeepState::Falling);
         return;
@@ -3432,7 +3436,7 @@ void Guest::UpdateRideAtEntrance()
             return;
     }
 
-    if (ride->status != RIDE_STATUS_OPEN || ride->vehicle_change_timeout != 0)
+    if (ride->status != RideStatus::Open || ride->vehicle_change_timeout != 0)
     {
         peep_update_ride_at_entrance_try_leave(this);
         return;
@@ -3489,7 +3493,7 @@ static void peep_update_ride_leave_entrance_maze(Guest* peep, Ride* ride, Coords
     peep->SetDestination(entrance_loc, 3);
 
     ride->cur_num_customers++;
-    peep->OnEnterRide(peep->CurrentRide);
+    peep->OnEnterRide(ride);
     peep->RideSubState = PeepRideSubState::MazePathfinding;
 }
 
@@ -3509,7 +3513,7 @@ static void peep_update_ride_leave_entrance_spiral_slide(Guest* peep, Ride* ride
     peep->CurrentCar = 0;
 
     ride->cur_num_customers++;
-    peep->OnEnterRide(peep->CurrentRide);
+    peep->OnEnterRide(ride);
     peep->RideSubState = PeepRideSubState::ApproachSpiralSlide;
 }
 
@@ -3869,7 +3873,7 @@ void Guest::UpdateRideFreeVehicleCheck()
 
     if (ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_NO_VEHICLES))
     {
-        if (ride->status != RIDE_STATUS_OPEN || ride->vehicle_change_timeout != 0 || (++RejoinQueueTimeout) == 0)
+        if (ride->status != RideStatus::Open || ride->vehicle_change_timeout != 0 || (++RejoinQueueTimeout) == 0)
         {
             peep_update_ride_no_free_vehicle_rejoin_queue(this, ride);
             return;
@@ -3948,7 +3952,7 @@ void Guest::UpdateRideFreeVehicleCheck()
     {
         return;
     }
-    if (ride->status == RIDE_STATUS_OPEN && ++RejoinQueueTimeout != 0
+    if (ride->status == RideStatus::Open && ++RejoinQueueTimeout != 0
         && !currentTrain->HasUpdateFlag(VEHICLE_UPDATE_FLAG_TRAIN_READY_DEPART))
     {
         return;
@@ -4012,7 +4016,7 @@ void Guest::UpdateRideEnterVehicle()
                     seatedGuest->SetState(PeepState::OnRide);
                     seatedGuest->GuestTimeOnRide = 0;
                     seatedGuest->RideSubState = PeepRideSubState::OnRide;
-                    seatedGuest->OnEnterRide(CurrentRide);
+                    seatedGuest->OnEnterRide(ride);
                 }
             }
 
@@ -4028,7 +4032,7 @@ void Guest::UpdateRideEnterVehicle()
 
             GuestTimeOnRide = 0;
             RideSubState = PeepRideSubState::OnRide;
-            OnEnterRide(CurrentRide);
+            OnEnterRide(ride);
         }
     }
 }
@@ -4552,7 +4556,7 @@ void Guest::UpdateRideApproachSpiralSlide()
     else if (waypoint == 2)
     {
         bool lastRide = false;
-        if (ride->status != RIDE_STATUS_OPEN)
+        if (ride->status != RideStatus::Open)
             lastRide = true;
         else if (CurrentCar++ != 0)
         {
@@ -4911,7 +4915,7 @@ void Guest::UpdateRideLeaveExit()
         return;
     }
 
-    OnExitRide(CurrentRide);
+    OnExitRide(ride);
 
     if (ride != nullptr && (PeepFlags & PEEP_FLAGS_TRACKING))
     {
@@ -4970,15 +4974,15 @@ void Guest::UpdateRideShopInteract()
     if (ride == nullptr)
         return;
 
-    const int16_t tileCenterX = NextLoc.x + 16;
-    const int16_t tileCenterY = NextLoc.y + 16;
+    const int16_t tileCentreX = NextLoc.x + 16;
+    const int16_t tileCentreY = NextLoc.y + 16;
     if (ride->type == RIDE_TYPE_FIRST_AID)
     {
         if (Nausea <= 35)
         {
             RideSubState = PeepRideSubState::LeaveShop;
 
-            SetDestination({ tileCenterX, tileCenterY }, 3);
+            SetDestination({ tileCentreX, tileCentreY }, 3);
             HappinessTarget = std::min(HappinessTarget + 30, PEEP_MAX_HAPPINESS);
             Happiness = HappinessTarget;
         }
@@ -5004,7 +5008,7 @@ void Guest::UpdateRideShopInteract()
 
     RideSubState = PeepRideSubState::LeaveShop;
 
-    SetDestination({ tileCenterX, tileCenterY }, 3);
+    SetDestination({ tileCentreX, tileCentreY }, 3);
 
     HappinessTarget = std::min(HappinessTarget + 30, PEEP_MAX_HAPPINESS);
     Happiness = HappinessTarget;
@@ -5355,13 +5359,13 @@ void Guest::UpdateWalking()
     {
         if (!tileElement->AsPath()->AdditionIsGhost())
         {
-            rct_scenery_entry* sceneryEntry = tileElement->AsPath()->GetAdditionEntry();
-            if (sceneryEntry == nullptr)
+            auto* pathAddEntry = tileElement->AsPath()->GetAdditionEntry();
+            if (pathAddEntry == nullptr)
             {
                 return;
             }
 
-            if (!(sceneryEntry->path_bit.flags & PATH_BIT_FLAG_IS_BENCH))
+            if (!(pathAddEntry->flags & PATH_BIT_FLAG_IS_BENCH))
                 positions_free = 9;
         }
     }
@@ -5437,7 +5441,7 @@ void Guest::UpdateQueuing()
         return;
     }
     auto ride = get_ride(CurrentRide);
-    if (ride == nullptr || ride->status != RIDE_STATUS_OPEN)
+    if (ride == nullptr || ride->status != RideStatus::Open)
     {
         RemoveFromQueue();
         SetState(PeepState::One);
@@ -5752,8 +5756,8 @@ void Guest::UpdateUsingBin()
                 if (!pathElement->HasAddition())
                     break;
 
-                rct_scenery_entry* sceneryEntry = pathElement->GetAdditionEntry();
-                if (!(sceneryEntry->path_bit.flags & PATH_BIT_FLAG_IS_BIN))
+                auto* pathAddEntry = pathElement->GetAdditionEntry();
+                if (!(pathAddEntry->flags & PATH_BIT_FLAG_IS_BIN))
                     break;
 
                 if (pathElement->IsBroken())
@@ -5864,8 +5868,8 @@ static PathElement* FindBench(const CoordsXYZ& loc)
         if (!pathElement->HasAddition())
             continue;
 
-        rct_scenery_entry* sceneryEntry = pathElement->GetAdditionEntry();
-        if (sceneryEntry == nullptr || !(sceneryEntry->path_bit.flags & PATH_BIT_FLAG_IS_BENCH))
+        auto* pathAddEntry = pathElement->GetAdditionEntry();
+        if (pathAddEntry == nullptr || !(pathAddEntry->flags & PATH_BIT_FLAG_IS_BENCH))
             continue;
 
         if (pathElement->IsBroken())
@@ -5953,8 +5957,8 @@ static PathElement* FindBin(const CoordsXYZ& loc)
         if (!pathElement->HasAddition())
             continue;
 
-        rct_scenery_entry* sceneryEntry = pathElement->GetAdditionEntry();
-        if (sceneryEntry == nullptr || !(sceneryEntry->path_bit.flags & PATH_BIT_FLAG_IS_BIN))
+        auto* pathAddEntry = pathElement->GetAdditionEntry();
+        if (pathAddEntry == nullptr || !(pathAddEntry->flags & PATH_BIT_FLAG_IS_BIN))
             continue;
 
         if (pathElement->IsBroken())
@@ -6031,8 +6035,8 @@ static PathElement* FindBreakableElement(const CoordsXYZ& loc)
         if (!pathElement->HasAddition())
             continue;
 
-        rct_scenery_entry* sceneryEntry = pathElement->GetAdditionEntry();
-        if (sceneryEntry == nullptr || !(sceneryEntry->path_bit.flags & PATH_BIT_FLAG_BREAKABLE))
+        auto* pathAddEntry = pathElement->GetAdditionEntry();
+        if (pathAddEntry == nullptr || !(pathAddEntry->flags & PATH_BIT_FLAG_BREAKABLE))
             continue;
 
         if (pathElement->IsBroken())
@@ -6188,7 +6192,7 @@ bool loc_690FD0(Peep* peep, ride_id_t* rideToView, uint8_t* rideSeatToView, Tile
     if (ride->excitement == RIDE_RATING_UNDEFINED)
     {
         *rideSeatToView = 1;
-        if (ride->status != RIDE_STATUS_OPEN)
+        if (ride->status != RideStatus::Open)
         {
             if (tileElement->GetClearanceZ() > peep->NextLoc.z + (8 * COORDS_Z_STEP))
             {
@@ -6201,7 +6205,7 @@ bool loc_690FD0(Peep* peep, ride_id_t* rideToView, uint8_t* rideSeatToView, Tile
     else
     {
         *rideSeatToView = 0;
-        if (ride->status == RIDE_STATUS_OPEN && !(ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN))
+        if (ride->status == RideStatus::Open && !(ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN))
         {
             if (tileElement->GetClearanceZ() > peep->NextLoc.z + (8 * COORDS_Z_STEP))
             {
@@ -6251,7 +6255,7 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         if (tileElement->GetDirection() != edge)
             continue;
         auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->wall.flags2 & WALL_SCENERY_2_IS_OPAQUE))
+        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
             continue;
         if (peep->NextLoc.z + (4 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
             continue;
@@ -6290,7 +6294,7 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         if (direction_reverse(tileElement->GetDirection()) != edge)
             continue;
         auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->wall.flags2 & WALL_SCENERY_2_IS_OPAQUE))
+        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
             continue;
         // TODO: Check whether this shouldn't be <=, as the other loops use. If so, also extract as loop A.
         if (peep->NextLoc.z + (4 * COORDS_Z_STEP) >= tileElement->GetBaseZ())
@@ -6329,7 +6333,7 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
         {
             const auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
-            if (sceneryEntry == nullptr || !(sceneryEntry->large_scenery.flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
+            if (sceneryEntry == nullptr || !(sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
             {
                 continue;
             }
@@ -6369,7 +6373,7 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         if (tileElement->GetType() == TILE_ELEMENT_TYPE_WALL)
         {
             auto wallEntry = tileElement->AsWall()->GetEntry();
-            if (wallEntry == nullptr || (wallEntry->wall.flags2 & WALL_SCENERY_2_IS_OPAQUE))
+            if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
             {
                 continue;
             }
@@ -6409,7 +6413,7 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         if (direction_reverse(tileElement->GetDirection()) != edge)
             continue;
         auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->wall.flags2 & WALL_SCENERY_2_IS_OPAQUE))
+        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
             continue;
         if (peep->NextLoc.z + (6 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
             continue;
@@ -6445,8 +6449,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
         if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
         {
-            auto sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
-            if (!(sceneryEntry == nullptr || sceneryEntry->large_scenery.flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
+            auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
+            if (!(sceneryEntry == nullptr || sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
             {
                 continue;
             }
@@ -6486,7 +6490,7 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         if (tileElement->GetType() == TILE_ELEMENT_TYPE_WALL)
         {
             auto wallEntry = tileElement->AsWall()->GetEntry();
-            if (wallEntry == nullptr || (wallEntry->wall.flags2 & WALL_SCENERY_2_IS_OPAQUE))
+            if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
             {
                 continue;
             }
@@ -6525,7 +6529,7 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         if (direction_reverse(tileElement->GetDirection()) != edge)
             continue;
         auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->wall.flags2 & WALL_SCENERY_2_IS_OPAQUE))
+        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
             continue;
         if (peep->NextLoc.z + (8 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
             continue;
@@ -6561,8 +6565,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
         if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
         {
-            const auto* entry = tileElement->AsLargeScenery()->GetEntry();
-            if (entry == nullptr || !(entry->large_scenery.flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
+            const auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
+            if (sceneryEntry == nullptr || !(sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
             {
                 continue;
             }
