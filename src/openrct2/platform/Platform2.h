@@ -28,28 +28,45 @@ enum class SPECIAL_FOLDER
 namespace Platform
 {
     uint32_t GetTicks();
-    std::string GetEnvironmentVariable(const std::string& name);
+    std::string GetEnvironmentVariable(std::string_view name);
     std::string GetFolderPath(SPECIAL_FOLDER folder);
     std::string GetInstallPath();
     std::string GetDocsPath();
     std::string GetCurrentExecutablePath();
     std::string GetCurrentExecutableDirectory();
     bool ShouldIgnoreCase();
-    bool FileExists(const std::string path);
     bool IsPathSeparator(char c);
-    utf8* GetAbsolutePath(utf8* buffer, size_t bufferSize, const utf8* relativePath);
-    uint64_t GetLastModified(const std::string& path);
+    uint64_t GetLastModified(std::string_view path);
     uint64_t GetFileSize(std::string_view path);
-    std::string ResolveCasing(const std::string& path, bool fileExists);
+    std::string ResolveCasing(std::string_view path, bool fileExists);
+    std::string SanitiseFilename(std::string_view originalName);
+
+    uint16_t GetLocaleLanguage();
+    CurrencyType GetLocaleCurrency();
+    CurrencyType GetCurrencyValue(const char* currCode);
+    MeasurementFormat GetLocaleMeasurementFormat();
+    uint8_t GetLocaleDateFormat();
+    TemperatureUnit GetLocaleTemperatureFormat();
     rct2_time GetTimeLocal();
     rct2_date GetDateLocal();
-    bool FindApp(const std::string& app, std::string* output);
-    int32_t Execute(const std::string& command, std::string* output = nullptr);
 
+    bool FindApp(std::string_view app, std::string* output);
+    int32_t Execute(std::string_view command, std::string* output = nullptr);
+    bool ProcessIsElevated();
+    float GetDefaultScale();
+
+    bool OriginalGameDataExists(std::string_view path);
+
+    std::string GetUsername();
+
+    std::string GetSteamPath();
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__)) || defined(__FreeBSD__)
     std::string GetEnvironmentPath(const char* name);
     std::string GetHomePath();
 #endif
+#ifndef NO_TTF
+    std::string GetFontPath(const TTFFontDescriptor& font);
+#endif // NO_TTF
 
     std::string FormatShortDate(std::time_t timestamp);
     std::string FormatTime(std::time_t timestamp);
@@ -62,6 +79,10 @@ namespace Platform
         const uint32_t iconIndex);
     void RemoveFileAssociations();
 #endif
+#ifdef __ANDROID__
+    void AndroidInitClassLoader();
+    jclass AndroidFindClass(JNIEnv* env, std::string_view name);
+#endif
 
     bool IsRunningInWine();
     bool IsColourTerminalSupported();
@@ -69,3 +90,15 @@ namespace Platform
     utf8* StrDecompToPrecomp(utf8* input);
     bool RequireNewWindow(bool openGL);
 } // namespace Platform
+
+#ifdef __ANDROID__
+class AndroidClassLoader
+{
+public:
+    AndroidClassLoader();
+    ~AndroidClassLoader();
+    static jobject _classLoader;
+    static jmethodID _findClassMethod;
+};
+
+#endif // __ANDROID__

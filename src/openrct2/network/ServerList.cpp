@@ -14,6 +14,7 @@
 #    include "../Context.h"
 #    include "../PlatformEnvironment.h"
 #    include "../config/Config.h"
+#    include "../core/File.h"
 #    include "../core/FileStream.h"
 #    include "../core/Guard.hpp"
 #    include "../core/Http.h"
@@ -95,20 +96,18 @@ std::optional<ServerListEntry> ServerListEntry::FromJson(json_t& server)
 
         return std::nullopt;
     }
-    else
-    {
-        ServerListEntry entry;
 
-        entry.Address = ip + ":" + std::to_string(port);
-        entry.Name = name;
-        entry.Description = description;
-        entry.Version = version;
-        entry.RequiresPassword = requiresPassword;
-        entry.Players = players;
-        entry.MaxPlayers = maxPlayers;
+    ServerListEntry entry;
 
-        return entry;
-    }
+    entry.Address = ip + ":" + std::to_string(port);
+    entry.Name = name;
+    entry.Description = description;
+    entry.Version = version;
+    entry.RequiresPassword = requiresPassword;
+    entry.Players = players;
+    entry.MaxPlayers = maxPlayers;
+
+    return entry;
 }
 
 void ServerList::Sort()
@@ -164,7 +163,7 @@ std::vector<ServerListEntry> ServerList::ReadFavourites() const
     {
         auto env = GetContext()->GetPlatformEnvironment();
         auto path = env->GetFilePath(PATHID::NETWORK_SERVERS);
-        if (Platform::FileExists(path))
+        if (File::Exists(path))
         {
             auto fs = FileStream(path, FILE_MODE_OPEN);
             auto numEntries = fs.ReadValue<uint32_t>();
@@ -215,9 +214,8 @@ bool ServerList::WriteFavourites(const std::vector<ServerListEntry>& entries) co
 {
     log_verbose("server_list_write(%d, 0x%p)", entries.size(), entries.data());
 
-    utf8 path[MAX_PATH];
-    platform_get_user_directory(path, nullptr, sizeof(path));
-    Path::Append(path, sizeof(path), "servers.cfg");
+    auto env = GetContext()->GetPlatformEnvironment();
+    auto path = Path::Combine(env->GetDirectoryPath(DIRBASE::USER), "servers.cfg");
 
     try
     {

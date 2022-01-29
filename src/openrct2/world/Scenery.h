@@ -7,8 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
-#ifndef _SCENERY_H_
-#define _SCENERY_H_
+#pragma once
 
 #include "../common.h"
 #include "../world/Location.hpp"
@@ -16,6 +15,7 @@
 #include "TileElement.h"
 
 #include <limits>
+#include <string_view>
 
 #define SCENERY_WITHER_AGE_THRESHOLD_1 0x28
 #define SCENERY_WITHER_AGE_THRESHOLD_2 0x37
@@ -132,6 +132,11 @@ struct SmallSceneryEntry : SceneryEntryBase
     uint16_t animation_mask;
     uint16_t num_frames;
     ObjectEntryIndex scenery_tab_id;
+
+    constexpr bool HasFlag(const uint32_t _flags) const
+    {
+        return (flags & _flags) != 0;
+    }
 };
 
 struct WallSceneryEntry : SceneryEntryBase
@@ -174,22 +179,11 @@ struct LargeSceneryText
     rct_large_scenery_text_glyph glyphs[256];
 
     LargeSceneryText() = default;
-
-    explicit LargeSceneryText(const rct_large_scenery_text& original)
-    {
-        for (size_t i = 0; i < std::size(original.offset); i++)
-        {
-            offset[i].x = original.offset[i].x;
-            offset[i].y = original.offset[i].y;
-        }
-        max_width = original.max_width;
-        flags = original.flags;
-        num_images = original.num_images;
-        for (size_t i = 0; i < std::size(original.glyphs); i++)
-        {
-            glyphs[i] = original.glyphs[i];
-        }
-    }
+    explicit LargeSceneryText(const rct_large_scenery_text& original);
+    const rct_large_scenery_text_glyph* GetGlyph(char32_t codepoint) const;
+    const rct_large_scenery_text_glyph& GetGlyph(char32_t codepoint, char32_t defaultCodepoint) const;
+    int32_t MeasureWidth(std::string_view text) const;
+    int32_t MeasureHeight(std::string_view text) const;
 };
 
 struct rct_scenery_group_entry
@@ -277,7 +271,7 @@ extern int16_t gSceneryCtrlPressZ;
 
 extern const CoordsXY SceneryQuadrantOffsets[];
 
-extern money32 gClearSceneryCost;
+extern money64 gClearSceneryCost;
 
 void init_scenery();
 void scenery_update_tile(const CoordsXY& sceneryPos);
@@ -291,4 +285,13 @@ rct_scenery_group_entry* get_scenery_group_entry(ObjectEntryIndex entryIndex);
 
 int32_t wall_entry_get_door_sound(const WallSceneryEntry* wallEntry);
 
-#endif
+bool IsSceneryAvailableToBuild(const ScenerySelection& item);
+
+bool IsSceneryItemRestricted(const ScenerySelection& item);
+void ClearRestrictedScenery();
+void RestrictAllMiscScenery();
+void MarkAllUnrestrictedSceneryAsInvented();
+std::vector<ScenerySelection>& GetRestrictedScenery();
+
+ObjectType GetObjectTypeFromSceneryType(uint8_t type);
+uint8_t GetSceneryTypeFromObjectType(ObjectType type);

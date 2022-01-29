@@ -14,6 +14,7 @@
 #    include "../Game.h"
 #    include "../common.h"
 #    include "../config/Config.h"
+#    include "../entity/EntityRegistry.h"
 #    include "../interface/Viewport.h"
 #    include "../interface/Window.h"
 #    include "../interface/Window_internal.h"
@@ -22,7 +23,6 @@
 #    include "../ride/Vehicle.h"
 #    include "../util/Util.h"
 #    include "../world/Climate.h"
-#    include "../world/Entity.h"
 #    include "../world/Map.h"
 #    include "Drawing.h"
 
@@ -53,24 +53,23 @@ enum class LightFXQualifier : uint8_t
     Map,
 };
 
-struct lightlist_entry
+struct LightListEntry
 {
-    int16_t x, y, z;
-    ScreenCoordsXY viewCoords;
-    LightType lightType;
-    uint8_t lightIntensity;
-    uint32_t lightHash;
-    LightFXQualifier qualifier;
-    uint8_t lightID;
-    uint8_t lightLinger;
-    uint8_t pad[1];
+    CoordsXYZ Position;
+    ScreenCoordsXY ViewCoords;
+    LightType Type;
+    uint8_t LightIntensity;
+    uint32_t LightHash;
+    LightFXQualifier Qualifier;
+    uint8_t LightID;
+    uint8_t LightLinger;
 };
 
-static lightlist_entry _LightListA[16000];
-static lightlist_entry _LightListB[16000];
+static LightListEntry _LightListA[16000];
+static LightListEntry _LightListB[16000];
 
-static lightlist_entry* _LightListBack;
-static lightlist_entry* _LightListFront;
+static LightListEntry* _LightListBack;
+static LightListEntry* _LightListFront;
 
 static uint32_t LightListCurrentCountBack;
 static uint32_t LightListCurrentCountFront;
@@ -78,12 +77,12 @@ static uint32_t LightListCurrentCountFront;
 static int16_t _current_view_x_front = 0;
 static int16_t _current_view_y_front = 0;
 static uint8_t _current_view_rotation_front = 0;
-static ZoomLevel _current_view_zoom_front = 0;
+static ZoomLevel _current_view_zoom_front{ 0 };
 static int16_t _current_view_x_back = 0;
 static int16_t _current_view_y_back = 0;
 static uint8_t _current_view_rotation_back = 0;
-static ZoomLevel _current_view_zoom_back = 0;
-static ZoomLevel _current_view_zoom_back_delay = 0;
+static ZoomLevel _current_view_zoom_back{ 0 };
+static ZoomLevel _current_view_zoom_back_delay{ 0 };
 
 static GamePalette gPalette_light;
 
@@ -195,20 +194,16 @@ void lightfx_prepare_light_list()
 {
     for (uint32_t light = 0; light < LightListCurrentCountFront; light++)
     {
-        lightlist_entry* entry = &_LightListFront[light];
+        LightListEntry* entry = &_LightListFront[light];
 
-        if (entry->z == 0x7FFF)
+        if (entry->Position.z == 0x7FFF)
         {
-            entry->lightIntensity = 0xFF;
+            entry->LightIntensity = 0xFF;
             continue;
         }
 
-        CoordsXYZ coord_3d = { /* .x = */ entry->x,
-                               /* .y = */ entry->y,
-                               /* .z = */ entry->z };
-
-        int32_t posOnScreenX = entry->viewCoords.x - _current_view_x_front;
-        int32_t posOnScreenY = entry->viewCoords.y - _current_view_y_front;
+        int32_t posOnScreenX = entry->ViewCoords.x - _current_view_x_front;
+        int32_t posOnScreenY = entry->ViewCoords.y - _current_view_y_front;
 
         posOnScreenX = posOnScreenX / _current_view_zoom_front;
         posOnScreenY = posOnScreenY / _current_view_zoom_front;
@@ -216,7 +211,7 @@ void lightfx_prepare_light_list()
         if ((posOnScreenX < -128) || (posOnScreenY < -128) || (posOnScreenX > _pixelInfo.width + 128)
             || (posOnScreenY > _pixelInfo.height + 128))
         {
-            entry->lightType = LightType::None;
+            entry->Type = LightType::None;
             continue;
         }
 
@@ -288,7 +283,7 @@ void lightfx_prepare_light_list()
             int32_t totalSamplePoints = 5;
             int32_t startSamplePoint = 1;
 
-            if (entry->qualifier == LightFXQualifier::Map)
+            if (entry->Qualifier == LightFXQualifier::Map)
             {
                 startSamplePoint = 0;
                 totalSamplePoints = 1;
@@ -307,15 +302,15 @@ void lightfx_prepare_light_list()
                 {
                     // based on get_map_coordinates_from_pos_window
                     rct_drawpixelinfo dpi;
-                    dpi.x = entry->viewCoords.x + offsetPattern[0 + pat * 2] / mapFrontDiv;
-                    dpi.y = entry->viewCoords.y + offsetPattern[1 + pat * 2] / mapFrontDiv;
+                    dpi.x = entry->ViewCoords.x + offsetPattern[0 + pat * 2] / mapFrontDiv;
+                    dpi.y = entry->ViewCoords.y + offsetPattern[1 + pat * 2] / mapFrontDiv;
                     dpi.height = 1;
                     dpi.zoom_level = _current_view_zoom_front;
                     dpi.width = 1;
 
                     paint_session* session = PaintSessionAlloc(&dpi, w->viewport->flags);
-                    PaintSessionGenerate(session);
-                    PaintSessionArrange(session);
+                    PaintSessionGenerate(*session);
+                    PaintSessionArrange(*session);
                     auto info = set_interaction_info_from_paint_session(session, ViewportInteractionItemAll);
                     PaintSessionFree(session);
 
@@ -331,15 +326,15 @@ void lightfx_prepare_light_list()
                 int32_t minDist = 0;
                 int32_t baseHeight = (-999) * COORDS_Z_STEP;
 
-                if (interactionType != ViewportInteractionItem::Entity && tileElement)
+                if (interactionType != ViewportInteractionItem::Entity && tileElement != nullptr)
                 {
                     baseHeight = tileElement->GetBaseZ();
                 }
 
-                minDist = (baseHeight - coord_3d.z) / 2;
+                minDist = (baseHeight - entry->Position.z) / 2;
 
-                int32_t deltaX = mapCoord.x - coord_3d.x;
-                int32_t deltaY = mapCoord.y - coord_3d.y;
+                int32_t deltaX = mapCoord.x - entry->Position.x;
+                int32_t deltaY = mapCoord.y - entry->Position.y;
 
                 int32_t projDot = (dirVecX * deltaX + dirVecY * deltaY) / 1000;
 
@@ -361,13 +356,13 @@ void lightfx_prepare_light_list()
                 {
                     if (lightIntensityOccluded == 100)
                         break;
-                    if (_current_view_zoom_front > 2)
+                    if (_current_view_zoom_front > ZoomLevel{ 2 })
                         break;
                     totalSamplePoints += 4;
                 }
                 else if (pat == 4)
                 {
-                    if (_current_view_zoom_front > 1)
+                    if (_current_view_zoom_front > ZoomLevel{ 1 })
                         break;
                     if (lightIntensityOccluded == 0 || lightIntensityOccluded == 500)
                         break;
@@ -385,26 +380,26 @@ void lightfx_prepare_light_list()
 
             if (lightIntensityOccluded == 0)
             {
-                entry->lightType = LightType::None;
+                entry->Type = LightType::None;
                 continue;
             }
 
-            entry->lightIntensity = std::min<uint32_t>(
-                0xFF, (entry->lightIntensity * lightIntensityOccluded) / (totalSamplePoints * 100));
+            entry->LightIntensity = std::min<uint32_t>(
+                0xFF, (entry->LightIntensity * lightIntensityOccluded) / (totalSamplePoints * 100));
         }
-        entry->lightIntensity = std::max<uint32_t>(
-            0x00, entry->lightIntensity - static_cast<int8_t>(_current_view_zoom_front) * 5);
+        entry->LightIntensity = std::max<uint32_t>(
+            0x00, entry->LightIntensity - static_cast<int8_t>(_current_view_zoom_front) * 5);
 
-        if (_current_view_zoom_front > 0)
+        if (_current_view_zoom_front > ZoomLevel{ 0 })
         {
-            if (GetLightTypeSize(entry->lightType) < static_cast<int8_t>(_current_view_zoom_front))
+            if (GetLightTypeSize(entry->Type) < static_cast<int8_t>(_current_view_zoom_front))
             {
-                entry->lightType = LightType::None;
+                entry->Type = LightType::None;
                 continue;
             }
 
-            entry->lightType = SetLightTypeSize(
-                entry->lightType, GetLightTypeSize(entry->lightType) - static_cast<int8_t>(_current_view_zoom_front));
+            entry->Type = SetLightTypeSize(
+                entry->Type, GetLightTypeSize(entry->Type) - static_cast<int8_t>(_current_view_zoom_front));
         }
     }
 }
@@ -421,7 +416,7 @@ void lightfx_swap_buffers()
 
     tmp = _LightListBack;
     _LightListBack = _LightListFront;
-    _LightListFront = static_cast<lightlist_entry*>(tmp);
+    _LightListFront = static_cast<LightListEntry*>(tmp);
 
     LightListCurrentCountFront = LightListCurrentCountBack;
     LightListCurrentCountBack = 0x0;
@@ -440,7 +435,7 @@ void lightfx_swap_buffers()
 void lightfx_update_viewport_settings()
 {
     rct_window* mainWindow = window_get_main();
-    if (mainWindow)
+    if (mainWindow != nullptr)
     {
         rct_viewport* viewport = window_get_viewport(mainWindow);
         _current_view_x_back = viewport->viewPos.x;
@@ -472,12 +467,12 @@ void lightfx_render_lights_to_frontbuffer()
         int32_t bufWriteWidth, bufWriteHeight;
         uint32_t bufReadSkip, bufWriteSkip;
 
-        lightlist_entry* entry = &_LightListFront[light];
+        LightListEntry* entry = &_LightListFront[light];
 
-        int32_t inRectCentreX = entry->viewCoords.x;
-        int32_t inRectCentreY = entry->viewCoords.y;
+        int32_t inRectCentreX = entry->ViewCoords.x;
+        int32_t inRectCentreY = entry->ViewCoords.y;
 
-        if (entry->z != 0x7FFF)
+        if (entry->Position.z != 0x7FFF)
         {
             inRectCentreX -= _current_view_x_front;
             inRectCentreY -= _current_view_y_front;
@@ -485,7 +480,7 @@ void lightfx_render_lights_to_frontbuffer()
             inRectCentreY = inRectCentreY / _current_view_zoom_front;
         }
 
-        switch (entry->lightType)
+        switch (entry->Type)
         {
             case LightType::Lantern0:
                 bufReadWidth = 32;
@@ -585,7 +580,7 @@ void lightfx_render_lights_to_frontbuffer()
         bufReadSkip = bufReadWidth - bufWriteWidth;
         bufWriteSkip = _pixelInfo.width - bufWriteWidth;
 
-        if (entry->lightIntensity == 0xFF)
+        if (entry->LightIntensity == 0xFF)
         {
             for (int32_t y = 0; y < bufWriteHeight; y++)
             {
@@ -606,7 +601,7 @@ void lightfx_render_lights_to_frontbuffer()
             {
                 for (int32_t x = 0; x < bufWriteWidth; x++)
                 {
-                    *bufWriteBase = std::min(0xFF, *bufWriteBase + (((*bufReadBase) * (1 + entry->lightIntensity)) >> 8));
+                    *bufWriteBase = std::min(0xFF, *bufWriteBase + (((*bufReadBase) * (1 + entry->LightIntensity)) >> 8));
                     bufWriteBase++;
                     bufReadBase++;
                 }
@@ -641,40 +636,36 @@ static void LightfxAdd3DLight(
 
     for (uint32_t i = 0; i < LightListCurrentCountBack; i++)
     {
-        lightlist_entry* entry = &_LightListBack[i];
-        if (entry->lightHash != lightHash)
+        LightListEntry* entry = &_LightListBack[i];
+        if (entry->LightHash != lightHash)
             continue;
-        if (entry->qualifier != qualifier)
+        if (entry->Qualifier != qualifier)
             continue;
-        if (entry->lightID != id)
+        if (entry->LightID != id)
             continue;
 
-        entry->x = loc.x;
-        entry->y = loc.y;
-        entry->z = loc.z;
-        entry->viewCoords = translate_3d_to_2d_with_z(get_current_rotation(), loc);
-        entry->lightType = lightType;
-        entry->lightIntensity = 0xFF;
-        entry->lightHash = lightHash;
-        entry->qualifier = qualifier;
-        entry->lightID = id;
-        entry->lightLinger = 1;
+        entry->Position = loc;
+        entry->ViewCoords = translate_3d_to_2d_with_z(get_current_rotation(), loc);
+        entry->Type = lightType;
+        entry->LightIntensity = 0xFF;
+        entry->LightHash = lightHash;
+        entry->Qualifier = qualifier;
+        entry->LightID = id;
+        entry->LightLinger = 1;
 
         return;
     }
 
-    lightlist_entry* entry = &_LightListBack[LightListCurrentCountBack++];
+    LightListEntry* entry = &_LightListBack[LightListCurrentCountBack++];
 
-    entry->x = loc.x;
-    entry->y = loc.y;
-    entry->z = loc.z;
-    entry->viewCoords = translate_3d_to_2d_with_z(get_current_rotation(), loc);
-    entry->lightType = lightType;
-    entry->lightIntensity = 0xFF;
-    entry->lightHash = lightHash;
-    entry->qualifier = qualifier;
-    entry->lightID = id;
-    entry->lightLinger = 1;
+    entry->Position = loc;
+    entry->ViewCoords = translate_3d_to_2d_with_z(get_current_rotation(), loc);
+    entry->Type = lightType;
+    entry->LightIntensity = 0xFF;
+    entry->LightHash = lightHash;
+    entry->Qualifier = qualifier;
+    entry->LightID = id;
+    entry->LightLinger = 1;
 
     //  log_warning("new 3d light");
 }
@@ -684,7 +675,7 @@ static void LightfxAdd3DLight(const CoordsXYZ& loc, const LightType lightType)
     LightfxAdd3DLight(((loc.x << 16) | loc.y), LightFXQualifier::Map, loc.z, loc, lightType);
 }
 
-void LightfxAdd3DLight(const SpriteBase& entity, const uint8_t id, const CoordsXYZ& loc, const LightType lightType)
+void LightfxAdd3DLight(const EntityBase& entity, const uint8_t id, const CoordsXYZ& loc, const LightType lightType)
 {
     LightfxAdd3DLight(entity.sprite_index, LightFXQualifier::Entity, id, loc, lightType);
 }
@@ -710,6 +701,8 @@ void lightfx_add_lights_magic_vehicle(const Vehicle* vehicle)
     };
 
     auto ride = vehicle->GetRide();
+    if (ride == nullptr)
+        return;
 
     switch (ride->type)
     {

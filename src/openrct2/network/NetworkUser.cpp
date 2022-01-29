@@ -11,12 +11,13 @@
 
 #    include "NetworkUser.h"
 
+#    include "../Context.h"
+#    include "../PlatformEnvironment.h"
 #    include "../core/Console.hpp"
+#    include "../core/File.h"
 #    include "../core/Guard.hpp"
 #    include "../core/Json.hpp"
 #    include "../core/Path.hpp"
-#    include "../core/String.hpp"
-#    include "../platform/Platform2.h"
 
 #    include <unordered_set>
 
@@ -52,9 +53,9 @@ json_t NetworkUser::ToJson() const
     jsonData["name"] = Name;
 
     json_t jsonGroupId;
-    if (GroupId.HasValue())
+    if (GroupId.has_value())
     {
-        jsonGroupId = GroupId.GetValue();
+        jsonGroupId = *GroupId;
     }
     jsonData["groupId"] = jsonGroupId;
 
@@ -77,10 +78,9 @@ void NetworkUserManager::DisposeUsers()
 
 void NetworkUserManager::Load()
 {
-    utf8 path[MAX_PATH];
-    GetStorePath(path, sizeof(path));
+    const auto path = GetStorePath();
 
-    if (Platform::FileExists(path))
+    if (File::Exists(path))
     {
         DisposeUsers();
 
@@ -101,20 +101,19 @@ void NetworkUserManager::Load()
         }
         catch (const std::exception& ex)
         {
-            Console::Error::WriteLine("Failed to read %s as JSON. %s", path, ex.what());
+            Console::Error::WriteLine("Failed to read %s as JSON. %s", path.c_str(), ex.what());
         }
     }
 }
 
 void NetworkUserManager::Save()
 {
-    utf8 path[MAX_PATH];
-    GetStorePath(path, sizeof(path));
+    const auto path = GetStorePath();
 
     json_t jsonUsers;
     try
     {
-        if (Platform::FileExists(path))
+        if (File::Exists(path))
         {
             jsonUsers = Json::ReadFromFile(path);
         }
@@ -143,12 +142,10 @@ void NetworkUserManager::Save()
                 // erase advances the iterator so make sure we don't do it again
                 continue;
             }
-            else
-            {
-                // replace the existing element in jsonUsers
-                *it = networkUser->ToJson();
-                savedHashes.insert(hashString);
-            }
+
+            // replace the existing element in jsonUsers
+            *it = networkUser->ToJson();
+            savedHashes.insert(hashString);
         }
 
         it++;
@@ -172,9 +169,9 @@ void NetworkUserManager::UnsetUsersOfGroup(uint8_t groupId)
     for (const auto& kvp : _usersByHash)
     {
         NetworkUser* networkUser = kvp.second;
-        if (networkUser->GroupId.HasValue() && networkUser->GroupId.GetValue() == groupId)
+        if (networkUser->GroupId.has_value() && *networkUser->GroupId == groupId)
         {
-            networkUser->GroupId = nullptr;
+            networkUser->GroupId = std::nullopt;
         }
     }
 }
@@ -233,10 +230,10 @@ NetworkUser* NetworkUserManager::GetOrAddUser(const std::string& hash)
     return networkUser;
 }
 
-void NetworkUserManager::GetStorePath(utf8* buffer, size_t bufferSize)
+u8string NetworkUserManager::GetStorePath()
 {
-    platform_get_user_directory(buffer, nullptr, bufferSize);
-    Path::Append(buffer, bufferSize, USER_STORE_FILENAME);
+    auto env = OpenRCT2::GetContext()->GetPlatformEnvironment();
+    return Path::Combine(env->GetDirectoryPath(OpenRCT2::DIRBASE::USER), USER_STORE_FILENAME);
 }
 
 #endif

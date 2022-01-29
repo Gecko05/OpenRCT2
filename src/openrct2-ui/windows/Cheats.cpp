@@ -19,6 +19,7 @@
 #include <openrct2/actions/SetCheatAction.h>
 #include <openrct2/config/Config.h>
 #include <openrct2/localisation/Date.h>
+#include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/Localisation.h>
 #include <openrct2/network/network.h>
 #include <openrct2/sprites.h>
@@ -60,7 +61,7 @@ static constexpr const rct_string_id WeatherTypes[] =
     STR_BLIZZARD,
 };
 
-enum WINDOW_CHEATS_WIDGET_IDX
+enum WindowCheatsWidgetIdx
 {
     WIDX_BACKGROUND,
     WIDX_TITLE,
@@ -212,7 +213,7 @@ static rct_widget window_cheats_money_widgets[] =
     MakeSpinnerWidgets({120, 239}, CHEAT_SPINNER, WindowWidgetType::Spinner,  WindowColour::Secondary                        ), // Day box
     MakeWidget        ({ 11, 258}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_DATE_SET          ), // Set Date
     MakeWidget        ({127, 258}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_DATE_RESET        ), // Reset Date
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 
 static rct_widget window_cheats_guests_widgets[] =
@@ -239,13 +240,13 @@ static rct_widget window_cheats_guests_widgets[] =
     MakeWidget({ 11, 279}, CHEAT_CHECK,   WindowWidgetType::Checkbox, WindowColour::Secondary, STR_CHEAT_DISABLE_VANDALISM,     STR_CHEAT_DISABLE_VANDALISM_TIP), // disable vandalism
     MakeWidget({ 11, 300}, CHEAT_CHECK,   WindowWidgetType::Checkbox, WindowColour::Secondary, STR_CHEAT_DISABLE_LITTERING,     STR_CHEAT_DISABLE_LITTERING_TIP), // disable littering
     MakeWidget({  5, 342}, {238,  69},    WindowWidgetType::Groupbox, WindowColour::Secondary, STR_CHEAT_GIVE_ALL_GUESTS                                       ), // Guests parameters group frame
-    MakeWidget({ 11, 363}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_CHEAT_CURRENCY_FORMAT                                       ), // give guests money
+    MakeWidget({ 11, 363}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_CURRENCY_FORMAT                                             ), // give guests money
     MakeWidget({127, 363}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_SHOP_ITEM_PLURAL_PARK_MAP                                   ), // give guests park maps
     MakeWidget({ 11, 384}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_SHOP_ITEM_PLURAL_BALLOON                                    ), // give guests balloons
     MakeWidget({127, 384}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_SHOP_ITEM_PLURAL_UMBRELLA                                   ), // give guests umbrellas
     MakeWidget({ 11, 426}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_CHEAT_LARGE_TRAM_GUESTS,     STR_CHEAT_LARGE_TRAM_GUESTS_TIP), // large tram
     MakeWidget({127, 426}, CHEAT_BUTTON,  WindowWidgetType::Button,   WindowColour::Secondary, STR_CHEAT_REMOVE_ALL_GUESTS,     STR_CHEAT_REMOVE_ALL_GUESTS_TIP), // remove all guests
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 
 //Strings for following moved to window_cheats_paint()
@@ -281,7 +282,7 @@ static rct_widget window_cheats_misc_widgets[] =
     MakeWidget        ({  5, 347}, {238,  35},   WindowWidgetType::Groupbox, WindowColour::Secondary, STR_CHEAT_STAFF_GROUP                                               ), // Staff group
     MakeWidget        ({126, 361}, {111,  14},   WindowWidgetType::DropdownMenu, WindowColour::Secondary                                                                      ), // Staff speed
     MakeWidget        ({225, 362}, { 11,  12},   WindowWidgetType::Button,   WindowColour::Secondary, STR_DROPDOWN_GLYPH                                                  ), // Staff speed
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 static rct_widget window_cheats_rides_widgets[] =
 {
@@ -307,7 +308,7 @@ static rct_widget window_cheats_rides_widgets[] =
     MakeWidget({ 11, 384}, CHEAT_CHECK,  WindowWidgetType::Checkbox, WindowColour::Secondary, STR_CHEAT_SHOW_VEHICLES_FROM_OTHER_TRACK_TYPES                                                 ), // Show vehicles from other track types
     MakeWidget({ 11, 405}, CHEAT_CHECK,  WindowWidgetType::Checkbox, WindowColour::Secondary, STR_CHEAT_DISABLE_TRAIN_LENGTH_LIMIT,           STR_CHEAT_DISABLE_TRAIN_LENGTH_LIMIT_TIP       ), // Disable train length limits
     MakeWidget({ 11, 426}, CHEAT_CHECK,  WindowWidgetType::Checkbox, WindowColour::Secondary, STR_CHEAT_IGNORE_RESEARCH_STATUS,               STR_CHEAT_IGNORE_RESEARCH_STATUS_TIP           ), // Ignore Research Status
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 
 static rct_widget *window_cheats_page_widgets[] =
@@ -413,7 +414,7 @@ static uint64_t window_cheats_page_enabled_widgets[] = {
     (1ULL << WIDX_DISABLE_RIDE_VALUE_AGING) |
     (1ULL << WIDX_IGNORE_RESEARCH_STATUS) |
     (1ULL << WIDX_ENABLE_ALL_DRAWABLE_TRACK_PIECES) |
-    (1ULL << WIDX_ALLOW_TRACK_PLACE_INVALID_HEIGHTS)
+    (1ULL << WIDX_ALLOW_TRACK_PLACE_INVALID_HEIGHTS),
 };
 
 static uint64_t window_cheats_page_hold_down_widgets[] = {
@@ -432,7 +433,7 @@ static uint64_t window_cheats_page_hold_down_widgets[] = {
     (1ULL << WIDX_INCREASE_PARK_RATING) |
     (1ULL << WIDX_DECREASE_PARK_RATING),
 
-    0
+    0,
 };
 
 static rct_string_id window_cheats_page_titles[] = {
@@ -559,7 +560,7 @@ public:
             case WINDOW_CHEATS_PAGE_GUESTS:
             {
                 auto ft = Formatter::Common();
-                ft.Add<int32_t>(MONEY(1000, 00));
+                ft.Add<money64>(MONEY(1000, 00));
                 SetCheckboxValue(WIDX_GUEST_IGNORE_RIDE_INTENSITY, gCheatsIgnoreRideIntensity);
                 SetCheckboxValue(WIDX_DISABLE_VANDALISM, gCheatsDisableVandalism);
                 SetCheckboxValue(WIDX_DISABLE_LITTERING, gCheatsDisableLittering);
@@ -616,7 +617,7 @@ public:
         {
             auto colour = colours[1];
             auto ft = Formatter();
-            ft.Add<money32>(_moneySpinnerValue);
+            ft.Add<money64>(_moneySpinnerValue);
             if (IsWidgetDisabled(WIDX_MONEY_SPINNER))
             {
                 colour |= COLOUR_FLAG_INSET;
@@ -866,8 +867,8 @@ private:
                 break;
             case WIDX_MONEY_SPINNER:
                 money_to_string(_moneySpinnerValue, _moneySpinnerText, MONEY_STRING_MAXLENGTH, false);
-                window_text_input_raw_open(
-                    this, WIDX_MONEY_SPINNER, STR_ENTER_NEW_VALUE, STR_ENTER_NEW_VALUE, _moneySpinnerText,
+                WindowTextInputRawOpen(
+                    this, WIDX_MONEY_SPINNER, STR_ENTER_NEW_VALUE, STR_ENTER_NEW_VALUE, {}, _moneySpinnerText,
                     MONEY_STRING_MAXLENGTH);
                 break;
             case WIDX_SET_MONEY:
@@ -1003,11 +1004,12 @@ private:
         {
             return;
         }
-        else if (widgetIndex == WIDX_WEATHER_DROPDOWN_BUTTON)
+
+        if (widgetIndex == WIDX_WEATHER_DROPDOWN_BUTTON)
         {
             CheatsSet(CheatType::ForceWeather, dropdownIndex);
         }
-        else if (widgetIndex == WIDX_STAFF_SPEED_DROPDOWN_BUTTON)
+        if (widgetIndex == WIDX_STAFF_SPEED_DROPDOWN_BUTTON)
         {
             int32_t speed = CHEATS_STAFF_FAST_SPEED;
             switch (dropdownIndex)
@@ -1198,7 +1200,7 @@ private:
     }
 };
 
-rct_window* window_cheats_open()
+rct_window* WindowCheatsOpen()
 {
     auto* window = window_bring_to_front_by_class(WC_CHEATS);
     if (window == nullptr)

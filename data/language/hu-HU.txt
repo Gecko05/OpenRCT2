@@ -1729,7 +1729,7 @@ STR_2383    :Víz
 STR_2384    :{WINDOW_COLOUR_2}A célod:
 STR_2385    :{BLACK}Nincs
 STR_2386    :{BLACK}Legyen legalább {COMMA16} vendég a parkodban {MONTHYEAR}végére, a parkod értékelése pedig legyen legalább 600
-STR_2387    :{BLACK}Legyen legalább {POP16}{POP16}{CURRENCY} a parkod értéke {PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}végére
+STR_2387    :{BLACK}Legyen legalább {POP16}{POP16}{CURRENCY} a parkod értéke {PUSH16}{PUSH16}{PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}végére
 STR_2388    :{BLACK}Érezd jól magad!
 STR_2389    :{BLACK}A lehető legjobb {STRINGID} építése!
 STR_2390    :{BLACK}Építs 10 különböző, egyenként legalább 6,00 izgalmi értékű hullámvasutat a parkodban
@@ -2049,51 +2049,6 @@ STR_2854    :{RED}A vendégek nem tudnak eljutni {STRINGID} bejáratáig !{NEWLI
 STR_2855    :{RED}Nem kapcsolódik út {STRINGID} kijáratához !{NEWLINE}Építs utat a játék kijáratához
 STR_2858    :Nem indítható marketingkampány…
 STR_2861    :{WINDOW_COLOUR_2}Az Infogrames Interactive Inc. számára licencelve
-STR_2862    :Zenei köszönetnyilvánítások…
-STR_2863    :Zenei köszönetnyilvánítások
-STR_2864    :{WINDOW_COLOUR_2}Induló - Die Regimentskinder:   (Fucik) copyright nélküli
-STR_2865    :{WINDOW_COLOUR_2}Heyken’s Serenade:   (J.Heyken) British Standard Music Coy; GEMA, BRITICO
-STR_2866    :{WINDOW_COLOUR_2}La Belle Espagnole:   (Robert Vollstedt) copyright nélküli
-STR_2867    :{WINDOW_COLOUR_2}Wedding Journey:   (Tradicionális)
-STR_2868    :{WINDOW_COLOUR_2}Mesél a bécsi erdő:   (JohannSTRauss) copyright nélküli
-STR_2869    :{WINDOW_COLOUR_2}Szláv tánc:   (Tradicionális)
-STR_2870    :{WINDOW_COLOUR_2}Das Alpenhorn:   (Tradicionális)
-STR_2871    :{WINDOW_COLOUR_2}The Blond Sailor:   (Tradicionális)
-STR_2872    :{WINDOW_COLOUR_2}Nyitány -  Költő és paraszt:   (Franz von Suppé) copyright nélküli
-STR_2873    :{WINDOW_COLOUR_2}Keringő egyveleg:   (JohannSTRauss) copyright nélküli
-STR_2874    :{WINDOW_COLOUR_2}Bella Bella Bimba:   (Tradicionális)
-STR_2875    :{WINDOW_COLOUR_2}Eredeti felvételek (P) 1976 C.J.Mears Organization,  engedéllyel használva
-STR_2876    :{WINDOW_COLOUR_2}RollerCoaster Tycoon 2 főcímzene:   (Allister Brimble) copyright © Chris Sawyer
-STR_2877    :{WINDOW_COLOUR_2}Dodgems Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2878    :{WINDOW_COLOUR_2}Mid Summer’s Heat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2879    :{WINDOW_COLOUR_2}Pharaoh’s Tomb:   (Allister Brimble) copyright © Chris Sawyer
-STR_2880    :{WINDOW_COLOUR_2}Caesar’s March:   (Allister Brimble) copyright © Chris Sawyer
-STR_2881    :{WINDOW_COLOUR_2}Drifting To Heaven:   (Allister Brimble) copyright © Chris Sawyer
-STR_2882    :{WINDOW_COLOUR_2}Invaders:   (Allister Brimble) copyright © Chris Sawyer
-STR_2883    :{WINDOW_COLOUR_2}Eternal Toybox:   (Allister Brimble) copyright © Chris Sawyer
-STR_2884    :{WINDOW_COLOUR_2}Jungle Juice:   (Allister Brimble) copyright © Chris Sawyer
-STR_2885    :{WINDOW_COLOUR_2}Ninja’s Noodles:   (Allister Brimble) copyright © Chris Sawyer
-STR_2886    :{WINDOW_COLOUR_2}Voyage to Andromeda:   (Allister Brimble) copyright © Chris Sawyer
-STR_2887    :{WINDOW_COLOUR_2}Brimble’s Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2888    :{WINDOW_COLOUR_2}Atlantis:   (Allister Brimble) copyright © Chris Sawyer
-STR_2889    :{WINDOW_COLOUR_2}Wild West Kid:   (Allister Brimble) copyright © Chris Sawyer
-STR_2890    :{WINDOW_COLOUR_2}Vampire’s Lair:   (Allister Brimble) copyright © Chris Sawyer
-STR_2891    :{WINDOW_COLOUR_2}Blockbuster:   (Allister Brimble) copyright © Chris Sawyer
-STR_2892    :{WINDOW_COLOUR_2}Airtime Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2893    :{WINDOW_COLOUR_2}Searchlight Rag:   (Scott Joplin/Allister Brimble) copyright © Chris Sawyer
-STR_2894    :{WINDOW_COLOUR_2}Flight of Fantasy:   (Steve Blenkinsopp) copyright © Chris Sawyer
-STR_2895    :{WINDOW_COLOUR_2}Big Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2896    :{WINDOW_COLOUR_2}Hypothermia:   (Allister Brimble) copyright © Chris Sawyer
-STR_2897    :{WINDOW_COLOUR_2}Last Sleigh Ride:   (Allister Brimble) copyright © Chris Sawyer
-STR_2898    :{WINDOW_COLOUR_2}Pipes of Glencairn:   (Allister Brimble) copyright © Chris Sawyer
-STR_2899    :{WINDOW_COLOUR_2}Traffic Jam:   (Allister Brimble) copyright © Chris Sawyer
-STR_2901    :{WINDOW_COLOUR_2}(A minták a Spectrasonics „Liquid Grooves”-ának köszönhetőek)
-STR_2902    :{WINDOW_COLOUR_2}Toccata:   (C.M.Widor, Előadja:  Peter James Adcock) felvétel © Chris Sawyer
-STR_2903    :{WINDOW_COLOUR_2}Space Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2904    :{WINDOW_COLOUR_2}Manic Mechanic:   (Allister Brimble) copyright © Chris Sawyer
-STR_2905    :{WINDOW_COLOUR_2}Techno Torture:   (Allister Brimble) copyright © Chris Sawyer
-STR_2906    :{WINDOW_COLOUR_2}Sweat Dreams:   (Allister Brimble) copyright © Chris Sawyer
-STR_2907    :{WINDOW_COLOUR_2}Baj van a részeg tengerésszel:   (Névtelen/Allister Brimble) copyright © Chris Sawyer
 STR_2971    :Fő színséma
 STR_2972    :Alternatív színséma 1
 STR_2973    :Alternatív színséma 2
@@ -2990,8 +2945,6 @@ STR_5723    :Heves esőzés
 STR_5724    :Viharos
 STR_5725    :{BLACK}Az időjárás legyen:
 STR_5726    :A park jelenlegi időjárásának beállítása
-STR_5727    :Skálázás minősége:
-STR_5731    :Lineáris
 # tooltip for tab in options window
 STR_5734    :Megjelenítés
 STR_5735    :Hálózati állapot
@@ -3174,56 +3127,56 @@ STR_5930    :Nagy díszlet részletei
 STR_5931    :Hirdetőtábla részletei
 STR_5932    :Sérült elem részletei
 STR_5933    :Tulajdonságok
-STR_5934    :{WINDOW_COLOUR_2}Terep textúrája: {BLACK}{STRINGID}
-STR_5935    :{WINDOW_COLOUR_2}Terep széle: {BLACK}{STRINGID}
-STR_5936    :{WINDOW_COLOUR_2}Földtulajdon: {BLACK}{STRINGID}
+STR_5934    :Terep textúrája: {BLACK}{STRINGID}
+STR_5935    :Terep széle: {BLACK}{STRINGID}
+STR_5936    :Földtulajdon: {BLACK}{STRINGID}
 STR_5937    :Nincs tulajdonban és nem eladó
-STR_5938    :{WINDOW_COLOUR_2}Vízszint: {BLACK}{COMMA16}
+STR_5938    :Vízszint: {BLACK}{COMMA16}
 STR_5939    :Park kerítésének eltávolítása
 STR_5940    :Park kerítésének visszaállítása
-STR_5941    :{WINDOW_COLOUR_2}Alapmagasság:
-STR_5942    :{WINDOW_COLOUR_2}Út neve: {BLACK}{STRINGID}
-STR_5943    :{WINDOW_COLOUR_2}Extrák: {BLACK}{STRINGID}
-STR_5944    :{WINDOW_COLOUR_2}Extrák: {BLACK}Semmi
-STR_5945    :{WINDOW_COLOUR_2}Összekapcsolt szélek:
-STR_5946    :{WINDOW_COLOUR_2}Játék típusa: {BLACK}{STRINGID}
-STR_5947    :{WINDOW_COLOUR_2}Játék ID: {BLACK}{COMMA16}
-STR_5948    :{WINDOW_COLOUR_2}Játék neve: {BLACK}{STRINGID}
-STR_5949    :{WINDOW_COLOUR_2}Láncos felvonó
-STR_5950    :{WINDOW_COLOUR_2}Változtatások alkalmazása a teljes pályaelemre
-STR_5951    :{WINDOW_COLOUR_2}Pályaelem ID: {BLACK}{COMMA16}
-STR_5952    :{WINDOW_COLOUR_2}Sorszám: {BLACK}{COMMA16}
+STR_5941    :Alapmagasság:
+STR_5942    :Út neve: {BLACK}{STRINGID}
+STR_5943    :Extrák: {BLACK}{STRINGID}
+STR_5944    :Extrák: {BLACK}Semmi
+STR_5945    :Összekapcsolt szélek:
+STR_5946    :Játék típusa: {BLACK}{STRINGID}
+STR_5947    :Játék ID: {BLACK}{COMMA16}
+STR_5948    :Játék neve: {BLACK}{STRINGID}
+STR_5949    :Láncos felvonó
+STR_5950    :Változtatások alkalmazása a teljes pályaelemre
+STR_5951    :Pályaelem ID: {BLACK}{COMMA16}
+STR_5952    :Sorszám: {BLACK}{COMMA16}
 STR_5953    :A jelenlegi mező térképelemeinek alapmagasság szerinti rendezése.
-STR_5954    :{WINDOW_COLOUR_2}Díszlet kora: {BLACK}{COMMA16}
-STR_5955    :{WINDOW_COLOUR_2}Kvadráns helyzet: {BLACK}{STRINGID}
+STR_5954    :Díszlet kora: {BLACK}{COMMA16}
+STR_5955    :Kvadráns helyzet: {BLACK}{STRINGID}
 STR_5956    :Délnyugat
 STR_5957    :Északnyugat
 STR_5958    :Északkelet
 STR_5959    :Délkelet
-STR_5960    :{WINDOW_COLOUR_2}Kvadráns helyzet:
-STR_5961    :{WINDOW_COLOUR_2}Belépési index: {BLACK}{COMMA16}
-STR_5962    :{WINDOW_COLOUR_2}Ütközésérzékelés:
-STR_5963    :{WINDOW_COLOUR_2}Megemelt sarkok:
-STR_5964    :{WINDOW_COLOUR_2}Átlós
-STR_5965    :{WINDOW_COLOUR_2}Bejárat típusa: {BLACK}{STRINGID}
-STR_5966    :{WINDOW_COLOUR_2}Parkbejárat része: {BLACK}{STRINGID}
+STR_5960    :Kvadráns helyzet:
+STR_5961    :Belépési index: {BLACK}{COMMA16}
+STR_5962    :Ütközésérzékelés:
+STR_5963    :Megemelt sarkok:
+STR_5964    :Átlós
+STR_5965    :Bejárat típusa: {BLACK}{STRINGID}
+STR_5966    :Parkbejárat része: {BLACK}{STRINGID}
 STR_5967    :Középső
 STR_5968    :Bal
 STR_5969    :Jobb
-STR_5970    :{WINDOW_COLOUR_2}Bejárat ID: {BLACK}{COMMA16}
-STR_5971    :{WINDOW_COLOUR_2}Kijárat ID: {BLACK}{COMMA16}
-STR_5972    :{WINDOW_COLOUR_2}Játék ID: {BLACK}{COMMA16}
+STR_5970    :Bejárat ID: {BLACK}{COMMA16}
+STR_5971    :Kijárat ID: {BLACK}{COMMA16}
+STR_5972    :Játék ID: {BLACK}{COMMA16}
 STR_5973    :Következőhöz erősítés
 STR_5974    :Megváltoztatja az alap- és az űrszelvénymagasságot, hogy megegyezzen a jelenlegi mező következő elemével. Ez megkönnyíti az építkezést ezen a mezőn
 STR_5975    :Elhajlás:
 STR_5976    :Egyenes
 STR_5977    :Jobbról felfelé
 STR_5978    :Balról felfelé
-STR_5979    :{WINDOW_COLOUR_2}Fal típusa: {BLACK}{COMMA16}
-STR_5980    :{WINDOW_COLOUR_2}Hirdetőtábla szövege: {BLACK}{STRINGID}
-STR_5981    :{WINDOW_COLOUR_2}Nem hirdetőtábla
-STR_5982    :{WINDOW_COLOUR_2}Nagy díszlet típusa: {BLACK}{COMMA16}
-STR_5983    :{WINDOW_COLOUR_2}Nagy díszletelem ID: {BLACK}{COMMA16}
+STR_5979    :Fal típusa: {BLACK}{COMMA16}
+STR_5980    :Hirdetőtábla szövege: {BLACK}{STRINGID}
+STR_5981    :Nem hirdetőtábla
+STR_5982    :Nagy díszlet típusa: {BLACK}{COMMA16}
+STR_5983    :Nagy díszletelem ID: {BLACK}{COMMA16}
 STR_5984    :Blokkolt utak:
 STR_5985    :Új mappa
 STR_5986    :Írd be az új mappa nevét.
@@ -3386,7 +3339,6 @@ STR_6155    :Se a KDialog, se a Zenity nincs telepítve. Kérlek telepítsd vala
 STR_6156    :A név le van foglalva
 STR_6157    :Konzol
 STR_6158    :Fájl betöltése sikertelen…{NEWLINE}Nem kompatibilis RCTC verzió: {COMMA16}
-STR_6159    :Sima legközelebbi szomszéd
 STR_6160    :{WINDOW_COLOUR_2}Rendelkezésre álló járművek: {BLACK}{STRING}
 STR_6161    :Rácsok megjelenítése be/ki
 STR_6162    :Forgó vad egér
@@ -3490,7 +3442,7 @@ STR_6273    :Zene
 STR_6274    :Nem állítható be színséma…
 STR_6275    :{WINDOW_COLOUR_2}Állomás stílusa:
 STR_6276    :A vendégek beragadnak itt: {RED}{STRINGID}. Lehet, hogy érvénytelen játéktípus vagy működési mód okozza.
-STR_6277    :{WINDOW_COLOUR_2}Állomás index: {BLACK}{STRINGID}
+STR_6277    :Állomás index: {BLACK}{STRINGID}
 STR_6278    :Automentések száma
 STR_6279    :A megőrzendő automentések száma
 STR_6280    :Chat
@@ -3523,9 +3475,9 @@ STR_6315    :{WINDOW_COLOUR_2}Útkeresési cél: {BLACK}{INT32}, {INT32}, {INT32
 STR_6316    :{WINDOW_COLOUR_2}Útkeresési előzmények:
 STR_6317    :{BLACK}{INT32}, {INT32}, {INT32} irány {INT32}
 STR_6318    :Hálózati szinkronizációs hiba észlelve.{NEWLINE}Naplófájl: {STRING}
-STR_6319    :{WINDOW_COLOUR_2}Blokkolófék zárva
-STR_6320    :{WINDOW_COLOUR_2}Elpusztíthatatlan
-STR_6321    :{WINDOW_COLOUR_2}Törött hozzáadott elem
+STR_6319    :Blokkolófék zárva
+STR_6320    :Elpusztíthatatlan
+STR_6321    :Törött hozzáadott elem
 STR_6322    :{WINDOW_COLOUR_2}Sprite Id: {BLACK}{INT32}
 STR_6323    :Szimuláció folyamatban
 STR_6324    :Szimulálás
@@ -3571,7 +3523,7 @@ STR_6363    :A szöveg a vágólapra másolva
 STR_6364    :{RED}{STRINGID} balesete közben {COMMA16} ember meghalt
 STR_6365    :Játékok áldozatai
 STR_6366    :Beragadt vagy elakadt járművek
-STR_6367    :{WINDOW_COLOUR_2}Animációs képkocka:
+STR_6367    :Animációs képkocka:
 STR_6368    :Kompatibilitási okok miatt nem javasolt az OpenRCT2 Wine-al történő futtatása. Az OpenRCT2 natív macOS, Linux, FreeBSD és OpenBSD támogatással rendelkezik.
 STR_6369    :Pályaépítés érvénytelen magasságokban
 STR_6370    :Lehetővé teszi, hogy bármely köztes magasságban lehessen pályarészeket elhelyezni
@@ -3639,6 +3591,30 @@ STR_6431    :Jobb egérgomb
 STR_6432    :Egér {INT32}
 STR_6433    :Eltávolítás
 STR_6434    :A jelenlegi gyorsbillentyű összes hozzárendelésének törlése.
+STR_6435    :{WINDOW_COLOUR_2}Megállított vandálok: {BLACK}{COMMA16}
+STR_6436    :Láthatatlanság be/ki
+STR_6437    :Láthatatlan
+STR_6438    :L
+STR_6439    :Mezővizsgáló: Láthatatlanság be/ki
+STR_6440    :Átlátszó víz
+STR_6441    :Legalább egy nem várósori útobjektum legyen kiválasztva.
+STR_6442    :Legalább egy várósori útobjektum legyen kiválasztva.
+STR_6443    :Legalább egy úti kerítésobjektum legyen kiválasztva.
+STR_6444    :Útfelületek
+STR_6445    :Útkorlátok
+STR_6446    :{WINDOW_COLOUR_2}Felület neve: {BLACK}{STRINGID}
+STR_6447    :{WINDOW_COLOUR_2}Korlát neve: {BLACK}{STRINGID}
+STR_6448    :Nem támogatott objektumformátum
+STR_6449    :{WINDOW_COLOUR_2}Számok:
+STR_6450    :{BLACK}„{STRING}”
+STR_6451    :{BLACK}„{STRING}” - {STRING}
+STR_6452    :{WINDOW_COLOUR_2}Árul: {BLACK}{STRING}
+STR_6453    :Verzió infó másolása
+STR_6454    :A hirdetőtábla nem nevezhető át…
+STR_6455    :A felirat nem nevezhető át…
+STR_6456    :Óriás képmentés
+STR_6457    :Hiba jelentése a GitHubon
+STR_6458    :Követés a fő nézetben
 
 
 #############

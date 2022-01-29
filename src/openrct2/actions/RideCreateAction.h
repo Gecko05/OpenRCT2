@@ -11,16 +11,7 @@
 
 #include "GameAction.h"
 
-class RideCreateGameActionResult final : public GameActions::Result
-{
-public:
-    RideCreateGameActionResult();
-    RideCreateGameActionResult(GameActions::Status error, rct_string_id message);
-
-    ride_id_t rideIndex = RIDE_ID_NULL;
-};
-
-DEFINE_GAME_ACTION(RideCreateAction, GameCommand::CreateRide, RideCreateGameActionResult)
+class RideCreateAction final : public GameActionBase<GameCommand::CreateRide>
 {
 private:
     ObjectEntryIndex _rideType{ OBJECT_ENTRY_INDEX_NULL };
@@ -32,13 +23,13 @@ public:
     RideCreateAction() = default;
     RideCreateAction(int32_t rideType, ObjectEntryIndex subType, int32_t colour1, int32_t colour2);
 
-    void AcceptParameters(GameActionParameterVisitor & visitor) override;
+    void AcceptParameters(GameActionParameterVisitor& visitor) override;
 
     int32_t GetRideType() const;
     int32_t GetRideObject() const;
     uint16_t GetActionFlags() const override;
 
-    void Serialise(DataSerialiser & stream) override;
-    GameActions::Result::Ptr Query() const override;
-    GameActions::Result::Ptr Execute() const override;
+    void Serialise(DataSerialiser& stream) override;
+    GameActions::Result Query() const override;
+    GameActions::Result Execute() const override;
 };

@@ -9,14 +9,15 @@
 
 #include "StaffSetPatrolAreaAction.h"
 
+#include "../entity/EntityRegistry.h"
+#include "../entity/Peep.h"
+#include "../entity/Staff.h"
 #include "../interface/Window.h"
-#include "../peep/Peep.h"
-#include "../peep/Staff.h"
-#include "../world/Entity.h"
 
-StaffSetPatrolAreaAction::StaffSetPatrolAreaAction(uint16_t spriteId, const CoordsXY& loc)
+StaffSetPatrolAreaAction::StaffSetPatrolAreaAction(uint16_t spriteId, const CoordsXY& loc, const StaffSetPatrolAreaMode mode)
     : _spriteId(spriteId)
     , _loc(loc)
+    , _mode(mode)
 {
 }
 
@@ -28,72 +29,75 @@ uint16_t StaffSetPatrolAreaAction::GetActionFlags() const
 void StaffSetPatrolAreaAction::Serialise(DataSerialiser& stream)
 {
     GameAction::Serialise(stream);
-    stream << DS_TAG(_spriteId) << DS_TAG(_loc);
+    stream << DS_TAG(_spriteId) << DS_TAG(_loc) << DS_TAG(_mode);
 }
 
-GameActions::Result::Ptr StaffSetPatrolAreaAction::Query() const
+GameActions::Result StaffSetPatrolAreaAction::Query() const
 {
     if (_spriteId >= MAX_ENTITIES)
     {
         log_error("Invalid spriteId. spriteId = %u", _spriteId);
-        return MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
     if (!LocationValid(_loc))
     {
-        return MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
     auto staff = TryGetEntity<Staff>(_spriteId);
     if (staff == nullptr)
     {
         log_error("Invalid spriteId. spriteId = %u", _spriteId);
-        return MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
-    return MakeResult();
+    return GameActions::Result();
 }
 
-GameActions::Result::Ptr StaffSetPatrolAreaAction::Execute() const
+static void InvalidatePatrolTile(const CoordsXY& loc)
+{
+    // Align the location to the top left of the patrol square
+    const auto alignedLoc = CoordsXY{ loc.x & 0x1F80, loc.y & 0x1F80 };
+    for (int32_t y = 0; y < 4 * COORDS_XY_STEP; y += COORDS_XY_STEP)
+    {
+        for (int32_t x = 0; x < 4 * COORDS_XY_STEP; x += COORDS_XY_STEP)
+        {
+            map_invalidate_tile_full(alignedLoc + CoordsXY{ x, y });
+        }
+    }
+}
+
+GameActions::Result StaffSetPatrolAreaAction::Execute() const
 {
     auto staff = TryGetEntity<Staff>(_spriteId);
     if (staff == nullptr)
     {
         log_error("Invalid spriteId. spriteId = %u", _spriteId);
-        return MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
-    int32_t patrolOffset = staff->StaffId * STAFF_PATROL_AREA_SIZE;
-
-    staff_toggle_patrol_area(staff->StaffId, _loc);
-
-    bool isPatrolling = false;
-    for (int32_t i = 0; i < 128; i++)
+    switch (_mode)
     {
-        if (gStaffPatrolAreas[patrolOffset + i])
-        {
-            isPatrolling = true;
+        case StaffSetPatrolAreaMode::Set:
+            staff->SetPatrolArea(_loc, true);
+            InvalidatePatrolTile(_loc);
             break;
-        }
+        case StaffSetPatrolAreaMode::Unset:
+            staff->SetPatrolArea(_loc, false);
+            if (!staff->HasPatrolArea())
+            {
+                staff->ClearPatrolArea();
+            }
+            InvalidatePatrolTile(_loc);
+            break;
+        case StaffSetPatrolAreaMode::ClearAll:
+            staff->ClearPatrolArea();
+            gfx_invalidate_screen();
+            break;
     }
 
-    if (isPatrolling)
-    {
-        gStaffModes[staff->StaffId] = StaffMode::Patrol;
-    }
-    else if (gStaffModes[staff->StaffId] == StaffMode::Patrol)
-    {
-        gStaffModes[staff->StaffId] = StaffMode::Walk;
-    }
-
-    for (int32_t y = 0; y < 4 * COORDS_XY_STEP; y += COORDS_XY_STEP)
-    {
-        for (int32_t x = 0; x < 4 * COORDS_XY_STEP; x += COORDS_XY_STEP)
-        {
-            map_invalidate_tile_full({ (_loc.x & 0x1F80) + x, (_loc.y & 0x1F80) + y });
-        }
-    }
     staff_update_greyed_patrol_areas();
 
-    return MakeResult();
+    return GameActions::Result();
 }

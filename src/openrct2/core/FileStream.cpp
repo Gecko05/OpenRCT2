@@ -13,6 +13,7 @@
 #include "String.hpp"
 
 #include <algorithm>
+#include <string_view>
 
 #ifndef _WIN32
 #    include <sys/stat.h>
@@ -39,6 +40,11 @@ namespace OpenRCT2
 
     FileStream::FileStream(const std::string& path, int32_t fileMode)
         : FileStream(path.c_str(), fileMode)
+    {
+    }
+
+    FileStream::FileStream(std::string_view path, int32_t fileMode)
+        : FileStream(std::string(path), fileMode)
     {
     }
 
@@ -104,7 +110,7 @@ namespace OpenRCT2
         _fileSize = _filelengthi64(_fileno(_file));
 #else
         std::error_code ec;
-        _fileSize = fs::file_size(fs::u8path(path), ec);
+        _fileSize = fs::file_size(u8path(path), ec);
 #endif
 
         _ownsFilePtr = true;

@@ -23,6 +23,7 @@ namespace OpenRCT2::Ui::ShortcutId
     constexpr std::string_view InterfaceIncreaseSpeed = "interface.misc.increase_speed";
     constexpr std::string_view InterfaceToggleToolbars = "interface.misc.toggle_toolbars";
     constexpr std::string_view InterfaceScreenshot = "interface.misc.screenshot";
+    constexpr std::string_view InterfaceGiantScreenshot = "interface.misc.giant_screenshot";
     constexpr std::string_view InterfaceLoadGame = "interface.misc.load_game";
     constexpr std::string_view InterfaceSaveGame = "interface.misc.save_game";
     constexpr std::string_view InterfaceMute = "interface.misc.mute";
@@ -99,7 +100,7 @@ namespace OpenRCT2::Ui::ShortcutId
     constexpr std::string_view WindowRideConstructionDemolish = "window.rideconstruction.demolish";
 
     // Window / tile inspector
-    constexpr std::string_view WindowTileInspectorInsertCorrupt = "window.tileinspector.insert_corrupt";
+    constexpr std::string_view WindowTileInspectorToggleInvisibility = "window.tileinspector.toggle_invisibility";
     constexpr std::string_view WindowTileInspectorCopy = "window.tileinspector.copy";
     constexpr std::string_view WindowTileInspectorPaste = "window.tileinspector.paste";
     constexpr std::string_view WindowTileInspectorRemove = "window.tileinspector.remove";

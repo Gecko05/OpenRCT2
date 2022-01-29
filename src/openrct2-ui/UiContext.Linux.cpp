@@ -173,10 +173,10 @@ namespace OpenRCT2::Ui
                             std::string pattern = desc.Filters[0].Pattern;
                             std::string defaultExtension = pattern.substr(pattern.find_last_of('.'));
 
-                            const utf8* filename = Path::GetFileName(output.c_str());
+                            const auto filename = Path::GetFileName(output.c_str());
 
                             // If there is no extension, append the pattern
-                            const utf8* extension = Path::GetExtension(filename);
+                            const auto extension = Path::GetExtension(filename);
                             result = output;
                             if (extension[0] == '\0' && !defaultExtension.empty())
                             {
@@ -204,8 +204,7 @@ namespace OpenRCT2::Ui
                     ShowMessageBox(window, msg);
                     return ShowFileDialog(window, desc);
                 }
-                else if (
-                    desc.Type == FILE_DIALOG_TYPE::SAVE && access(result.c_str(), F_OK) != -1 && dtype == DIALOG_TYPE::KDIALOG)
+                if (desc.Type == FILE_DIALOG_TYPE::SAVE && access(result.c_str(), F_OK) != -1 && dtype == DIALOG_TYPE::KDIALOG)
                 {
                     std::string cmd = String::StdFormat("%s --yesno \"Overwrite %s?\"", executablePath.c_str(), result.c_str());
                     if (Platform::Execute(cmd) != 0)
@@ -393,9 +392,10 @@ namespace OpenRCT2::Ui
                     {
                         filtersb << ' ';
                     }
-                    else if (isalpha(c))
+                    else if (isalpha(static_cast<unsigned char>(c)))
                     {
-                        filtersb << '[' << static_cast<char>(tolower(c)) << static_cast<char>(toupper(c)) << ']';
+                        auto uc = static_cast<unsigned char>(c);
+                        filtersb << '[' << static_cast<char>(tolower(uc)) << static_cast<char>(toupper(uc)) << ']';
                     }
                     else
                     {

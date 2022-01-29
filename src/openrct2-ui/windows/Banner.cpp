@@ -13,7 +13,6 @@
 #include <openrct2-ui/windows/Window.h>
 #include <openrct2/Game.h>
 #include <openrct2/actions/BannerRemoveAction.h>
-#include <openrct2/actions/BannerSetColourAction.h>
 #include <openrct2/actions/BannerSetNameAction.h>
 #include <openrct2/actions/BannerSetStyleAction.h>
 #include <openrct2/config/Config.h>
@@ -27,7 +26,7 @@ static constexpr const int32_t WH = 96;
 static constexpr const rct_string_id WINDOW_TITLE = STR_BANNER_WINDOW_TITLE;
 
 // clang-format off
-enum WINDOW_BANNER_WIDGET_IDX {
+enum WindowBannerWidgetIdx {
     WIDX_BACKGROUND,
     WIDX_TITLE,
     WIDX_CLOSE,
@@ -66,7 +65,7 @@ static rct_widget window_banner_widgets[] = {
     MakeWidget({      5, WH - 16}, {12, 12}, WindowWidgetType::ColourBtn, WindowColour::Secondary, 0xFFFFFFFF,         STR_SELECT_MAIN_SIGN_COLOUR_TIP), // high money
     MakeWidget({     43, WH - 16}, {39, 12}, WindowWidgetType::DropdownMenu,  WindowColour::Secondary                                                     ), // high money
     MakeWidget({     70, WH - 15}, {11, 10}, WindowWidgetType::Button,    WindowColour::Secondary, STR_DROPDOWN_GLYPH, STR_SELECT_TEXT_COLOUR_TIP     ), // high money
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 
 // clang-format on
@@ -74,7 +73,6 @@ static rct_widget window_banner_widgets[] = {
 class BannerWindow final : public Window
 {
 private:
-    Banner* _banner;
     CoordsXYZ _bannerViewPos;
 
     void CreateViewport()
@@ -82,21 +80,27 @@ private:
         rct_widget* viewportWidget = &window_banner_widgets[WIDX_VIEWPORT];
         viewport_create(
             this, windowPos + ScreenCoordsXY{ viewportWidget->left + 1, viewportWidget->top + 1 },
-            (viewportWidget->width()) - 1, (viewportWidget->height()) - 1, 0, _bannerViewPos, 0, SPRITE_INDEX_NULL);
+            (viewportWidget->width()) - 1, (viewportWidget->height()) - 1, Focus(_bannerViewPos));
 
         if (viewport != nullptr)
             viewport->flags = gConfigGeneral.always_show_gridlines ? VIEWPORT_FLAG_GRIDLINES : 0;
         Invalidate();
     }
 
+    BannerIndex GetBannerIndex() const
+    {
+        return BannerIndex::FromUnderlying(number);
+    }
+
     BannerElement* GetBannerElement()
     {
-        if (_banner == nullptr)
+        auto* banner = GetBanner(GetBannerIndex());
+        if (banner == nullptr)
         {
             return nullptr;
         }
 
-        TileElement* tileElement = map_get_first_element_at(_banner->position.ToCoordsXY().ToTileCentre());
+        TileElement* tileElement = map_get_first_element_at(banner->position);
         if (tileElement == nullptr)
         {
             return nullptr;
@@ -109,7 +113,7 @@ private:
             {
                 continue;
             }
-            if (bannerElement->GetIndex() == number)
+            if (bannerElement->GetIndex() == GetBannerIndex())
             {
                 return bannerElement;
             }
@@ -131,24 +135,29 @@ public:
     void Initialise(rct_windownumber _number)
     {
         number = _number;
-        _banner = GetBanner(number);
+        auto* banner = GetBanner(BannerIndex::FromUnderlying(number));
 
         auto* bannerElement = GetBannerElement();
         if (bannerElement == nullptr)
             return;
 
-        _bannerViewPos = CoordsXYZ{ _banner->position.ToCoordsXY().ToTileCentre(), bannerElement->GetBaseZ() };
+        _bannerViewPos = CoordsXYZ{ banner->position.ToCoordsXY().ToTileCentre(), bannerElement->GetBaseZ() };
         CreateViewport();
     }
 
     void OnMouseDown(rct_widgetindex widgetIndex) override
     {
         rct_widget* widget = &widgets[widgetIndex];
-
+        auto* banner = GetBanner(GetBannerIndex());
+        if (banner == nullptr)
+        {
+            Close();
+            return;
+        }
         switch (widgetIndex)
         {
             case WIDX_MAIN_COLOUR:
-                WindowDropdownShowColour(this, widget, TRANSLUCENT(colours[1]), _banner->colour);
+                WindowDropdownShowColour(this, widget, TRANSLUCENT(colours[1]), banner->colour);
                 break;
             case WIDX_TEXT_COLOUR_DROPDOWN_BUTTON:
 
@@ -165,13 +174,19 @@ public:
                     { widget->left + windowPos.x, widget->top + windowPos.y }, widget->height() + 1, colours[1], 0,
                     Dropdown::Flag::StayOpen, 13, widget->width() - 3);
 
-                Dropdown::SetChecked(_banner->text_colour - 1, true);
+                Dropdown::SetChecked(banner->text_colour - 1, true);
                 break;
         }
     }
 
     void OnMouseUp(rct_widgetindex widgetIndex) override
     {
+        auto* banner = GetBanner(GetBannerIndex());
+        if (banner == nullptr)
+        {
+            Close();
+            return;
+        }
         switch (widgetIndex)
         {
             case WIDX_CLOSE:
@@ -180,23 +195,23 @@ public:
             case WIDX_BANNER_DEMOLISH:
             {
                 auto* bannerElement = GetBannerElement();
-                if (_banner == nullptr || bannerElement == nullptr)
+                if (bannerElement == nullptr)
                     break;
 
                 auto bannerRemoveAction = BannerRemoveAction(
-                    { _banner->position.ToCoordsXY(), bannerElement->GetBaseZ(), bannerElement->GetPosition() });
+                    { banner->position.ToCoordsXY(), bannerElement->GetBaseZ(), bannerElement->GetPosition() });
                 GameActions::Execute(&bannerRemoveAction);
                 break;
             }
             case WIDX_BANNER_TEXT:
-                window_text_input_raw_open(
-                    this, WIDX_BANNER_TEXT, STR_BANNER_TEXT, STR_ENTER_BANNER_TEXT, _banner->GetText().c_str(), 32);
+                WindowTextInputRawOpen(
+                    this, WIDX_BANNER_TEXT, STR_BANNER_TEXT, STR_ENTER_BANNER_TEXT, {}, banner->GetText().c_str(), 32);
                 break;
             case WIDX_BANNER_NO_ENTRY:
             {
                 textinput_cancel();
                 auto bannerSetStyle = BannerSetStyleAction(
-                    BannerSetStyleType::NoEntry, number, _banner->flags ^ BANNER_FLAG_NO_ENTRY);
+                    BannerSetStyleType::NoEntry, GetBannerIndex(), banner->flags ^ BANNER_FLAG_NO_ENTRY);
                 GameActions::Execute(&bannerSetStyle);
                 break;
             }
@@ -212,7 +227,7 @@ public:
                 if (dropdownIndex == -1)
                     break;
 
-                auto bannerSetStyle = BannerSetStyleAction(BannerSetStyleType::PrimaryColour, number, dropdownIndex);
+                auto bannerSetStyle = BannerSetStyleAction(BannerSetStyleType::PrimaryColour, GetBannerIndex(), dropdownIndex);
                 GameActions::Execute(&bannerSetStyle);
                 break;
             }
@@ -220,7 +235,7 @@ public:
             {
                 if (dropdownIndex == -1)
                     break;
-                auto bannerSetStyle = BannerSetStyleAction(BannerSetStyleType::TextColour, number, dropdownIndex + 1);
+                auto bannerSetStyle = BannerSetStyleAction(BannerSetStyleType::TextColour, GetBannerIndex(), dropdownIndex + 1);
                 GameActions::Execute(&bannerSetStyle);
                 break;
             }
@@ -231,7 +246,7 @@ public:
     {
         if (widgetIndex == WIDX_BANNER_TEXT)
         {
-            auto bannerSetNameAction = BannerSetNameAction(number, std::string(text));
+            auto bannerSetNameAction = BannerSetNameAction(GetBannerIndex(), std::string(text));
             GameActions::Execute(&bannerSetNameAction);
         }
     }
@@ -254,10 +269,15 @@ public:
 
     void OnPrepareDraw() override
     {
+        auto* banner = GetBanner(GetBannerIndex());
+        if (banner == nullptr)
+        {
+            return;
+        }
         rct_widget* colourBtn = &window_banner_widgets[WIDX_MAIN_COLOUR];
         colourBtn->type = WindowWidgetType::Empty;
 
-        auto* bannerEntry = get_banner_entry(_banner->type);
+        auto* bannerEntry = get_banner_entry(banner->type);
         if (bannerEntry != nullptr && (bannerEntry->flags & BANNER_ENTRY_FLAG_HAS_PRIMARY_COLOUR))
         {
             colourBtn->type = WindowWidgetType::ColourBtn;
@@ -265,15 +285,15 @@ public:
         pressed_widgets &= ~(1ULL << WIDX_BANNER_NO_ENTRY);
         disabled_widgets &= ~(
             (1ULL << WIDX_BANNER_TEXT) | (1ULL << WIDX_TEXT_COLOUR_DROPDOWN) | (1ULL << WIDX_TEXT_COLOUR_DROPDOWN_BUTTON));
-        if (_banner->flags & BANNER_FLAG_NO_ENTRY)
+        if (banner->flags & BANNER_FLAG_NO_ENTRY)
         {
             pressed_widgets |= (1ULL << WIDX_BANNER_NO_ENTRY);
             disabled_widgets |= (1ULL << WIDX_BANNER_TEXT) | (1ULL << WIDX_TEXT_COLOUR_DROPDOWN)
                 | (1ULL << WIDX_TEXT_COLOUR_DROPDOWN_BUTTON);
         }
-        colourBtn->image = SPRITE_ID_PALETTE_COLOUR_1(_banner->colour) | IMAGE_TYPE_TRANSPARENT | SPR_PALETTE_BTN;
+        colourBtn->image = SPRITE_ID_PALETTE_COLOUR_1(banner->colour) | IMAGE_TYPE_TRANSPARENT | SPR_PALETTE_BTN;
         rct_widget* dropDownWidget = &window_banner_widgets[WIDX_TEXT_COLOUR_DROPDOWN];
-        dropDownWidget->text = BannerColouredTextFormats[_banner->text_colour];
+        dropDownWidget->text = BannerColouredTextFormats[banner->text_colour];
     }
 };
 
@@ -281,7 +301,7 @@ public:
  *
  *  rct2: 0x006BA305
  */
-rct_window* window_banner_open(rct_windownumber number)
+rct_window* WindowBannerOpen(rct_windownumber number)
 {
     auto w = static_cast<BannerWindow*>(window_bring_to_front_by_number(WC_BANNER, number));
 

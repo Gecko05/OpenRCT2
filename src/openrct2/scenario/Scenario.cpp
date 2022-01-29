@@ -18,8 +18,12 @@
 #include "../ParkImporter.h"
 #include "../audio/audio.h"
 #include "../config/Config.h"
+#include "../core/BitSet.hpp"
 #include "../core/Guard.hpp"
 #include "../core/Random.hpp"
+#include "../entity/Duck.h"
+#include "../entity/Guest.h"
+#include "../entity/Staff.h"
 #include "../interface/Viewport.h"
 #include "../localisation/Date.h"
 #include "../localisation/Localisation.h"
@@ -31,8 +35,9 @@
 #include "../network/network.h"
 #include "../object/Object.h"
 #include "../object/ObjectList.h"
-#include "../peep/Staff.h"
+#include "../object/ObjectManager.h"
 #include "../platform/platform.h"
+#include "../profiling/Profiling.h"
 #include "../rct1/RCT1.h"
 #include "../rct12/RCT12.h"
 #include "../ride/Ride.h"
@@ -41,7 +46,7 @@
 #include "../util/Util.h"
 #include "../windows/Intent.h"
 #include "../world/Climate.h"
-#include "../world/Duck.h"
+#include "../world/Entrance.h"
 #include "../world/Map.h"
 #include "../world/Park.h"
 #include "../world/Scenery.h"
@@ -50,7 +55,6 @@
 #include "ScenarioSources.h"
 
 #include <algorithm>
-#include <bitset>
 
 const rct_string_id ScenarioCategoryStringIds[SCENARIO_CATEGORY_COUNT] = {
     STR_BEGINNER_PARKS, STR_CHALLENGING_PARKS,    STR_EXPERT_PARKS, STR_REAL_PARKS, STR_OTHER_PARKS,
@@ -58,27 +62,25 @@ const rct_string_id ScenarioCategoryStringIds[SCENARIO_CATEGORY_COUNT] = {
     STR_DLC_PARKS,      STR_BUILD_YOUR_OWN_PARKS,
 };
 
-rct_s6_info gS6Info;
+SCENARIO_CATEGORY gScenarioCategory;
 std::string gScenarioName;
 std::string gScenarioDetails;
 std::string gScenarioCompletedBy;
 std::string gScenarioSavePath;
-char gScenarioExpansionPacks[3256];
 bool gFirstTimeSaving = true;
 uint16_t gSavedAge;
 uint32_t gLastAutoSaveUpdate = 0;
 
-uint32_t gScenarioTicks;
 random_engine_t gScenarioRand;
 
 Objective gScenarioObjective;
 
 bool gAllowEarlyCompletionInNetworkPlay;
 uint16_t gScenarioParkRatingWarningDays;
-money32 gScenarioCompletedCompanyValue;
-money32 gScenarioCompanyValueRecord;
+money64 gScenarioCompletedCompanyValue;
+money64 gScenarioCompanyValueRecord;
 
-char gScenarioFileName[MAX_PATH];
+std::string gScenarioFileName;
 
 static void scenario_objective_check();
 
@@ -108,12 +110,9 @@ void scenario_begin()
     gHistoricalProfit = gInitialCash - gBankLoan;
     gCash = gInitialCash;
 
-    gScenarioDetails = std::string_view(gS6Info.details, 256);
-    gScenarioName = std::string_view(gS6Info.name, 64);
-
     {
         utf8 normalisedName[64];
-        ScenarioSources::NormaliseName(normalisedName, sizeof(normalisedName), gS6Info.name);
+        ScenarioSources::NormaliseName(normalisedName, sizeof(normalisedName), gScenarioName.c_str());
 
         rct_string_id localisedStringIds[3];
         if (language_get_localised_scenario_strings(normalisedName, localisedStringIds))
@@ -137,14 +136,14 @@ void scenario_begin()
     char savePath[MAX_PATH];
     platform_get_user_directory(savePath, "save", sizeof(savePath));
     safe_strcat_path(savePath, park.Name.c_str(), sizeof(savePath));
-    path_append_extension(savePath, ".sv6", sizeof(savePath));
+    path_append_extension(savePath, ".park", sizeof(savePath));
     gScenarioSavePath = savePath;
 
     gCurrentExpenditure = 0;
     gCurrentProfit = 0;
     gWeeklyProfitAverageDividend = 0;
     gWeeklyProfitAverageDivisor = 0;
-    gScenarioCompletedCompanyValue = MONEY32_UNDEFINED;
+    gScenarioCompletedCompanyValue = MONEY64_UNDEFINED;
     gTotalAdmissions = 0;
     gTotalIncomeFromAdmissions = 0;
     gScenarioCompletedBy = "?";
@@ -157,7 +156,15 @@ void scenario_begin()
     park_calculate_size();
     map_count_remaining_land_rights();
     Staff::ResetStats();
-    gLastEntranceStyle = 0;
+
+    auto& objManager = GetContext()->GetObjectManager();
+    gLastEntranceStyle = objManager.GetLoadedObjectEntryIndex("rct2.station.plain");
+    if (gLastEntranceStyle == OBJECT_ENTRY_INDEX_NULL)
+    {
+        // Fall back to first entrance object
+        gLastEntranceStyle = 0;
+    }
+
     gMarketingCampaigns.clear();
     gParkRatingCasualtyPenalty = 0;
 
@@ -197,12 +204,12 @@ void scenario_failure()
  */
 void scenario_success()
 {
-    const money32 companyValue = gCompanyValue;
+    auto companyValue = gCompanyValue;
 
     gScenarioCompletedCompanyValue = companyValue;
     peep_applause();
 
-    if (scenario_repository_try_record_highscore(gScenarioFileName, companyValue, nullptr))
+    if (scenario_repository_try_record_highscore(gScenarioFileName.c_str(), companyValue, nullptr))
     {
         // Allow name entry
         gParkFlags |= PARK_FLAGS_SCENARIO_COMPLETE_NAME_INPUT;
@@ -217,7 +224,7 @@ void scenario_success()
  */
 void scenario_success_submit_name(const char* name)
 {
-    if (scenario_repository_try_record_highscore(gScenarioFileName, gScenarioCompanyValueRecord, name))
+    if (scenario_repository_try_record_highscore(gScenarioFileName.c_str(), gScenarioCompanyValueRecord, name))
     {
         gScenarioCompletedBy = name;
     }
@@ -383,7 +390,7 @@ static void scenario_update_daynight_cycle()
     // Only update palette if day / night cycle has changed
     if (gDayNightCycle != currentDayNightCycle)
     {
-        platform_update_palette(gGamePalette, 10, 236);
+        UpdatePalette(gGamePalette, 10, 236);
     }
 }
 
@@ -393,6 +400,8 @@ static void scenario_update_daynight_cycle()
  */
 void scenario_update()
 {
+    PROFILED_FUNCTION();
+
     if (gScreenFlags == SCREEN_FLAGS_PLAYING)
     {
         if (date_is_day_start(gDateMonthTicks))
@@ -558,7 +567,7 @@ static bool scenario_prepare_rides_for_save()
     tile_element_iterator_begin(&it);
     do
     {
-        if (it.element->GetType() == TILE_ELEMENT_TYPE_TRACK)
+        if (it.element->GetType() == TileElementType::Track)
         {
             markTrackAsIndestructible = false;
 
@@ -586,18 +595,6 @@ static bool scenario_prepare_rides_for_save()
  */
 bool scenario_prepare_for_save()
 {
-    auto& park = GetContext()->GetGameState()->GetPark();
-    auto parkName = park.Name.c_str();
-
-    gS6Info.entry.flags = 255;
-    if (gS6Info.name[0] == 0)
-        String::Set(gS6Info.name, sizeof(gS6Info.name), parkName);
-
-    gS6Info.objective_type = gScenarioObjective.Type;
-    gS6Info.objective_arg_1 = gScenarioObjective.Year;
-    gS6Info.objective_arg_2 = gScenarioObjective.Currency;
-    gS6Info.objective_arg_3 = gScenarioObjective.NumGuests;
-
     // This can return false if the goal is 'Finish 5 roller coaster' and there are too few.
     if (!scenario_prepare_rides_for_save())
     {
@@ -613,106 +610,10 @@ bool scenario_prepare_for_save()
     return true;
 }
 
-/**
- * Modifies the given S6 data so that ghost elements, rides with no track elements or unused banners / user strings are saved.
- */
-void scenario_fix_ghosts(rct_s6_data* s6)
-{
-    // Build tile pointer cache (needed to get the first element at a certain location)
-    RCT12TileElement* tilePointers[MAX_TILE_TILE_ELEMENT_POINTERS];
-    for (size_t i = 0; i < MAX_TILE_TILE_ELEMENT_POINTERS; i++)
-    {
-        tilePointers[i] = TILE_UNDEFINED_TILE_ELEMENT;
-    }
-
-    RCT12TileElement* tileElement = s6->tile_elements;
-    RCT12TileElement** tile = tilePointers;
-    for (size_t y = 0; y < MAXIMUM_MAP_SIZE_TECHNICAL; y++)
-    {
-        for (size_t x = 0; x < MAXIMUM_MAP_SIZE_TECHNICAL; x++)
-        {
-            *tile++ = tileElement;
-            while (!(tileElement++)->IsLastForTile())
-                ;
-        }
-    }
-
-    // Remove all ghost elements
-    RCT12TileElement* destinationElement = s6->tile_elements;
-
-    for (int32_t y = 0; y < MAXIMUM_MAP_SIZE_TECHNICAL; y++)
-    {
-        for (int32_t x = 0; x < MAXIMUM_MAP_SIZE_TECHNICAL; x++)
-        {
-            // This is the equivalent of map_get_first_element_at(x, y), but on S6 data.
-            RCT12TileElement* originalElement = tilePointers[x + y * MAXIMUM_MAP_SIZE_TECHNICAL];
-            do
-            {
-                if (originalElement->IsGhost())
-                {
-                    uint8_t bannerIndex = originalElement->GetBannerIndex();
-                    if (bannerIndex != RCT12_BANNER_INDEX_NULL)
-                    {
-                        auto banner = &s6->banners[bannerIndex];
-                        if (banner->type != RCT12_OBJECT_ENTRY_INDEX_NULL)
-                        {
-                            banner->type = RCT12_OBJECT_ENTRY_INDEX_NULL;
-                            if (is_user_string_id(banner->string_idx))
-                                s6->custom_strings[(banner->string_idx % RCT12_MAX_USER_STRINGS)][0] = 0;
-                        }
-                    }
-                }
-                else
-                {
-                    *destinationElement++ = *originalElement;
-                }
-            } while (!(originalElement++)->IsLastForTile());
-
-            // Set last element flag in case the original last element was never added
-            (destinationElement - 1)->flags |= TILE_ELEMENT_FLAG_LAST_TILE;
-        }
-    }
-}
-
-static void ride_all_has_any_track_elements(std::array<bool, RCT12_MAX_RIDES_IN_PARK>& rideIndexArray)
-{
-    tile_element_iterator it;
-    tile_element_iterator_begin(&it);
-    while (tile_element_iterator_next(&it))
-    {
-        if (it.element->GetType() != TILE_ELEMENT_TYPE_TRACK)
-            continue;
-        if (it.element->IsGhost())
-            continue;
-
-        rideIndexArray[it.element->AsTrack()->GetRideIndex()] = true;
-    }
-}
-
-void scenario_remove_trackless_rides(rct_s6_data* s6)
-{
-    std::array<bool, RCT12_MAX_RIDES_IN_PARK> rideHasTrack{};
-    ride_all_has_any_track_elements(rideHasTrack);
-    for (int32_t i = 0; i < RCT12_MAX_RIDES_IN_PARK; i++)
-    {
-        auto ride = &s6->rides[i];
-        if (rideHasTrack[i] || ride->type == RIDE_TYPE_NULL)
-        {
-            continue;
-        }
-
-        ride->type = RIDE_TYPE_NULL;
-        if (is_user_string_id(ride->name))
-        {
-            s6->custom_strings[(ride->name % RCT12_MAX_USER_STRINGS)][0] = 0;
-        }
-    }
-}
-
 ObjectiveStatus Objective::CheckGuestsBy() const
 {
-    int16_t parkRating = gParkRating;
-    int32_t currentMonthYear = gDateMonthsElapsed;
+    auto parkRating = gParkRating;
+    auto currentMonthYear = gDateMonthsElapsed;
 
     if (currentMonthYear == MONTH_COUNT * Year || AllowEarlyCompletion())
     {
@@ -720,7 +621,8 @@ ObjectiveStatus Objective::CheckGuestsBy() const
         {
             return ObjectiveStatus::Success;
         }
-        else if (currentMonthYear == MONTH_COUNT * Year)
+
+        if (currentMonthYear == MONTH_COUNT * Year)
         {
             return ObjectiveStatus::Failure;
         }
@@ -741,7 +643,8 @@ ObjectiveStatus Objective::CheckParkValueBy() const
         {
             return ObjectiveStatus::Success;
         }
-        else if (currentMonthYear == MONTH_COUNT * Year)
+
+        if (currentMonthYear == MONTH_COUNT * Year)
         {
             return ObjectiveStatus::Failure;
         }
@@ -758,7 +661,7 @@ ObjectiveStatus Objective::CheckParkValueBy() const
 ObjectiveStatus Objective::Check10RollerCoasters() const
 {
     auto rcs = 0;
-    std::bitset<MAX_RIDE_OBJECTS> type_already_counted;
+    BitSet<MAX_RIDE_OBJECTS> type_already_counted;
     for (const auto& ride : GetRideManager())
     {
         if (ride.status == RideStatus::Open && ride.excitement >= RIDE_RATING(6, 00) && ride.subtype != OBJECT_ENTRY_INDEX_NULL)
@@ -857,7 +760,7 @@ ObjectiveStatus Objective::CheckMonthlyRideIncome() const
  */
 ObjectiveStatus Objective::Check10RollerCoastersLength() const
 {
-    std::bitset<MAX_RIDE_OBJECTS> type_already_counted;
+    BitSet<MAX_RIDE_OBJECTS> type_already_counted;
     auto rcs = 0;
     for (const auto& ride : GetRideManager())
     {
@@ -868,7 +771,7 @@ ObjectiveStatus Objective::Check10RollerCoastersLength() const
             {
                 if (ride_entry_has_category(rideEntry, RIDE_CATEGORY_ROLLERCOASTER) && !type_already_counted[ride.subtype])
                 {
-                    if ((ride_get_total_length(&ride) >> 16) >= MinimumLength)
+                    if ((ride.GetTotalLength() >> 16) >= MinimumLength)
                     {
                         type_already_counted[ride.subtype] = true;
                         rcs++;
@@ -928,8 +831,8 @@ ObjectiveStatus Objective::CheckRepayLoanAndParkValue() const
 
 ObjectiveStatus Objective::CheckMonthlyFoodIncome() const
 {
-    money32* lastMonthExpenditure = gExpenditureTable[1];
-    int32_t lastMonthProfit = lastMonthExpenditure[static_cast<int32_t>(ExpenditureType::ShopSales)]
+    const auto* lastMonthExpenditure = gExpenditureTable[1];
+    auto lastMonthProfit = lastMonthExpenditure[static_cast<int32_t>(ExpenditureType::ShopSales)]
         + lastMonthExpenditure[static_cast<int32_t>(ExpenditureType::ShopStock)]
         + lastMonthExpenditure[static_cast<int32_t>(ExpenditureType::FoodDrinkSales)]
         + lastMonthExpenditure[static_cast<int32_t>(ExpenditureType::FoodDrinkStock)];
@@ -978,7 +881,7 @@ static void scenario_objective_check()
  */
 ObjectiveStatus Objective::Check() const
 {
-    if (gScenarioCompletedCompanyValue != MONEY32_UNDEFINED)
+    if (gScenarioCompletedCompanyValue != MONEY64_UNDEFINED)
     {
         return ObjectiveStatus::Undecided;
     }

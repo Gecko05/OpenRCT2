@@ -16,6 +16,7 @@
 #include "../core/Memory.hpp"
 #include "../core/String.hpp"
 #include "../drawing/Drawing.h"
+#include "../drawing/Image.h"
 #include "../interface/Cursors.h"
 #include "../localisation/Language.h"
 #include "../world/Scenery.h"
@@ -42,7 +43,7 @@ void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, OpenRCT2::IStre
     rct_object_entry sgEntry = stream->ReadValue<rct_object_entry>();
     SetPrimarySceneryGroup(ObjectEntryDescriptor(sgEntry));
 
-    if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_FRAME_OFFSETS))
+    if (_legacyType.HasFlag(SMALL_SCENERY_FLAG_HAS_FRAME_OFFSETS))
     {
         _frameOffsets = ReadFrameOffsets(stream);
     }
@@ -78,7 +79,7 @@ void SmallSceneryObject::Load()
 
     _legacyType.scenery_tab_id = OBJECT_ENTRY_INDEX_NULL;
 
-    if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_FRAME_OFFSETS))
+    if (_legacyType.HasFlag(SMALL_SCENERY_FLAG_HAS_FRAME_OFFSETS))
     {
         _legacyType.frame_offsets = _frameOffsets.data();
     }
@@ -97,45 +98,40 @@ void SmallSceneryObject::Unload()
 
 void SmallSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const
 {
-    uint32_t imageId = _legacyType.image;
-    if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_PRIMARY_COLOUR))
+    auto imageId = ImageId(_legacyType.image);
+    if (_legacyType.HasFlag(SMALL_SCENERY_FLAG_HAS_PRIMARY_COLOUR))
     {
-        imageId |= 0x20D00000;
-        if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_SECONDARY_COLOUR))
+        imageId = imageId.WithPrimary(COLOUR_BORDEAUX_RED);
+        if (_legacyType.HasFlag(SMALL_SCENERY_FLAG_HAS_SECONDARY_COLOUR))
         {
-            imageId |= 0x92000000;
+            imageId = imageId.WithSecondary(COLOUR_YELLOW);
         }
     }
 
     auto screenCoords = ScreenCoordsXY{ width / 2, (height / 2) + (_legacyType.height / 2) };
     screenCoords.y = std::min(screenCoords.y, height - 16);
 
-    if ((scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_FULL_TILE))
-        && (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_VOFFSET_CENTRE)))
+    if ((_legacyType.HasFlag(SMALL_SCENERY_FLAG_FULL_TILE)) && (_legacyType.HasFlag(SMALL_SCENERY_FLAG_VOFFSET_CENTRE)))
     {
         screenCoords.y -= 12;
     }
 
-    gfx_draw_sprite(dpi, imageId, screenCoords, 0);
+    gfx_draw_sprite(dpi, imageId, screenCoords);
 
-    if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_GLASS))
+    if (_legacyType.HasFlag(SMALL_SCENERY_FLAG_HAS_GLASS))
     {
-        imageId = _legacyType.image + 0x44500004;
-        if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_SECONDARY_COLOUR))
-        {
-            imageId |= 0x92000000;
-        }
-        gfx_draw_sprite(dpi, imageId, screenCoords, 0);
+        imageId = ImageId(_legacyType.image + 4).WithTransparancy(COLOUR_BORDEAUX_RED);
+        gfx_draw_sprite(dpi, imageId, screenCoords);
     }
 
-    if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_ANIMATED_FG))
+    if (_legacyType.HasFlag(SMALL_SCENERY_FLAG_ANIMATED_FG))
     {
-        imageId = _legacyType.image + 4;
-        if (scenery_small_entry_has_flag(&_legacyType, SMALL_SCENERY_FLAG_HAS_SECONDARY_COLOUR))
+        imageId = ImageId(_legacyType.image + 4);
+        if (_legacyType.HasFlag(SMALL_SCENERY_FLAG_HAS_SECONDARY_COLOUR))
         {
-            imageId |= 0x92000000;
+            imageId = imageId.WithSecondary(COLOUR_YELLOW);
         }
-        gfx_draw_sprite(dpi, imageId, screenCoords, 0);
+        gfx_draw_sprite(dpi, imageId, screenCoords);
     }
 }
 
@@ -158,14 +154,12 @@ void SmallSceneryObject::PerformFixes()
     auto identifier = GetLegacyIdentifier();
     static const auto& scgWalls = Object::GetScgWallsHeader();
 
-    // ToonTowner's base blocks. Make them allow supports on top and put them in the Walls and Roofs group.
+    // ToonTowner's base blocks. Put them in the Walls and Roofs group.
     if (identifier == "XXBBCL01" ||
         identifier == "XXBBMD01" ||
         identifier == "ARBASE2 ")
     {
         SetPrimarySceneryGroup(scgWalls);
-
-        _legacyType.flags |= SMALL_SCENERY_FLAG_BUILD_DIRECTLY_ONTOP;
     }
 
     // ToonTowner's Pirate roofs. Make them show up in the Pirate Theming.
@@ -210,17 +204,17 @@ void SmallSceneryObject::PerformFixes()
 
 ObjectEntryDescriptor SmallSceneryObject::GetScgPiratHeader() const
 {
-    return ObjectEntryDescriptor("rct2.scgpirat");
+    return ObjectEntryDescriptor("rct2.scenery_group.scgpirat");
 }
 
 ObjectEntryDescriptor SmallSceneryObject::GetScgMineHeader() const
 {
-    return ObjectEntryDescriptor("rct2.scgpirat");
+    return ObjectEntryDescriptor("rct2.scgmine");
 }
 
 ObjectEntryDescriptor SmallSceneryObject::GetScgAbstrHeader() const
 {
-    return ObjectEntryDescriptor("rct2.scgabstr");
+    return ObjectEntryDescriptor("rct2.scenery_group.scgabstr");
 }
 
 void SmallSceneryObject::ReadJson(IReadObjectContext* context, json_t& root)

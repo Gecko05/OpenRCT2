@@ -19,6 +19,10 @@
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/core/Memory.hpp>
 #include <openrct2/drawing/Drawing.h>
+#include <openrct2/entity/Balloon.h>
+#include <openrct2/entity/Duck.h>
+#include <openrct2/entity/Peep.h>
+#include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/Localisation.h>
 #include <openrct2/ride/Vehicle.h>
 #include <openrct2/scenario/ScenarioRepository.h>
@@ -26,18 +30,15 @@
 #include <openrct2/sprites.h>
 #include <openrct2/title/TitleSequence.h>
 #include <openrct2/util/Util.h>
-#include <openrct2/world/Balloon.h>
-#include <openrct2/world/Duck.h>
-#include <openrct2/world/Entity.h>
 
 // clang-format off
-struct TITLE_COMMAND_ORDER {
+struct TitleCommandOrder {
     TitleScript command;
     rct_string_id nameStringId;
     rct_string_id descStringId;
 };
 
-static TITLE_COMMAND_ORDER _window_title_command_editor_orders[] = {
+static TitleCommandOrder _window_title_command_editor_orders[] = {
     { TitleScript::Load,       STR_TITLE_EDITOR_ACTION_LOAD_SAVE, STR_TITLE_EDITOR_ARGUMENT_SAVEFILE },
     { TitleScript::LoadSc,      STR_TITLE_EDITOR_ACTION_LOAD_SCENARIO, STR_TITLE_EDITOR_ARGUMENT_SCENARIO },
     { TitleScript::Location,    STR_TITLE_EDITOR_COMMAND_TYPE_LOCATION, STR_TITLE_EDITOR_ARGUMENT_COORDINATES },
@@ -52,7 +53,7 @@ static TITLE_COMMAND_ORDER _window_title_command_editor_orders[] = {
 
 #define NUM_COMMANDS std::size(_window_title_command_editor_orders)
 
-enum WINDOW_TITLE_COMMAND_EDITOR_WIDGET_IDX {
+enum WindowTitleCommandEditorWidgetIdx {
     WIDX_BACKGROUND,
     WIDX_TITLE,
     WIDX_CLOSE,
@@ -106,39 +107,39 @@ static rct_widget window_title_command_editor_widgets[] = {
 
     MakeWidget({ 10, 99}, {  71,  14}, WindowWidgetType::Button,   WindowColour::Secondary, STR_OK                                         ), // OKAY
     MakeWidget({120, 99}, {  71,  14}, WindowWidgetType::Button,   WindowColour::Secondary, STR_CANCEL                                     ), // Cancel
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 
-static void window_title_command_editor_close(rct_window * w);
-static void window_title_command_editor_mouseup(rct_window * w, rct_widgetindex widgetIndex);
-static void window_title_command_editor_mousedown(rct_window * w, rct_widgetindex widgetIndex, rct_widget * widget);
-static void window_title_command_editor_dropdown(rct_window * w, rct_widgetindex widgetIndex, int32_t dropdownIndex);
-static void window_title_command_editor_update(rct_window * w);
-static void window_title_command_editor_tool_down(rct_window * w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
-static void window_title_command_editor_invalidate(rct_window * w);
-static void window_title_command_editor_paint(rct_window * w, rct_drawpixelinfo * dpi);
-static void window_title_command_editor_textinput(rct_window * w, rct_widgetindex widgetIndex, char * text);
-static void scenario_select_callback(const utf8 * path);
-static int32_t get_command_info_index(TitleScript commandType);
-static TITLE_COMMAND_ORDER get_command_info(TitleScript commandType);
-static TileCoordsXY get_location();
-static uint8_t get_zoom();
+static void WindowTitleCommandEditorClose(rct_window * w);
+static void WindowTitleCommandEditorMouseup(rct_window * w, rct_widgetindex widgetIndex);
+static void WindowTitleCommandEditorMousedown(rct_window * w, rct_widgetindex widgetIndex, rct_widget * widget);
+static void WindowTitleCommandEditorDropdown(rct_window * w, rct_widgetindex widgetIndex, int32_t dropdownIndex);
+static void WindowTitleCommandEditorUpdate(rct_window * w);
+static void WindowTitleCommandEditorToolDown(rct_window * w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
+static void WindowTitleCommandEditorInvalidate(rct_window * w);
+static void WindowTitleCommandEditorPaint(rct_window * w, rct_drawpixelinfo * dpi);
+static void WindowTitleCommandEditorTextinput(rct_window * w, rct_widgetindex widgetIndex, char * text);
+static void ScenarioSelectCallback(const utf8 * path);
+static int32_t GetCommandInfoIndex(TitleScript commandType);
+static TitleCommandOrder GetCommandInfo(TitleScript commandType);
+static TileCoordsXY GetLocation();
+static uint8_t GetZoom();
 
 static rct_window_event_list window_title_command_editor_events([](auto& events)
 {
-    events.close = &window_title_command_editor_close;
-    events.mouse_up = &window_title_command_editor_mouseup;
-    events.mouse_down = &window_title_command_editor_mousedown;
-    events.dropdown = &window_title_command_editor_dropdown;
-    events.update = &window_title_command_editor_update;
-    events.tool_down = &window_title_command_editor_tool_down;
-    events.text_input = &window_title_command_editor_textinput;
-    events.invalidate = &window_title_command_editor_invalidate;
-    events.paint = &window_title_command_editor_paint;
+    events.close = &WindowTitleCommandEditorClose;
+    events.mouse_up = &WindowTitleCommandEditorMouseup;
+    events.mouse_down = &WindowTitleCommandEditorMousedown;
+    events.dropdown = &WindowTitleCommandEditorDropdown;
+    events.update = &WindowTitleCommandEditorUpdate;
+    events.tool_down = &WindowTitleCommandEditorToolDown;
+    events.text_input = &WindowTitleCommandEditorTextinput;
+    events.invalidate = &WindowTitleCommandEditorInvalidate;
+    events.paint = &WindowTitleCommandEditorPaint;
 });
 // clang-format on
 
-static void scenario_select_callback(const utf8* path)
+static void ScenarioSelectCallback(const utf8* path)
 {
     if (_command.Type == TitleScript::LoadSc)
     {
@@ -148,7 +149,7 @@ static void scenario_select_callback(const utf8* path)
     }
 }
 
-static int32_t get_command_info_index(TitleScript commandType)
+static int32_t GetCommandInfoIndex(TitleScript commandType)
 {
     for (int32_t i = 0; i < static_cast<int32_t>(NUM_COMMANDS); i++)
     {
@@ -158,7 +159,7 @@ static int32_t get_command_info_index(TitleScript commandType)
     return 0;
 }
 
-static TITLE_COMMAND_ORDER get_command_info(TitleScript commandType)
+static TitleCommandOrder GetCommandInfo(TitleScript commandType)
 {
     for (int32_t i = 0; i < static_cast<int32_t>(NUM_COMMANDS); i++)
     {
@@ -168,7 +169,7 @@ static TITLE_COMMAND_ORDER get_command_info(TitleScript commandType)
     return _window_title_command_editor_orders[0];
 }
 
-static TileCoordsXY get_location()
+static TileCoordsXY GetLocation()
 {
     TileCoordsXY tileCoord = {};
     rct_window* w = window_get_main();
@@ -186,7 +187,7 @@ static TileCoordsXY get_location()
     return tileCoord;
 }
 
-static uint8_t get_zoom()
+static uint8_t GetZoom()
 {
     uint8_t zoom = 0;
     rct_window* w = window_get_main();
@@ -197,7 +198,7 @@ static uint8_t get_zoom()
     return zoom;
 }
 
-static bool sprite_selector_tool_is_active()
+static bool SpriteSelectorToolIsActive()
 {
     if (!(input_test_flag(INPUT_FLAG_TOOL_ACTIVE)))
         return false;
@@ -206,7 +207,7 @@ static bool sprite_selector_tool_is_active()
     return true;
 }
 
-void window_title_command_editor_open(TitleSequence* sequence, int32_t index, bool insert)
+void WindowTitleCommandEditorOpen(TitleSequence* sequence, int32_t index, bool insert)
 {
     _sequence = sequence;
 
@@ -227,9 +228,10 @@ void window_title_command_editor_open(TitleSequence* sequence, int32_t index, bo
     WindowInitScrollWidgets(window);
 
     rct_widget* const viewportWidget = &window_title_command_editor_widgets[WIDX_VIEWPORT];
+    const auto focus = Focus(CoordsXYZ{ 0, 0, 0 });
     viewport_create(
         window, window->windowPos + ScreenCoordsXY{ viewportWidget->left + 1, viewportWidget->top + 1 },
-        viewportWidget->width() - 1, viewportWidget->height() - 1, 0, { 0, 0, 0 }, 0, SPRITE_INDEX_NULL);
+        viewportWidget->width() - 1, viewportWidget->height() - 1, focus);
 
     _window_title_command_editor_index = index;
     _window_title_command_editor_insert = insert;
@@ -278,15 +280,15 @@ void window_title_command_editor_open(TitleSequence* sequence, int32_t index, bo
     }
 }
 
-static void window_title_command_editor_close(rct_window* w)
+static void WindowTitleCommandEditorClose(rct_window* w)
 {
-    if (sprite_selector_tool_is_active())
+    if (SpriteSelectorToolIsActive())
     {
         tool_cancel();
     }
 }
 
-static void window_title_command_editor_mouseup(rct_window* w, rct_widgetindex widgetIndex)
+static void WindowTitleCommandEditorMouseup(rct_window* w, rct_widgetindex widgetIndex)
 {
     switch (widgetIndex)
     {
@@ -315,7 +317,7 @@ static void window_title_command_editor_mouseup(rct_window* w, rct_widgetindex w
         case WIDX_GET:
             if (_command.Type == TitleScript::Location)
             {
-                auto tileCoord = get_location();
+                auto tileCoord = GetLocation();
                 _command.X = static_cast<uint8_t>(tileCoord.x);
                 _command.Y = static_cast<uint8_t>(tileCoord.y);
                 snprintf(textbox1Buffer, BUF_SIZE, "%d", _command.X);
@@ -323,17 +325,17 @@ static void window_title_command_editor_mouseup(rct_window* w, rct_widgetindex w
             }
             else if (_command.Type == TitleScript::Zoom)
             {
-                uint8_t zoom = get_zoom();
+                uint8_t zoom = GetZoom();
                 _command.Zoom = zoom;
                 snprintf(textbox1Buffer, BUF_SIZE, "%d", _command.Zoom);
             }
             w->Invalidate();
             break;
         case WIDX_SELECT_SCENARIO:
-            window_scenarioselect_open(scenario_select_callback, true);
+            WindowScenarioselectOpen(ScenarioSelectCallback, true);
             break;
         case WIDX_SELECT_SPRITE:
-            if (!sprite_selector_tool_is_active())
+            if (!SpriteSelectorToolIsActive())
             {
                 tool_set(w, WIDX_BACKGROUND, Tool::Crosshair);
             }
@@ -364,7 +366,7 @@ static void window_title_command_editor_mouseup(rct_window* w, rct_widgetindex w
     }
 }
 
-static void window_title_command_editor_mousedown(rct_window* w, rct_widgetindex widgetIndex, rct_widget* widget)
+static void WindowTitleCommandEditorMousedown(rct_window* w, rct_widgetindex widgetIndex, rct_widget* widget)
 {
     widget--;
     switch (widgetIndex)
@@ -382,7 +384,7 @@ static void window_title_command_editor_mousedown(rct_window* w, rct_widgetindex
                 { w->windowPos.x + widget->left, w->windowPos.y + widget->top }, widget->height() + 1, w->colours[1], 0,
                 Dropdown::Flag::StayOpen, numItems, widget->width() - 3);
 
-            Dropdown::SetChecked(get_command_info_index(_command.Type), true);
+            Dropdown::SetChecked(GetCommandInfoIndex(_command.Type), true);
             break;
         }
         case WIDX_INPUT_DROPDOWN:
@@ -420,13 +422,13 @@ static void window_title_command_editor_mousedown(rct_window* w, rct_widgetindex
     }
 }
 
-static void window_title_command_editor_dropdown(rct_window* w, rct_widgetindex widgetIndex, int32_t dropdownIndex)
+static void WindowTitleCommandEditorDropdown(rct_window* w, rct_widgetindex widgetIndex, int32_t dropdownIndex)
 {
     if (dropdownIndex == -1)
         return;
 
     // Cancel sprite selector tool if it's active
-    if (sprite_selector_tool_is_active())
+    if (SpriteSelectorToolIsActive())
     {
         tool_cancel();
     }
@@ -438,7 +440,7 @@ static void window_title_command_editor_dropdown(rct_window* w, rct_widgetindex 
             {
                 window_unfollow_sprite(w);
             }
-            if (dropdownIndex == get_command_info_index(_command.Type))
+            if (dropdownIndex == GetCommandInfoIndex(_command.Type))
             {
                 break;
             }
@@ -447,7 +449,7 @@ static void window_title_command_editor_dropdown(rct_window* w, rct_widgetindex 
             {
                 case TitleScript::Location:
                 {
-                    auto tileCoord = get_location();
+                    auto tileCoord = GetLocation();
                     _command.X = static_cast<uint8_t>(tileCoord.x);
                     _command.Y = static_cast<uint8_t>(tileCoord.y);
                     snprintf(textbox1Buffer, BUF_SIZE, "%d", _command.X);
@@ -476,7 +478,8 @@ static void window_title_command_editor_dropdown(rct_window* w, rct_widgetindex 
                     _command.SpriteIndex = SPRITE_INDEX_NULL;
                     _command.SpriteName[0] = '\0';
                     window_unfollow_sprite(w);
-                    w->viewport->flags &= ~VIEWPORT_FOCUS_TYPE_SPRITE;
+                    // This is incorrect
+                    w->viewport->flags &= ~VIEWPORT_FLAG_GRIDLINES;
                     break;
                 case TitleScript::Speed:
                     _command.Speed = 1;
@@ -541,7 +544,7 @@ static void window_title_command_editor_dropdown(rct_window* w, rct_widgetindex 
     }
 }
 
-static void window_title_command_editor_textinput(rct_window* w, rct_widgetindex widgetIndex, char* text)
+static void WindowTitleCommandEditorTextinput(rct_window* w, rct_widgetindex widgetIndex, char* text)
 {
     char* end;
     int32_t value = strtol(widgetIndex != WIDX_TEXTBOX_Y ? textbox1Buffer : textbox2Buffer, &end, 10);
@@ -617,7 +620,7 @@ static void window_title_command_editor_textinput(rct_window* w, rct_widgetindex
     }
 }
 
-static void window_title_command_editor_update(rct_window* w)
+static void WindowTitleCommandEditorUpdate(rct_window* w)
 {
     if (gCurrentTextBox.window.classification == w->classification && gCurrentTextBox.window.number == w->number)
     {
@@ -626,8 +629,7 @@ static void window_title_command_editor_update(rct_window* w)
     }
 }
 
-static void window_title_command_editor_tool_down(
-    rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
+static void WindowTitleCommandEditorToolDown(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
 {
     auto info = ViewportInteractionGetItemLeft(screenCoords);
 
@@ -689,7 +691,7 @@ static void window_title_command_editor_tool_down(
     }
 }
 
-static void window_title_command_editor_invalidate(rct_window* w)
+static void WindowTitleCommandEditorInvalidate(rct_window* w)
 {
     ColourSchemeUpdateByClass(w, WC_TITLE_EDITOR);
 
@@ -741,7 +743,7 @@ static void window_title_command_editor_invalidate(rct_window* w)
             window_title_command_editor_widgets[WIDX_VIEWPORT].type = WindowWidgetType::Viewport;
 
             // Draw button pressed while the tool is active
-            if (sprite_selector_tool_is_active())
+            if (SpriteSelectorToolIsActive())
                 w->pressed_widgets |= (1ULL << WIDX_SELECT_SPRITE);
             else
                 w->pressed_widgets &= ~(1ULL << WIDX_SELECT_SPRITE);
@@ -761,11 +763,11 @@ static void window_title_command_editor_invalidate(rct_window* w)
     }
 }
 
-static void window_title_command_editor_paint(rct_window* w, rct_drawpixelinfo* dpi)
+static void WindowTitleCommandEditorPaint(rct_window* w, rct_drawpixelinfo* dpi)
 {
     WindowDrawWidgets(w, dpi);
 
-    TITLE_COMMAND_ORDER command_info = get_command_info(_command.Type);
+    TitleCommandOrder command_info = GetCommandInfo(_command.Type);
 
     // "Command:" label
     DrawTextBasic(

@@ -15,6 +15,9 @@
 #include "../config/Config.h"
 #include "../core/String.hpp"
 #include "../drawing/Drawing.h"
+#include "../entity/Duck.h"
+#include "../entity/EntityRegistry.h"
+#include "../entity/Staff.h"
 #include "../localisation/Localisation.h"
 #include "../localisation/StringIds.h"
 #include "../network/network.h"
@@ -26,13 +29,11 @@
 #include "../windows/Intent.h"
 #include "../world/Banner.h"
 #include "../world/Climate.h"
-#include "../world/Duck.h"
 #include "../world/Footpath.h"
 #include "../world/Location.hpp"
 #include "../world/Map.h"
 #include "../world/Park.h"
 #include "../world/Scenery.h"
-#include "../world/Sprite.h"
 #include "../world/Surface.h"
 #include "ParkSetLoanAction.h"
 #include "ParkSetParameterAction.h"
@@ -64,28 +65,28 @@ void SetCheatAction::Serialise(DataSerialiser& stream)
     stream << DS_TAG(_cheatType) << DS_TAG(_param1) << DS_TAG(_param2);
 }
 
-GameActions::Result::Ptr SetCheatAction::Query() const
+GameActions::Result SetCheatAction::Query() const
 {
     if (static_cast<uint32_t>(_cheatType) >= static_cast<uint32_t>(CheatType::Count))
     {
-        MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+        GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
     ParametersRange validRange = GetParameterRange(static_cast<CheatType>(_cheatType.id));
 
     if (_param1 < validRange.first.first || _param1 > validRange.first.second)
     {
-        MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+        GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
     if (_param2 < validRange.second.first || _param2 > validRange.second.second)
     {
-        MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+        GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
-    return MakeResult();
+    return GameActions::Result();
 }
 
-GameActions::Result::Ptr SetCheatAction::Execute() const
+GameActions::Result SetCheatAction::Execute() const
 {
     switch (static_cast<CheatType>(_cheatType.id))
     {
@@ -242,7 +243,7 @@ GameActions::Result::Ptr SetCheatAction::Execute() const
         default:
         {
             log_error("Unabled cheat: %d", _cheatType.id);
-            MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+            GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
         }
         break;
     }
@@ -253,7 +254,7 @@ GameActions::Result::Ptr SetCheatAction::Execute() const
     }
 
     window_invalidate_by_class(WC_CHEATS);
-    return MakeResult();
+    return GameActions::Result();
 }
 
 ParametersRange SetCheatAction::GetParameterRange(CheatType cheatType) const
@@ -382,7 +383,7 @@ void SetCheatAction::WaterPlants() const
     tile_element_iterator_begin(&it);
     do
     {
-        if (it.element->GetType() == TILE_ELEMENT_TYPE_SMALL_SCENERY)
+        if (it.element->GetType() == TileElementType::SmallScenery)
         {
             it.element->AsSmallScenery()->SetAge(0);
         }
@@ -398,7 +399,7 @@ void SetCheatAction::FixVandalism() const
     tile_element_iterator_begin(&it);
     do
     {
-        if (it.element->GetType() != TILE_ELEMENT_TYPE_PATH)
+        if (it.element->GetType() != TileElementType::Path)
             continue;
 
         if (!(it.element)->AsPath()->HasAddition())
@@ -414,14 +415,14 @@ void SetCheatAction::RemoveLitter() const
 {
     for (auto litter : EntityList<Litter>())
     {
-        sprite_remove(litter);
+        EntityRemove(litter);
     }
 
     tile_element_iterator it{};
     tile_element_iterator_begin(&it);
     do
     {
-        if (it.element->GetType() != TILE_ELEMENT_TYPE_PATH)
+        if (it.element->GetType() != TileElementType::Path)
             continue;
 
         auto* path = it.element->AsPath();
@@ -683,7 +684,7 @@ void SetCheatAction::SetStaffSpeed(uint8_t value) const
 void SetCheatAction::OwnAllLand() const
 {
     const int32_t min = 32;
-    const int32_t max = gMapSizeUnits - 32;
+    const int32_t max = GetMapSizeUnits() - 32;
 
     for (CoordsXY coords = { min, min }; coords.y <= max; coords.y += COORDS_XY_STEP)
     {

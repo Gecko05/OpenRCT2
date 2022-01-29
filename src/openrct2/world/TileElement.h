@@ -14,6 +14,7 @@
 #include "../ride/Station.h"
 #include "Banner.h"
 #include "Footpath.h"
+#include "tile_element/TileElementType.h"
 
 struct Banner;
 struct CoordsXY;
@@ -26,40 +27,15 @@ struct rct_footpath_entry;
 class LargeSceneryObject;
 class TerrainSurfaceObject;
 class TerrainEdgeObject;
+class FootpathObject;
+class FootpathSurfaceObject;
+class FootpathRailingsObject;
 using track_type_t = uint16_t;
 
 constexpr const uint8_t MAX_ELEMENT_HEIGHT = 255;
 constexpr const uint8_t OWNER_MASK = 0b00001111;
 
 #pragma pack(push, 1)
-
-enum
-{
-    TILE_ELEMENT_TYPE_SURFACE = (0 << 2),
-    TILE_ELEMENT_TYPE_PATH = (1 << 2),
-    TILE_ELEMENT_TYPE_TRACK = (2 << 2),
-    TILE_ELEMENT_TYPE_SMALL_SCENERY = (3 << 2),
-    TILE_ELEMENT_TYPE_ENTRANCE = (4 << 2),
-    TILE_ELEMENT_TYPE_WALL = (5 << 2),
-    TILE_ELEMENT_TYPE_LARGE_SCENERY = (6 << 2),
-    TILE_ELEMENT_TYPE_BANNER = (7 << 2),
-    // The corrupt element type is used for skipping drawing other following
-    // elements on a given tile.
-    TILE_ELEMENT_TYPE_CORRUPT = (8 << 2),
-};
-
-enum class TileElementType : uint8_t
-{
-    Surface = (0 << 2),
-    Path = (1 << 2),
-    Track = (2 << 2),
-    SmallScenery = (3 << 2),
-    Entrance = (4 << 2),
-    Wall = (5 << 2),
-    LargeScenery = (6 << 2),
-    Banner = (7 << 2),
-    Corrupt = (8 << 2),
-};
 
 struct TileElement;
 struct SurfaceElement;
@@ -70,7 +46,6 @@ struct LargeSceneryElement;
 struct WallElement;
 struct EntranceElement;
 struct BannerElement;
-struct CorruptElement;
 
 struct TileElementBase
 {
@@ -82,8 +57,8 @@ struct TileElementBase
 
     void Remove();
 
-    uint8_t GetType() const;
-    void SetType(uint8_t newType);
+    TileElementType GetType() const;
+    void SetType(TileElementType newType);
 
     Direction GetDirection() const;
     void SetDirection(Direction direction);
@@ -93,6 +68,8 @@ struct TileElementBase
     void SetLastForTile(bool on);
     bool IsGhost() const;
     void SetGhost(bool isGhost);
+    bool IsInvisible() const;
+    void SetInvisible(bool on);
 
     uint8_t GetOccupiedQuadrants() const;
     void SetOccupiedQuadrants(uint8_t quadrants);
@@ -111,8 +88,7 @@ struct TileElementBase
         if constexpr (std::is_same_v<TType, TileElement>)
             return reinterpret_cast<const TileElement*>(this);
         else
-            return static_cast<TileElementType>(GetType()) == TType::ElementType ? reinterpret_cast<const TType*>(this)
-                                                                                 : nullptr;
+            return GetType() == TType::ElementType ? reinterpret_cast<const TType*>(this) : nullptr;
     }
 
     template<typename TType> TType* as()
@@ -120,7 +96,7 @@ struct TileElementBase
         if constexpr (std::is_same_v<TType, TileElement>)
             return reinterpret_cast<TileElement*>(this);
         else
-            return static_cast<TileElementType>(GetType()) == TType::ElementType ? reinterpret_cast<TType*>(this) : nullptr;
+            return GetType() == TType::ElementType ? reinterpret_cast<TType*>(this) : nullptr;
     }
 
     const SurfaceElement* AsSurface() const
@@ -198,7 +174,7 @@ struct TileElement : public TileElementBase
     uint8_t pad_05[3];
     uint8_t pad_08[8];
 
-    void ClearAs(uint8_t newType);
+    void ClearAs(TileElementType newType);
 
     ride_id_t GetRideIndex() const;
 
@@ -260,34 +236,35 @@ struct PathElement : TileElementBase
     static constexpr TileElementType ElementType = TileElementType::Path;
 
 private:
-    PathSurfaceIndex SurfaceIndex; // 5
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-private-field"
-    PathRailingsIndex RailingsIndex; // 7
-#pragma clang diagnostic pop
-    uint8_t Additions;       // 8 (0 means no addition)
-    uint8_t EdgesAndCorners; // 9 (edges in lower 4 bits, corners in upper 4)
-    uint8_t Flags2;          // 10
-    uint8_t SlopeDirection;  // 11
+    ObjectEntryIndex SurfaceIndex;  // 5
+    ObjectEntryIndex RailingsIndex; // 7
+    uint8_t Additions;              // 9 (0 means no addition)
+    uint8_t EdgesAndCorners;        // 10 (edges in lower 4 bits, corners in upper 4)
+    uint8_t Flags2;                 // 11
+    uint8_t SlopeDirection;         // 12
     union
     {
-        uint8_t AdditionStatus; // 12, only used for litter bins
-        ride_id_t rideIndex;    // 12
+        uint8_t AdditionStatus; // 13, only used for litter bins
+        ride_id_t rideIndex;    // 13
     };
-    ::StationIndex StationIndex; // 14
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-private-field"
-    uint8_t pad_0F[1];
-#pragma clang diagnostic pop
+    ::StationIndex StationIndex; // 15
 
 public:
-    PathSurfaceIndex GetSurfaceEntryIndex() const;
-    PathSurfaceEntry* GetSurfaceEntry() const;
-    void SetSurfaceEntryIndex(PathSurfaceIndex newIndex);
+    ObjectEntryIndex GetLegacyPathEntryIndex() const;
+    const FootpathObject* GetLegacyPathEntry() const;
+    void SetLegacyPathEntryIndex(ObjectEntryIndex newIndex);
+    bool HasLegacyPathEntry() const;
 
-    PathRailingsIndex GetRailingEntryIndex() const;
-    PathRailingsEntry* GetRailingEntry() const;
-    void SetRailingEntryIndex(PathRailingsIndex newIndex);
+    ObjectEntryIndex GetSurfaceEntryIndex() const;
+    const FootpathSurfaceObject* GetSurfaceEntry() const;
+    void SetSurfaceEntryIndex(ObjectEntryIndex newIndex);
+
+    ObjectEntryIndex GetRailingsEntryIndex() const;
+    const FootpathRailingsObject* GetRailingsEntry() const;
+    void SetRailingsEntryIndex(ObjectEntryIndex newIndex);
+
+    const PathSurfaceDescriptor* GetSurfaceDescriptor() const;
+    const PathRailingsDescriptor* GetRailingsDescriptor() const;
 
     uint8_t GetQueueBannerDirection() const;
     void SetQueueBannerDirection(uint8_t direction);
@@ -374,14 +351,14 @@ private:
     };
     uint8_t Flags2;
     ride_id_t RideIndex;
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-private-field"
-    uint8_t pad[2];
-#pragma clang diagnostic pop
+    ride_type_t RideType;
 
 public:
     track_type_t GetTrackType() const;
     void SetTrackType(track_type_t newEntryIndex);
+
+    ride_type_t GetRideType() const;
+    void SetRideType(const ride_type_t rideType);
 
     uint8_t GetSequenceIndex() const;
     void SetSequenceIndex(uint8_t newSequenceIndex);
@@ -569,11 +546,12 @@ private:
     uint8_t entranceType;      // 5
     uint8_t SequenceIndex;     // 6. Only uses the lower nibble.
     uint8_t StationIndex;      // 7
-    PathSurfaceIndex PathType; // 8
-    ride_id_t rideIndex;       // 9
+    ObjectEntryIndex PathType; // 8
+    ride_id_t rideIndex;       // A
+    uint8_t flags2;            // C
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
-    uint8_t pad_0C[4];
+    uint8_t pad_0D[3];
 #pragma clang diagnostic pop
 
 public:
@@ -589,8 +567,19 @@ public:
     uint8_t GetSequenceIndex() const;
     void SetSequenceIndex(uint8_t newSequenceIndex);
 
-    PathSurfaceIndex GetPathType() const;
-    void SetPathType(PathSurfaceIndex newPathType);
+    bool HasLegacyPathEntry() const;
+
+    ObjectEntryIndex GetLegacyPathEntryIndex() const;
+    const FootpathObject* GetLegacyPathEntry() const;
+    void SetLegacyPathEntryIndex(ObjectEntryIndex newPathType);
+
+    ObjectEntryIndex GetSurfaceEntryIndex() const;
+    const FootpathSurfaceObject* GetSurfaceEntry() const;
+    void SetSurfaceEntryIndex(ObjectEntryIndex newIndex);
+
+    const PathSurfaceDescriptor* GetPathSurfaceDescriptor() const;
+
+    int32_t GetDirections() const;
 };
 assert_struct_size(EntranceElement, 16);
 
@@ -622,14 +611,6 @@ public:
 };
 assert_struct_size(BannerElement, 16);
 
-struct CorruptElement : TileElementBase
-{
-    static constexpr TileElementType ElementType = TileElementType::Corrupt;
-
-    uint8_t pad[3];
-    uint8_t pad_08[8];
-};
-assert_struct_size(CorruptElement, 16);
 #pragma pack(pop)
 
 class QuarterTile
@@ -686,6 +667,7 @@ enum
 enum
 {
     TILE_ELEMENT_FLAG_GHOST = (1 << 4),
+    TILE_ELEMENT_FLAG_INVISIBLE = (1 << 5),
     TILE_ELEMENT_FLAG_LAST_TILE = (1 << 7)
 };
 

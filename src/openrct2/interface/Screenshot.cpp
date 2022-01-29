@@ -17,9 +17,11 @@
 #include "../actions/SetCheatAction.h"
 #include "../audio/audio.h"
 #include "../core/Console.hpp"
+#include "../core/File.h"
 #include "../core/Imaging.h"
 #include "../drawing/Drawing.h"
 #include "../drawing/X8DrawingEngine.h"
+#include "../localisation/Formatter.h"
 #include "../localisation/Localisation.h"
 #include "../platform/Platform2.h"
 #include "../util/Util.h"
@@ -138,7 +140,7 @@ static std::optional<std::string> screenshot_get_next_path()
 
     // Generate a path with a `tries` number
     auto pathComposer = [&screenshotDirectory, &name](int tries) {
-        auto composedFilename = platform_sanitise_filename(
+        auto composedFilename = Platform::SanitiseFilename(
             name + ((tries > 0) ? " ("s + std::to_string(tries) + ")" : ""s) + ".png");
         return screenshotDirectory + PATH_SEPARATOR + composedFilename;
     };
@@ -146,7 +148,7 @@ static std::optional<std::string> screenshot_get_next_path()
     for (int tries = 0; tries < 100; tries++)
     {
         auto path = pathComposer(tries);
-        if (!Platform::FileExists(path))
+        if (!File::Exists(path))
         {
             return path;
         }
@@ -161,26 +163,24 @@ std::string screenshot_dump_png(rct_drawpixelinfo* dpi)
     // Get a free screenshot path
     auto path = screenshot_get_next_path();
 
-    if (path == std::nullopt)
+    if (!path.has_value())
     {
         return "";
     }
 
-    if (WriteDpiToFile(path->c_str(), dpi, gPalette))
+    if (WriteDpiToFile(path.value(), dpi, gPalette))
     {
-        return *path;
+        return path.value();
     }
-    else
-    {
-        return "";
-    }
+
+    return "";
 }
 
 std::string screenshot_dump_png_32bpp(int32_t width, int32_t height, const void* pixels)
 {
     auto path = screenshot_get_next_path();
 
-    if (path == std::nullopt)
+    if (!path.has_value())
     {
         return "";
     }
@@ -196,8 +196,8 @@ std::string screenshot_dump_png_32bpp(int32_t width, int32_t height, const void*
         image.Depth = 32;
         image.Stride = width * 4;
         image.Pixels = std::vector<uint8_t>(pixels8, pixels8 + pixelsLen);
-        Imaging::WriteToFile(path->c_str(), image, IMAGE_FORMAT::PNG_32);
-        return *path;
+        Imaging::WriteToFile(path.value(), image, IMAGE_FORMAT::PNG_32);
+        return path.value();
     }
     catch (const std::exception& e)
     {
@@ -375,7 +375,7 @@ static void RenderViewport(IDrawingEngine* drawingEngine, const rct_viewport& vi
         drawingEngine = tempDrawingEngine.get();
     }
     dpi.DrawingEngine = drawingEngine;
-    viewport_render(&dpi, &viewport, 0, 0, viewport.width, viewport.height);
+    viewport_render(&dpi, &viewport, { { 0, 0 }, { viewport.width, viewport.height } });
 }
 
 void screenshot_giant()
@@ -384,16 +384,15 @@ void screenshot_giant()
     try
     {
         auto path = screenshot_get_next_path();
-        if (path == std::nullopt)
+        if (!path.has_value())
         {
             throw std::runtime_error("Giant screenshot failed, unable to find a suitable destination path.");
         }
 
-        int32_t rotation = get_current_rotation();
-        ZoomLevel zoom = 0;
-
-        auto mainWindow = window_get_main();
-        auto vp = window_get_viewport(mainWindow);
+        const auto rotation = get_current_rotation();
+        auto zoom = ZoomLevel{ 0 };
+        auto* mainWindow = window_get_main();
+        const auto* vp = window_get_viewport(mainWindow);
         if (mainWindow != nullptr && vp != nullptr)
         {
             zoom = vp->zoom;
@@ -412,7 +411,7 @@ void screenshot_giant()
         dpi = CreateDPI(viewport);
 
         RenderViewport(nullptr, viewport, dpi);
-        WriteDpiToFile(path->c_str(), &dpi, gPalette);
+        WriteDpiToFile(path.value(), &dpi, gPalette);
 
         // Show user that screenshot saved successfully
         Formatter ft;
@@ -449,50 +448,53 @@ static void benchgfx_render_screenshots(const char* inputPath, std::unique_ptr<I
     gScreenFlags = SCREEN_FLAGS_PLAYING;
 
     // Create Viewport and DPI for every rotation and zoom.
-    constexpr int32_t MAX_ROTATIONS = 4;
-    constexpr int32_t MAX_ZOOM_LEVEL = 3;
-    std::array<rct_drawpixelinfo, MAX_ROTATIONS * MAX_ZOOM_LEVEL> dpis;
-    std::array<rct_viewport, MAX_ROTATIONS * MAX_ZOOM_LEVEL> viewports;
+    // We iterate from the default zoom level to the max zoomed out zoom level, then run GetGiantViewport once for each
+    // rotation.
+    constexpr int32_t NUM_ROTATIONS = 4;
+    constexpr auto NUM_ZOOM_LEVELS = static_cast<int8_t>(ZoomLevel::max());
+    std::array<rct_drawpixelinfo, NUM_ROTATIONS * NUM_ZOOM_LEVELS> dpis;
+    std::array<rct_viewport, NUM_ROTATIONS * NUM_ZOOM_LEVELS> viewports;
 
-    for (int32_t zoom = 0; zoom < MAX_ZOOM_LEVEL; zoom++)
+    for (ZoomLevel zoom{ 0 }; zoom < ZoomLevel::max(); zoom++)
     {
-        for (int32_t rotation = 0; rotation < MAX_ROTATIONS; rotation++)
+        int32_t zoomIndex{ static_cast<int8_t>(zoom) };
+        for (int32_t rotation = 0; rotation < NUM_ROTATIONS; rotation++)
         {
-            auto& viewport = viewports[zoom * MAX_ZOOM_LEVEL + rotation];
-            auto& dpi = dpis[zoom * MAX_ZOOM_LEVEL + rotation];
+            auto& viewport = viewports[zoomIndex * NUM_ZOOM_LEVELS + rotation];
+            auto& dpi = dpis[zoomIndex * NUM_ZOOM_LEVELS + rotation];
             viewport = GetGiantViewport(gMapSize, rotation, zoom);
             dpi = CreateDPI(viewport);
         }
     }
 
-    const uint32_t totalRenderCount = iterationCount * MAX_ROTATIONS * MAX_ZOOM_LEVEL;
+    const uint32_t totalRenderCount = iterationCount * NUM_ROTATIONS * NUM_ZOOM_LEVELS;
 
     try
     {
         double totalTime = 0.0;
 
-        std::array<double, MAX_ZOOM_LEVEL> zoomAverages;
+        std::array<double, NUM_ZOOM_LEVELS> zoomAverages;
 
         // Render at every zoom.
-        for (int32_t zoom = 0; zoom < MAX_ZOOM_LEVEL; zoom++)
+        for (int32_t zoom = 0; zoom < NUM_ZOOM_LEVELS; zoom++)
         {
             double zoomLevelTime = 0.0;
 
             // Render at every rotation.
-            for (int32_t rotation = 0; rotation < MAX_ROTATIONS; rotation++)
+            for (int32_t rotation = 0; rotation < NUM_ROTATIONS; rotation++)
             {
                 // N iterations.
                 for (uint32_t i = 0; i < iterationCount; i++)
                 {
-                    auto& dpi = dpis[zoom * MAX_ZOOM_LEVEL + rotation];
-                    auto& viewport = viewports[zoom * MAX_ZOOM_LEVEL + rotation];
+                    auto& dpi = dpis[zoom * NUM_ZOOM_LEVELS + rotation];
+                    auto& viewport = viewports[zoom * NUM_ZOOM_LEVELS + rotation];
                     double elapsed = MeasureFunctionTime([&viewport, &dpi]() { RenderViewport(nullptr, viewport, dpi); });
                     totalTime += elapsed;
                     zoomLevelTime += elapsed;
                 }
             }
 
-            zoomAverages[zoom] = zoomLevelTime / static_cast<double>(MAX_ROTATIONS * iterationCount);
+            zoomAverages[zoom] = zoomLevelTime / static_cast<double>(NUM_ROTATIONS * iterationCount);
         }
 
         const double average = totalTime / static_cast<double>(totalRenderCount);
@@ -500,10 +502,11 @@ static void benchgfx_render_screenshots(const char* inputPath, std::unique_ptr<I
         const auto engineName = format_string(engineStringId, nullptr);
         std::printf("Engine: %s\n", engineName.c_str());
         std::printf("Render Count: %u\n", totalRenderCount);
-        for (int32_t zoom = 0; zoom < MAX_ZOOM_LEVEL; zoom++)
+        for (ZoomLevel zoom{ 0 }; zoom < ZoomLevel::max(); zoom++)
         {
-            const auto zoomAverage = zoomAverages[zoom];
-            std::printf("Zoom[%d] average: %.06fs, %.f FPS\n", zoom, zoomAverage, 1.0 / zoomAverage);
+            int32_t zoomIndex{ static_cast<int8_t>(zoom) };
+            const auto zoomAverage = zoomAverages[zoomIndex];
+            std::printf("Zoom[%d] average: %.06fs, %.f FPS\n", zoomIndex, zoomAverage, 1.0 / zoomAverage);
         }
         std::printf("Total average: %.06fs, %.f FPS\n", average, 1.0 / average);
         std::printf("Time: %.05fs\n", totalTime);
@@ -650,7 +653,8 @@ int32_t cmdline_for_screenshot(const char** argv, int32_t argc, ScreenshotOption
         rct_viewport viewport{};
         if (giantScreenshot)
         {
-            auto zoom = std::atoi(argv[3]);
+            auto customZoom = static_cast<int8_t>(std::atoi(argv[3]));
+            auto zoom = ZoomLevel{ customZoom };
             auto rotation = std::atoi(argv[4]) & 3;
             viewport = GetGiantViewport(gMapSize, rotation, zoom);
             gCurrentRotation = rotation;
@@ -708,7 +712,7 @@ int32_t cmdline_for_screenshot(const char** argv, int32_t argc, ScreenshotOption
 
                 viewport.viewPos = { coords2d.x - ((viewport.view_width << customZoom) / 2),
                                      coords2d.y - ((viewport.view_height << customZoom) / 2) };
-                viewport.zoom = customZoom;
+                viewport.zoom = ZoomLevel{ static_cast<int8_t>(customZoom) };
                 gCurrentRotation = customRotation;
             }
             else
@@ -765,34 +769,32 @@ static std::string ResolveFilenameForCapture(const fs::path& filename)
         }
         return *path;
     }
-    else
+
+    auto screenshotDirectory = u8path(screenshot_get_directory());
+    auto screenshotPath = fs::absolute(screenshotDirectory / filename);
+
+    // Check the filename isn't attempting to leave the screenshot directory for security
+    if (!IsPathChildOf(screenshotPath, screenshotDirectory))
     {
-        auto screenshotDirectory = fs::u8path(screenshot_get_directory());
-        auto screenshotPath = fs::absolute(screenshotDirectory / filename);
-
-        // Check the filename isn't attempting to leave the screenshot directory for security
-        if (!IsPathChildOf(screenshotPath, screenshotDirectory))
-        {
-            throw std::runtime_error("Filename is not a child of the screenshot directory.");
-        }
-
-        auto directory = screenshotPath.parent_path();
-        if (!fs::is_directory(directory))
-        {
-            if (!fs::create_directory(directory, screenshotDirectory))
-            {
-                throw std::runtime_error("Unable to create directory.");
-            }
-        }
-
-        return screenshotPath.string();
+        throw std::runtime_error("Filename is not a child of the screenshot directory.");
     }
+
+    auto directory = screenshotPath.parent_path();
+    if (!fs::is_directory(directory))
+    {
+        if (!fs::create_directory(directory, screenshotDirectory))
+        {
+            throw std::runtime_error("Unable to create directory.");
+        }
+    }
+
+    return screenshotPath.u8string();
 }
 
 void CaptureImage(const CaptureOptions& options)
 {
     rct_viewport viewport{};
-    if (options.View)
+    if (options.View.has_value())
     {
         viewport.width = options.View->Width;
         viewport.height = options.View->Height;

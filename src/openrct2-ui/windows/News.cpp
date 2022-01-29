@@ -13,19 +13,20 @@
 #include <openrct2/Context.h>
 #include <openrct2/audio/audio.h>
 #include <openrct2/drawing/Drawing.h>
+#include <openrct2/entity/EntityRegistry.h>
+#include <openrct2/entity/Peep.h>
+#include <openrct2/entity/Staff.h>
+#include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/Localisation.h>
 #include <openrct2/management/NewsItem.h>
-#include <openrct2/peep/Peep.h>
-#include <openrct2/peep/Staff.h>
 #include <openrct2/sprites.h>
-#include <openrct2/world/Entity.h>
 
 static constexpr const rct_string_id WINDOW_TITLE = STR_RECENT_MESSAGES;
 static constexpr const int32_t WH = 300;
 static constexpr const int32_t WW = 400;
 
 // clang-format off
-enum WINDOW_NEWS_WIDGET_IDX {
+enum WindowNewsWidgetIdx {
     WIDX_BACKGROUND,
     WIDX_TITLE,
     WIDX_CLOSE,
@@ -38,7 +39,7 @@ static rct_widget window_news_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
     MakeWidget({372, 18}, { 24,  24}, WindowWidgetType::FlatBtn, WindowColour::Primary, SPR_TAB_GEARS_0), // settings
     MakeWidget({  4, 44}, {392, 252}, WindowWidgetType::Scroll,  WindowColour::Primary, SCROLL_VERTICAL), // scroll
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 
 class NewsWindow final : public Window
@@ -110,9 +111,9 @@ public:
         {
             static rct_window* _mainWindow;
             auto subjectLoc = News::GetSubjectLocation(newsItem.Type, newsItem.Assoc);
-            if (subjectLoc != std::nullopt && (_mainWindow = window_get_main()) != nullptr)
+            if (subjectLoc.has_value() && (_mainWindow = window_get_main()) != nullptr)
             {
-                window_scroll_to_location(_mainWindow, *subjectLoc);
+                window_scroll_to_location(_mainWindow, subjectLoc.value());
             }
         }
     }
@@ -139,12 +140,12 @@ public:
                     buttonIndex = 0;
                     break;
                 }
-                else if (mutableScreenCoords.x < 351 && newsItem.TypeHasSubject())
+                if (mutableScreenCoords.x < 351 && newsItem.TypeHasSubject())
                 {
                     buttonIndex = 1;
                     break;
                 }
-                else if (mutableScreenCoords.x < 376 && newsItem.TypeHasLocation())
+                if (mutableScreenCoords.x < 376 && newsItem.TypeHasLocation())
                 {
                     buttonIndex = 2;
                     break;
@@ -307,7 +308,7 @@ public:
     }
 };
 
-rct_window* window_news_open()
+rct_window* WindowNewsOpen()
 {
     return WindowFocusOrCreate<NewsWindow>(WC_RECENT_NEWS, WW, WH, 0);
 }

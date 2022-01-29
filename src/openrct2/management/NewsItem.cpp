@@ -13,17 +13,19 @@
 #include "../Input.h"
 #include "../OpenRCT2.h"
 #include "../audio/audio.h"
+#include "../entity/EntityRegistry.h"
+#include "../entity/Peep.h"
 #include "../interface/Window.h"
 #include "../interface/Window_internal.h"
 #include "../localisation/Date.h"
+#include "../localisation/Formatter.h"
 #include "../localisation/Localisation.h"
 #include "../management/Research.h"
-#include "../peep/Peep.h"
+#include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/Vehicle.h"
 #include "../util/Util.h"
 #include "../windows/Intent.h"
-#include "../world/Entity.h"
 #include "../world/Location.hpp"
 
 News::ItemQueues gNewsItems;
@@ -62,8 +64,8 @@ const News::Item& News::ItemQueues::operator[](size_t index) const
 {
     if (index < Recent.capacity())
         return Recent[index];
-    else
-        return Archived[index - Recent.capacity()];
+
+    return Archived[index - Recent.capacity()];
 }
 
 News::Item* News::ItemQueues::At(int32_t index)
@@ -77,10 +79,8 @@ const News::Item* News::ItemQueues::At(int32_t index) const
     {
         return &(*this)[index];
     }
-    else
-    {
-        return nullptr;
-    }
+
+    return nullptr;
 }
 
 bool News::IsQueueEmpty()
@@ -154,6 +154,8 @@ bool News::ItemQueues::CurrentShouldBeArchived() const
  */
 void News::UpdateCurrentItem()
 {
+    PROFILED_FUNCTION();
+
     // Check if there is a current news item
     if (gNewsItems.IsEmpty())
         return;
@@ -211,8 +213,8 @@ std::optional<CoordsXYZ> News::GetSubjectLocation(News::ItemType type, int32_t s
     {
         case News::ItemType::Ride:
         {
-            Ride* ride = get_ride(subject);
-            if (ride == nullptr || ride->overall_view.isNull())
+            Ride* ride = get_ride(static_cast<ride_id_t>(subject));
+            if (ride == nullptr || ride->overall_view.IsNull())
             {
                 break;
             }
@@ -226,7 +228,7 @@ std::optional<CoordsXYZ> News::GetSubjectLocation(News::ItemType type, int32_t s
             if (peep == nullptr)
                 break;
 
-            subjectLoc = CoordsXYZ{ peep->x, peep->y, peep->z };
+            subjectLoc = peep->GetLocation();
             if (subjectLoc->x != LOCATION_NULL)
                 break;
 
@@ -253,7 +255,7 @@ std::optional<CoordsXYZ> News::GetSubjectLocation(News::ItemType type, int32_t s
             }
             if (sprite != nullptr)
             {
-                subjectLoc = CoordsXYZ{ sprite->x, sprite->y, sprite->z };
+                subjectLoc = sprite->GetLocation();
             }
             break;
         }
@@ -262,7 +264,7 @@ std::optional<CoordsXYZ> News::GetSubjectLocation(News::ItemType type, int32_t s
             auto peep = TryGetEntity<Peep>(subject);
             if (peep != nullptr)
             {
-                subjectLoc = CoordsXYZ{ peep->x, peep->y, peep->z };
+                subjectLoc = peep->GetLocation();
             }
             break;
         }
@@ -271,7 +273,7 @@ std::optional<CoordsXYZ> News::GetSubjectLocation(News::ItemType type, int32_t s
             auto subjectUnsigned = static_cast<uint32_t>(subject);
             auto subjectXY = CoordsXY{ static_cast<int16_t>(subjectUnsigned & 0xFFFF),
                                        static_cast<int16_t>(subjectUnsigned >> 16) };
-            if (!subjectXY.isNull())
+            if (!subjectXY.IsNull())
             {
                 subjectLoc = CoordsXYZ{ subjectXY, tile_element_height(subjectXY) };
             }

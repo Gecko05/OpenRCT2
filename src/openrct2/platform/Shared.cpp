@@ -19,7 +19,10 @@
 #include "../Game.h"
 #include "../OpenRCT2.h"
 #include "../config/Config.h"
+#include "../core/File.h"
 #include "../core/FileSystem.hpp"
+#include "../core/Path.hpp"
+#include "../core/String.hpp"
 #include "../drawing/Drawing.h"
 #include "../drawing/LightFX.h"
 #include "../localisation/Currency.h"
@@ -29,6 +32,8 @@
 #include "Platform2.h"
 
 #include <algorithm>
+#include <array>
+#include <cstring>
 #include <stdlib.h>
 #include <time.h>
 
@@ -66,6 +71,24 @@ static LARGE_INTEGER _entryTimestamp;
 
 namespace Platform
 {
+    CurrencyType GetCurrencyValue(const char* currCode)
+    {
+        if (currCode == nullptr || strlen(currCode) < 3)
+        {
+            return CurrencyType::Pounds;
+        }
+
+        for (int32_t currency = 0; currency < EnumValue(CurrencyType::Count); ++currency)
+        {
+            if (strncmp(currCode, CurrencyDescriptors[currency].isoCode, 3) == 0)
+            {
+                return static_cast<CurrencyType>(currency);
+            }
+        }
+
+        return CurrencyType::Pounds;
+    }
+
     rct2_date GetDateLocal()
     {
         auto time = std::time(nullptr);
@@ -91,63 +114,39 @@ namespace Platform
         return outTime;
     }
 
-    bool FileExists(const std::string path)
+    bool OriginalGameDataExists(std::string_view path)
     {
-        fs::path file = fs::u8path(path);
-        log_verbose("Checking if file exists: %s", path.c_str());
-        return fs::exists(file);
+        std::string combinedPath = Path::ResolveCasing(Path::Combine(path, "Data", "g1.dat"));
+        return File::Exists(combinedPath);
     }
+
+    std::string SanitiseFilename(std::string_view originalName)
+    {
+#ifdef _WIN32
+        static constexpr std::array prohibited = { '<', '>', '*', '\\', ':', '|', '?', '"', '/' };
+#else
+        static constexpr std::array prohibited = { '/' };
+#endif
+        auto sanitised = std::string(originalName);
+        std::replace_if(
+            sanitised.begin(), sanitised.end(),
+            [](const std::string::value_type& ch) -> bool {
+                return std::find(prohibited.begin(), prohibited.end(), ch) != prohibited.end();
+            },
+            '_');
+        sanitised = String::Trim(sanitised);
+        return sanitised;
+    }
+
+#ifndef __ANDROID__
+    float GetDefaultScale()
+    {
+        return 1;
+    }
+#endif
 } // namespace Platform
 
-using update_palette_func = void (*)(const uint8_t*, int32_t, int32_t);
-
 GamePalette gPalette;
-
-void platform_update_palette(const uint8_t* colours, int32_t start_index, int32_t num_colours)
-{
-    colours += start_index * 4;
-
-    for (int32_t i = start_index; i < num_colours + start_index; i++)
-    {
-        uint8_t r = colours[2];
-        uint8_t g = colours[1];
-        uint8_t b = colours[0];
-
-#ifdef __ENABLE_LIGHTFX__
-        if (lightfx_is_available())
-        {
-            lightfx_apply_palette_filter(i, &r, &g, &b);
-        }
-        else
-#endif
-        {
-            float night = gDayNightCycle;
-            if (night >= 0 && gClimateLightningFlash == 0)
-            {
-                r = lerp(r, soft_light(r, 8), night);
-                g = lerp(g, soft_light(g, 8), night);
-                b = lerp(b, soft_light(b, 128), night);
-            }
-        }
-
-        gPalette[i].Red = r;
-        gPalette[i].Green = g;
-        gPalette[i].Blue = b;
-        gPalette[i].Alpha = 0;
-        colours += 4;
-    }
-
-    // Fix #1749 and #6535: rainbow path, donut shop and pause button contain black spots that should be white.
-    gPalette[255].Alpha = 0;
-    gPalette[255].Red = 255;
-    gPalette[255].Green = 255;
-    gPalette[255].Blue = 255;
-
-    if (!gOpenRCT2Headless)
-    {
-        drawing_engine_set_palette(gPalette);
-    }
-}
 
 void platform_toggle_windowed_mode()
 {
@@ -216,46 +215,6 @@ void platform_sleep(uint32_t ms)
 #endif
 }
 
-CurrencyType platform_get_currency_value(const char* currCode)
-{
-    if (currCode == nullptr || strlen(currCode) < 3)
-    {
-        return CurrencyType::Pounds;
-    }
-
-    for (int32_t currency = 0; currency < EnumValue(CurrencyType::Count); ++currency)
-    {
-        if (strncmp(currCode, CurrencyDescriptors[currency].isoCode, 3) == 0)
-        {
-            return static_cast<CurrencyType>(currency);
-        }
-    }
-
-    return CurrencyType::Pounds;
-}
-
-#ifndef _WIN32
-std::string platform_sanitise_filename(const std::string& path)
-{
-    static const std::array<std::string::value_type, 1> prohibited = { '/' };
-    auto sanitised = path;
-    std::replace_if(
-        sanitised.begin(), sanitised.end(),
-        [](const std::string::value_type& ch) -> bool {
-            return std::find(prohibited.begin(), prohibited.end(), ch) != prohibited.end();
-        },
-        '_');
-    return sanitised;
-}
-#endif
-
-#ifndef __ANDROID__
-float platform_get_default_scale()
-{
-    return 1;
-}
-#endif
-
 void core_init()
 {
     static bool initialised = false;
@@ -264,7 +223,7 @@ void core_init()
         initialised = true;
 
 #ifdef __ANDROID__
-        platform_android_init_class_loader();
+        Platform::AndroidInitClassLoader();
 #endif // __ANDROID__
 
         platform_ticks_init();

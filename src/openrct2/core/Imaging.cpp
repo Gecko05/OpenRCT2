@@ -124,7 +124,7 @@ namespace Imaging
             }
             else if (bitDepth == 8 && !expandTo32)
             {
-                // 8-bit paletted or grayscale
+                // 8-bit paletted or greyscale
                 Guard::Assert(rowBytes == pngWidth, GUARD_LINE);
                 for (png_uint_32 i = 0; i < pngHeight; i++)
                 {
@@ -257,14 +257,13 @@ namespace Imaging
         {
             return IMAGE_FORMAT::PNG;
         }
-        else if (String::EndsWith(path, ".bmp", true))
+
+        if (String::EndsWith(path, ".bmp", true))
         {
             return IMAGE_FORMAT::BITMAP;
         }
-        else
-        {
-            return IMAGE_FORMAT::UNKNOWN;
-        }
+
+        return IMAGE_FORMAT::UNKNOWN;
     }
 
     static ImageReaderFunc GetReader(IMAGE_FORMAT format)

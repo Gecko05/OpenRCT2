@@ -15,6 +15,7 @@
 #include "../core/Json.hpp"
 #include "../core/Memory.hpp"
 #include "../drawing/Drawing.h"
+#include "../drawing/Image.h"
 #include "../interface/Cursors.h"
 #include "../localisation/Language.h"
 #include "../world/Banner.h"
@@ -98,15 +99,15 @@ void LargeSceneryObject::Unload()
     gfx_object_free_images(_baseImageId, GetImageTable().GetCount());
 
     _legacyType.name = 0;
-    _legacyType.image = 0;
+    _baseImageId = _legacyType.image = 0;
 }
 
 void LargeSceneryObject::DrawPreview(rct_drawpixelinfo* dpi, int32_t width, int32_t height) const
 {
     auto screenCoords = ScreenCoordsXY{ width / 2, (height / 2) - 39 };
 
-    uint32_t imageId = 0xB2D00000 | _legacyType.image;
-    gfx_draw_sprite(dpi, imageId, screenCoords, 0);
+    const auto image = ImageId(_legacyType.image, COLOUR_BORDEAUX_RED, COLOUR_YELLOW);
+    gfx_draw_sprite(dpi, image, screenCoords);
 }
 
 std::vector<rct_large_scenery_tile> LargeSceneryObject::ReadTiles(OpenRCT2::IStream* stream)

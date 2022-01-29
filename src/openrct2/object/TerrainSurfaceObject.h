@@ -53,13 +53,7 @@ public:
     uint8_t Rotations{};
     money32 Price{};
     TERRAIN_SURFACE_FLAGS Flags{};
-
-    uint32_t NumImagesLoaded{};
-
-    explicit TerrainSurfaceObject(const rct_object_entry& entry)
-        : Object(entry)
-    {
-    }
+    PaletteIndex MapColours[2]{};
 
     void ReadJson(IReadObjectContext* context, json_t& root) override;
     void Load() override;

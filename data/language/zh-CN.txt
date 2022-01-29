@@ -1740,7 +1740,7 @@ STR_2383    :水面
 STR_2384    :{WINDOW_COLOUR_2}你的目标：
 STR_2385    :{BLACK}无
 STR_2386    :{BLACK}在{POP16}{MONTHYEAR} 之前乐园内至少有 {PUSH16}{PUSH16}{COMMA16} 游客, 并且乐园评分不低于 600
-STR_2387    :{BLACK}在{PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}之前乐园价值不低于{POP16}{POP16}{CURRENCY}
+STR_2387    :{BLACK}在{PUSH16}{MONTHYEAR}之前乐园价值不低于{CURRENCY}
 STR_2388    :{BLACK}尽情玩吧!
 STR_2389    :{BLACK}建造你的最佳{STRINGID}吧!
 STR_2390    :{BLACK}在你的乐园中运营10种类型的过山车, 并且每一个的兴奋度不低于 6.00
@@ -2060,51 +2060,6 @@ STR_2854    :{RED}游客都不能走到去{STRINGID}的入口!{NEWLINE}请建造
 STR_2855    :{RED}{STRINGID}的出口并没有道路连接!{NEWLINE}请建造道路连接出口
 STR_2858    :不能开始实行营销计划…
 STR_2861    :{WINDOW_COLOUR_2}Licensed to Infogrames Interactive Inc.
-STR_2862    :音乐鸣谢列表…
-STR_2863    :音乐鸣谢列表
-STR_2864    :{WINDOW_COLOUR_2}March - Children of the Regiment:   (Fucik) 无版权
-STR_2865    :{WINDOW_COLOUR_2}Heyken's Serenade:   (J.Heyken) British Standard Music Coy; GEMA, BRITICO
-STR_2866    :{WINDOW_COLOUR_2}La Belle Espagnole:   (Robert Vollstedt) 版权控制
-STR_2867    :{WINDOW_COLOUR_2}Wedding Journey:   (Traditional)
-STR_2868    :{WINDOW_COLOUR_2}Tales from the Vienna Woods:   (Johann Strauss) 无版权
-STR_2869    :{WINDOW_COLOUR_2}Slavonic Dance:   (Traditional)
-STR_2870    :{WINDOW_COLOUR_2}Das Alpenhorn:   (Traditional)
-STR_2871    :{WINDOW_COLOUR_2}The Blond Sailor:   (Traditional)
-STR_2872    :{WINDOW_COLOUR_2}Overture - Poet and Peasant:   (Suppe) 无版权
-STR_2873    :{WINDOW_COLOUR_2}Waltz Medley:   (Johann Strauss) 无版权
-STR_2874    :{WINDOW_COLOUR_2}Bella Bella Bimba:   (Traditional)
-STR_2875    :{WINDOW_COLOUR_2}Original recordings (P) 1976 C.J.Mears Organization, used with consent
-STR_2876    :{WINDOW_COLOUR_2}RollerCoaster Tycoon 2 Title Music:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2877    :{WINDOW_COLOUR_2}Dodgems Beat:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2878    :{WINDOW_COLOUR_2}Mid Summer's Heat:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2879    :{WINDOW_COLOUR_2}Pharaoh's Tomb:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2880    :{WINDOW_COLOUR_2}Caesar's March:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2881    :{WINDOW_COLOUR_2}Drifting To Heaven:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2882    :{WINDOW_COLOUR_2}Invaders:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2883    :{WINDOW_COLOUR_2}Eternal Toybox:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2884    :{WINDOW_COLOUR_2}Jungle Juice:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2885    :{WINDOW_COLOUR_2}Ninja's Noodles:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2886    :{WINDOW_COLOUR_2}Voyage to Andromeda:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2887    :{WINDOW_COLOUR_2}Brimble's Beat:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2888    :{WINDOW_COLOUR_2}Atlantis:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2889    :{WINDOW_COLOUR_2}Wild West Kid:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2890    :{WINDOW_COLOUR_2}Vampire's Lair:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2891    :{WINDOW_COLOUR_2}Blockbuster:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2892    :{WINDOW_COLOUR_2}Airtime Rock:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2893    :{WINDOW_COLOUR_2}Searchlight Rag:   (Scott Joplin/Allister Brimble) 版权所有 © Chris Sawyer
-STR_2894    :{WINDOW_COLOUR_2}Flight of Fantasy:   (Steve Blenkinsopp) 版权所有 © Chris Sawyer
-STR_2895    :{WINDOW_COLOUR_2}Big Rock:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2896    :{WINDOW_COLOUR_2}Hypothermia:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2897    :{WINDOW_COLOUR_2}Last Sleigh Ride:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2898    :{WINDOW_COLOUR_2}Pipes of Glencairn:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2899    :{WINDOW_COLOUR_2}Traffic Jam:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2901    :{WINDOW_COLOUR_2}(Samples courtesy of Spectrasonics “Liquid Grooves”)
-STR_2902    :{WINDOW_COLOUR_2}Toccata:   (C.M.Widor, played by Peter James Adcock) recording © Chris Sawyer
-STR_2903    :{WINDOW_COLOUR_2}Space Rock:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2904    :{WINDOW_COLOUR_2}Manic Mechanic:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2905    :{WINDOW_COLOUR_2}Techno Torture:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2906    :{WINDOW_COLOUR_2}Sweat Dreams:   (Allister Brimble) 版权所有 © Chris Sawyer
-STR_2907    :{WINDOW_COLOUR_2}What shall we do with the Drunken Sailor:   (Anon/Allister Brimble) 版权所有 © Chris Sawyer
 STR_2971    :主要配色主题
 STR_2972    :额外配色主题1
 STR_2973    :额外配色主题2
@@ -3015,8 +2970,6 @@ STR_5723    :大雨
 STR_5724    :大雷雨
 STR_5725    :{BLACK}强制设定天气为:
 STR_5726    :设定游乐园当前的天气
-STR_5727    :缩放质量
-STR_5731    :线性
 # tooltip for tab in options window
 STR_5734    :渲染
 STR_5735    :网络状态
@@ -3102,7 +3055,6 @@ STR_5814    :{WINDOW_COLOUR_1}“{STRING}”
 #tooltips
 STR_5815    :游戏内显示FPS帧数
 STR_5816    :设置比例去缩放游戏.{NEWLINE}高分辨率时很有用
-STR_5817    :设置UI缩放类型.需要开启硬件渲染{NEWLINE}线性缩放是平滑但模糊的.平滑最近邻缩放是锐利的, 但会导致轻微的性能下降.
 STR_5819    :[需要开启硬件渲染]{NEWLINE}暂停游戏当游戏内{NEWLINE}Steam overlay打开时
 STR_5820    :全屏模式时若游戏失焦{NEWLINE}则最小化游戏
 STR_5822    :日夜循环.{NEWLINE}完成一个循环花费游戏内一个月时间
@@ -3214,56 +3166,56 @@ STR_5930    :巨型景物详情
 STR_5931    :横幅详情
 STR_5932    :已毁坏元素详情
 STR_5933    :属性
-STR_5934    :{WINDOW_COLOUR_2}地型素材:{BLACK}{STRINGID}
-STR_5935    :{WINDOW_COLOUR_2}地型边缘:{BLACK}{STRINGID}
-STR_5936    :{WINDOW_COLOUR_2}土地拥有权:{BLACK}{STRINGID}
+STR_5934    :地型素材:{BLACK}{STRINGID}
+STR_5935    :地型边缘:{BLACK}{STRINGID}
+STR_5936    :土地拥有权:{BLACK}{STRINGID}
 STR_5937    :未拥有且不可购买
-STR_5938    :{WINDOW_COLOUR_2}水位:{BLACK}{COMMA16}
+STR_5938    :水位:{BLACK}{COMMA16}
 STR_5939    :移除乐园边界
 STR_5940    :还原乐园边界
-STR_5941    :{WINDOW_COLOUR_2}地面高度:
-STR_5942    :{WINDOW_COLOUR_2}道路名称:{BLACK}{STRINGID}
-STR_5943    :{WINDOW_COLOUR_2}附加物品:{BLACK}{STRINGID}
-STR_5944    :{WINDOW_COLOUR_2}附加物品:{BLACK}暂无
-STR_5945    :{WINDOW_COLOUR_2}已连接的边缘:
-STR_5946    :{WINDOW_COLOUR_2}游乐设施种类:{BLACK}{STRINGID}
-STR_5947    :{WINDOW_COLOUR_2}游乐设施ID:{BLACK}{COMMA16}
-STR_5948    :{WINDOW_COLOUR_2}游乐设施名称:{BLACK}{STRINGID}
-STR_5949    :{WINDOW_COLOUR_2}提升坡
-STR_5950    :{WINDOW_COLOUR_2}将改变应用于整个轨道组件中
-STR_5951    :{WINDOW_COLOUR_2}轨道组件ID:{BLACK}{COMMA16}
-STR_5952    :{WINDOW_COLOUR_2}编号:{BLACK}{COMMA16}
+STR_5941    :地面高度:
+STR_5942    :道路名称:{BLACK}{STRINGID}
+STR_5943    :附加物品:{BLACK}{STRINGID}
+STR_5944    :附加物品:{BLACK}暂无
+STR_5945    :已连接的边缘:
+STR_5946    :游乐设施种类:{BLACK}{STRINGID}
+STR_5947    :游乐设施ID:{BLACK}{COMMA16}
+STR_5948    :游乐设施名称:{BLACK}{STRINGID}
+STR_5949    :提升坡
+STR_5950    :将改变应用于整个轨道组件中
+STR_5951    :轨道组件ID:{BLACK}{COMMA16}
+STR_5952    :编号:{BLACK}{COMMA16}
 STR_5953    :以底部高度排序目前网格上的地图元素
-STR_5954    :{WINDOW_COLOUR_2}景物年龄:{BLACK}{COMMA16}
-STR_5955    :{WINDOW_COLOUR_2}四角放置:{BLACK}{STRINGID}
+STR_5954    :景物年龄:{BLACK}{COMMA16}
+STR_5955    :四角放置:{BLACK}{STRINGID}
 STR_5956    :西南
 STR_5957    :西北
 STR_5958    :东北
 STR_5959    :东南
-STR_5960    :{WINDOW_COLOUR_2}四角放置:
-STR_5961    :{WINDOW_COLOUR_2}入口编号:{BLACK}{COMMA16}
-STR_5962    :{WINDOW_COLOUR_2}碰撞检测:
-STR_5963    :{WINDOW_COLOUR_2}已升起的角:
-STR_5964    :{WINDOW_COLOUR_2}斜角
-STR_5965    :{WINDOW_COLOUR_2}入口类型:{BLACK}{STRINGID}
-STR_5966    :{WINDOW_COLOUR_2}游乐园入口部份:{BLACK}{STRINGID}
+STR_5960    :四角放置:
+STR_5961    :入口编号:{BLACK}{COMMA16}
+STR_5962    :碰撞检测:
+STR_5963    :已升起的角:
+STR_5964    :斜角
+STR_5965    :入口类型:{BLACK}{STRINGID}
+STR_5966    :游乐园入口部份:{BLACK}{STRINGID}
 STR_5967    :中间
 STR_5968    :左
 STR_5969    :右
-STR_5970    :{WINDOW_COLOUR_2}入口编号:{BLACK}{COMMA16}
-STR_5971    :{WINDOW_COLOUR_2}出口编号:{BLACK}{COMMA16}
-STR_5972    :{WINDOW_COLOUR_2}游乐设施编号:{BLACK}{COMMA16}
+STR_5970    :入口编号:{BLACK}{COMMA16}
+STR_5971    :出口编号:{BLACK}{COMMA16}
+STR_5972    :游乐设施编号:{BLACK}{COMMA16}
 STR_5973    :与下一地图元素并列
 STR_5974    :将此元素的基准和净高度与下一元素调整一致. 这可以让在网格上建造变得更加容易.
 STR_5975    :坡道:
 STR_5976    :平坦
 STR_5977    :右边向上
 STR_5978    :左边向上
-STR_5979    :{WINDOW_COLOUR_2}围栏类型:{BLACK}{COMMA16}
-STR_5980    :{WINDOW_COLOUR_2}横幅文字:{BLACK}{STRINGID}
-STR_5981    :{WINDOW_COLOUR_2}不是横幅
-STR_5982    :{WINDOW_COLOUR_2}巨型景物类型:{BLACK}{COMMA16}
-STR_5983    :{WINDOW_COLOUR_2}巨型景物组件编号:{BLACK}{COMMA16}
+STR_5979    :围栏类型:{BLACK}{COMMA16}
+STR_5980    :横幅文字:{BLACK}{STRINGID}
+STR_5981    :不是横幅
+STR_5982    :巨型景物类型:{BLACK}{COMMA16}
+STR_5983    :巨型景物组件编号:{BLACK}{COMMA16}
 STR_5984    :被挡住的道路:
 STR_5985    :新建文件夹
 STR_5986    :请输入新文件夹的名字
@@ -3431,7 +3383,6 @@ STR_6155    :KDialog和Zenity库均没有安装. 请至少安装其一, 或者�
 STR_6156    :名称已被使用
 STR_6157    :控制台
 STR_6158    :不能读取此文件…{NEWLINE}不兼容的RCT版本: {COMMA16}
-STR_6159    :平滑最近相邻
 STR_6160    :{WINDOW_COLOUR_2}可用车辆: {BLACK}{STRING}
 STR_6161    :网格显示切换
 STR_6162    :旋转野鼠
@@ -3535,7 +3486,7 @@ STR_6273    :音乐
 STR_6274    :无法设置配色主题…
 STR_6275    :{WINDOW_COLOUR_2}车站类型:
 STR_6276    :{RED}{STRINGID} 有游客被困住了，这可能是因为无效的设施类型或者运行模式
-STR_6277    :{WINDOW_COLOUR_2}车站编号: {BLACK}{STRINGID}
+STR_6277    :车站编号: {BLACK}{STRINGID}
 STR_6278    :自动保存数量
 STR_6279    :应该保留的自动保存数量
 STR_6293    :B

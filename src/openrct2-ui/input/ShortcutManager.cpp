@@ -167,10 +167,10 @@ void ShortcutManager::ProcessEvent(const InputEvent& e)
         if (shortcut != nullptr && shortcut->IsSuitableInputEvent(e))
         {
             auto shortcutInput = ShortcutInput::FromInputEvent(e);
-            if (shortcutInput)
+            if (shortcutInput.has_value())
             {
                 shortcut->Current.clear();
-                shortcut->Current.push_back(std::move(*shortcutInput));
+                shortcut->Current.push_back(std::move(shortcutInput.value()));
             }
             _pendingShortcutChange.clear();
             window_close_by_class(WC_CHANGE_KEYBOARD_SHORTCUT);
@@ -194,7 +194,7 @@ void ShortcutManager::LoadUserBindings()
 {
     try
     {
-        auto path = fs::u8path(_env->GetFilePath(PATHID::CONFIG_SHORTCUTS));
+        auto path = u8path(_env->GetFilePath(PATHID::CONFIG_SHORTCUTS));
         if (fs::exists(path))
         {
             LoadUserBindings(path);
@@ -204,7 +204,7 @@ void ShortcutManager::LoadUserBindings()
             try
             {
                 Console::WriteLine("Importing legacy shortcuts...");
-                auto legacyPath = fs::u8path(_env->GetFilePath(PATHID::CONFIG_SHORTCUTS_LEGACY));
+                auto legacyPath = u8path(_env->GetFilePath(PATHID::CONFIG_SHORTCUTS_LEGACY));
                 if (fs::exists(legacyPath))
                 {
                     LoadLegacyBindings(legacyPath);
@@ -234,23 +234,21 @@ std::optional<ShortcutInput> ShortcutManager::ConvertLegacyBinding(uint16_t bind
 
     if (binding == nullBinding)
     {
-        return {};
+        return std::nullopt;
     }
-    else
-    {
-        ShortcutInput result;
-        result.Kind = InputDeviceKind::Keyboard;
-        if (binding & shift)
-            result.Modifiers |= KMOD_SHIFT;
-        if (binding & ctrl)
-            result.Modifiers |= KMOD_CTRL;
-        if (binding & alt)
-            result.Modifiers |= KMOD_ALT;
-        if (binding & cmd)
-            result.Modifiers |= KMOD_GUI;
-        result.Button = SDL_GetKeyFromScancode(static_cast<SDL_Scancode>(binding & 0xFF));
-        return result;
-    }
+
+    ShortcutInput result;
+    result.Kind = InputDeviceKind::Keyboard;
+    if (binding & shift)
+        result.Modifiers |= KMOD_SHIFT;
+    if (binding & ctrl)
+        result.Modifiers |= KMOD_CTRL;
+    if (binding & alt)
+        result.Modifiers |= KMOD_ALT;
+    if (binding & cmd)
+        result.Modifiers |= KMOD_GUI;
+    result.Button = SDL_GetKeyFromScancode(static_cast<SDL_Scancode>(binding & 0xFF));
+    return result;
 }
 
 void ShortcutManager::LoadLegacyBindings(const fs::path& path)
@@ -273,9 +271,9 @@ void ShortcutManager::LoadLegacyBindings(const fs::path& path)
                 {
                     shortcut->Current.clear();
                     auto input = ConvertLegacyBinding(value);
-                    if (input)
+                    if (input.has_value())
                     {
-                        shortcut->Current.push_back(std::move(*input));
+                        shortcut->Current.push_back(std::move(input.value()));
                     }
                 }
             }
@@ -317,7 +315,7 @@ void ShortcutManager::SaveUserBindings()
 {
     try
     {
-        auto path = fs::u8path(_env->GetFilePath(PATHID::CONFIG_SHORTCUTS));
+        auto path = u8path(_env->GetFilePath(PATHID::CONFIG_SHORTCUTS));
         SaveUserBindings(path);
     }
     catch (const std::exception& e)
@@ -429,7 +427,7 @@ std::string_view ShortcutManager::GetLegacyShortcutId(size_t index)
         ShortcutId::InterfaceSceneryPicker,
         ShortcutId::InterfaceScaleIncrease,
         ShortcutId::InterfaceScaleDecrease,
-        ShortcutId::WindowTileInspectorInsertCorrupt,
+        ShortcutId::WindowTileInspectorToggleInvisibility,
         ShortcutId::WindowTileInspectorCopy,
         ShortcutId::WindowTileInspectorPaste,
         ShortcutId::WindowTileInspectorRemove,

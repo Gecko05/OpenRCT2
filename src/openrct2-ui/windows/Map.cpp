@@ -18,21 +18,25 @@
 #include <openrct2/Game.h>
 #include <openrct2/Input.h>
 #include <openrct2/OpenRCT2.h>
+#include <openrct2/actions/ChangeMapSizeAction.h>
 #include <openrct2/actions/LandSetRightsAction.h>
 #include <openrct2/actions/PlaceParkEntranceAction.h>
 #include <openrct2/actions/PlacePeepSpawnAction.h>
 #include <openrct2/actions/SurfaceSetStyleAction.h>
 #include <openrct2/audio/audio.h>
+#include <openrct2/entity/EntityList.h>
+#include <openrct2/entity/EntityRegistry.h>
+#include <openrct2/entity/Staff.h>
+#include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/Localisation.h>
+#include <openrct2/object/TerrainSurfaceObject.h>
 #include <openrct2/ride/RideData.h>
 #include <openrct2/ride/Track.h>
 #include <openrct2/ride/TrainManager.h>
 #include <openrct2/ride/Vehicle.h>
-#include <openrct2/world/EntityList.h>
 #include <openrct2/world/Entrance.h>
 #include <openrct2/world/Footpath.h>
 #include <openrct2/world/Scenery.h>
-#include <openrct2/world/Sprite.h>
 #include <openrct2/world/Surface.h>
 #include <vector>
 
@@ -65,13 +69,14 @@ constexpr uint8_t StaffMapColourAlternate = PALETTE_INDEX_10;
 // minimap. In order to distinguish those from actual coordinates, we use a separate name.
 using MapCoordsXY = TileCoordsXY;
 
-// clang-format off
-enum {
+enum
+{
     PAGE_PEEPS,
     PAGE_RIDES
 };
 
-enum WINDOW_MAP_WIDGET_IDX {
+enum WindowMapWidgetIdx
+{
     WIDX_BACKGROUND,
     WIDX_TITLE,
     WIDX_CLOSE,
@@ -98,6 +103,7 @@ enum WINDOW_MAP_WIDGET_IDX {
 
 validate_global_widx(WC_MAP, WIDX_ROTATE_90);
 
+// clang-format off
 static rct_widget window_map_widgets[] = {
     WINDOW_SHIM(WINDOW_TITLE, WW, WH),
     MakeWidget        ({  0,  43}, {245, 215}, WindowWidgetType::Resize,    WindowColour::Secondary                                                                                  ),
@@ -117,7 +123,7 @@ static rct_widget window_map_widgets[] = {
     MakeWidget        ({ 58, 197}, {174,  12}, WindowWidgetType::Checkbox,  WindowColour::Secondary, STR_CONSTRUCTION_RIGHTS_SALE,    STR_SET_CONSTRUCTION_RIGHTS_TO_BE_AVAILABLE_TIP),
     MakeWidget        ({218,  45}, { 24,  24}, WindowWidgetType::FlatBtn,   WindowColour::Secondary, SPR_ROTATE_ARROW,                STR_ROTATE_OBJECTS_90                          ),
     MakeWidget        ({110, 189}, {131,  14}, WindowWidgetType::Button,    WindowColour::Secondary, STR_MAPGEN_WINDOW_TITLE,         STR_MAP_GENERATOR_TIP                          ),
-    { WIDGETS_END },
+    WIDGETS_END,
 };
 
 // used in transforming viewport view coordinates to minimap coordinates
@@ -126,57 +132,56 @@ static constexpr const ScreenCoordsXY MiniMapOffsets[] = {
     {     MAXIMUM_MAP_SIZE_TECHNICAL - 8,                              0 },
     { 2 * MAXIMUM_MAP_SIZE_TECHNICAL - 8,     MAXIMUM_MAP_SIZE_TECHNICAL },
     {     MAXIMUM_MAP_SIZE_TECHNICAL - 8, 2 * MAXIMUM_MAP_SIZE_TECHNICAL },
-    {                              0 - 8,     MAXIMUM_MAP_SIZE_TECHNICAL }
+    {                              0 - 8,     MAXIMUM_MAP_SIZE_TECHNICAL },
 };
+// clang-format on
 
 /** rct2: 0x00981BCC */
 static constexpr const uint16_t RideKeyColours[] = {
-    MapColour(PALETTE_INDEX_61),   // COLOUR_KEY_RIDE
-    MapColour(PALETTE_INDEX_42),   // COLOUR_KEY_FOOD
-    MapColour(PALETTE_INDEX_20),   // COLOUR_KEY_DRINK
-    MapColour(PALETTE_INDEX_209),  // COLOUR_KEY_SOUVENIR
-    MapColour(PALETTE_INDEX_136),  // COLOUR_KEY_KIOSK
-    MapColour(PALETTE_INDEX_102),  // COLOUR_KEY_FIRST_AID
-    MapColour(PALETTE_INDEX_55),   // COLOUR_KEY_CASH_MACHINE
-    MapColour(PALETTE_INDEX_161),  // COLOUR_KEY_TOILETS
+    MapColour(PALETTE_INDEX_61),  // COLOUR_KEY_RIDE
+    MapColour(PALETTE_INDEX_42),  // COLOUR_KEY_FOOD
+    MapColour(PALETTE_INDEX_20),  // COLOUR_KEY_DRINK
+    MapColour(PALETTE_INDEX_209), // COLOUR_KEY_SOUVENIR
+    MapColour(PALETTE_INDEX_136), // COLOUR_KEY_KIOSK
+    MapColour(PALETTE_INDEX_102), // COLOUR_KEY_FIRST_AID
+    MapColour(PALETTE_INDEX_55),  // COLOUR_KEY_CASH_MACHINE
+    MapColour(PALETTE_INDEX_161), // COLOUR_KEY_TOILETS
 };
 
-static void window_map_close(rct_window *w);
-static void window_map_resize(rct_window *w);
-static void window_map_mouseup(rct_window *w, rct_widgetindex widgetIndex);
-static void window_map_mousedown(rct_window *w, rct_widgetindex widgetIndex, rct_widget* widget);
-static void window_map_update(rct_window *w);
-static void window_map_toolupdate(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
-static void window_map_tooldown(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
-static void window_map_tooldrag(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
-static void window_map_toolabort(rct_window *w, rct_widgetindex widgetIndex);
-static void window_map_scrollgetsize(rct_window *w, int32_t scrollIndex, int32_t *width, int32_t *height);
-static void window_map_scrollmousedown(rct_window *w, int32_t scrollIndex, const ScreenCoordsXY& screenCoords);
-static void window_map_textinput(rct_window *w, rct_widgetindex widgetIndex, char *text);
-static void window_map_invalidate(rct_window *w);
-static void window_map_paint(rct_window *w, rct_drawpixelinfo *dpi);
-static void window_map_scrollpaint(rct_window *w, rct_drawpixelinfo *dpi, int32_t scrollIndex);
+static void WindowMapClose(rct_window* w);
+static void WindowMapResize(rct_window* w);
+static void WindowMapMouseup(rct_window* w, rct_widgetindex widgetIndex);
+static void WindowMapMousedown(rct_window* w, rct_widgetindex widgetIndex, rct_widget* widget);
+static void WindowMapUpdate(rct_window* w);
+static void WindowMapToolupdate(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
+static void WindowMapTooldown(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
+static void WindowMapTooldrag(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords);
+static void WindowMapToolabort(rct_window* w, rct_widgetindex widgetIndex);
+static void WindowMapScrollgetsize(rct_window* w, int32_t scrollIndex, int32_t* width, int32_t* height);
+static void WindowMapScrollmousedown(rct_window* w, int32_t scrollIndex, const ScreenCoordsXY& screenCoords);
+static void WindowMapTextinput(rct_window* w, rct_widgetindex widgetIndex, char* text);
+static void WindowMapInvalidate(rct_window* w);
+static void WindowMapPaint(rct_window* w, rct_drawpixelinfo* dpi);
+static void WindowMapScrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_t scrollIndex);
 
-static rct_window_event_list window_map_events([](auto& events)
-{
-    events.close = &window_map_close;
-    events.mouse_up = &window_map_mouseup;
-    events.resize = &window_map_resize;
-    events.mouse_down = &window_map_mousedown;
-    events.update = &window_map_update;
-    events.tool_update = &window_map_toolupdate;
-    events.tool_down = &window_map_tooldown;
-    events.tool_drag = &window_map_tooldrag;
-    events.tool_abort = &window_map_toolabort;
-    events.get_scroll_size = &window_map_scrollgetsize;
-    events.scroll_mousedown = &window_map_scrollmousedown;
-    events.scroll_mousedrag = &window_map_scrollmousedown;
-    events.text_input = &window_map_textinput;
-    events.invalidate = &window_map_invalidate;
-    events.paint = &window_map_paint;
-    events.scroll_paint = &window_map_scrollpaint;
+static rct_window_event_list window_map_events([](auto& events) {
+    events.close = &WindowMapClose;
+    events.mouse_up = &WindowMapMouseup;
+    events.resize = &WindowMapResize;
+    events.mouse_down = &WindowMapMousedown;
+    events.update = &WindowMapUpdate;
+    events.tool_update = &WindowMapToolupdate;
+    events.tool_down = &WindowMapTooldown;
+    events.tool_drag = &WindowMapTooldrag;
+    events.tool_abort = &WindowMapToolabort;
+    events.get_scroll_size = &WindowMapScrollgetsize;
+    events.scroll_mousedown = &WindowMapScrollmousedown;
+    events.scroll_mousedrag = &WindowMapScrollmousedown;
+    events.text_input = &WindowMapTextinput;
+    events.invalidate = &WindowMapInvalidate;
+    events.paint = &WindowMapPaint;
+    events.scroll_paint = &WindowMapScrollpaint;
 });
-// clang-format on
 
 /** rct2: 0x00F1AD61 */
 static uint8_t _activeTool;
@@ -189,32 +194,32 @@ static std::vector<uint8_t> _mapImageData;
 
 static uint16_t _landRightsToolSize;
 
-static void window_map_init_map();
-static void window_map_centre_on_view_point();
-static void window_map_show_default_scenario_editor_buttons(rct_window* w);
-static void window_map_draw_tab_images(rct_window* w, rct_drawpixelinfo* dpi);
-static void window_map_paint_peep_overlay(rct_drawpixelinfo* dpi);
-static void window_map_paint_train_overlay(rct_drawpixelinfo* dpi);
-static void window_map_paint_hud_rectangle(rct_drawpixelinfo* dpi);
-static void window_map_inputsize_land(rct_window* w);
-static void window_map_inputsize_map(rct_window* w);
+static void WindowMapInitMap();
+static void WindowMapCentreOnViewPoint();
+static void WindowMapShowDefaultScenarioEditorButtons(rct_window* w);
+static void WindowMapDrawTabImages(rct_window* w, rct_drawpixelinfo* dpi);
+static void WindowMapPaintPeepOverlay(rct_drawpixelinfo* dpi);
+static void WindowMapPaintTrainOverlay(rct_drawpixelinfo* dpi);
+static void WindowMapPaintHudRectangle(rct_drawpixelinfo* dpi);
+static void WindowMapInputsizeLand(rct_window* w);
+static void WindowMapInputsizeMap(rct_window* w);
 
-static void window_map_set_land_rights_tool_update(const ScreenCoordsXY& screenCoords);
-static void window_map_place_park_entrance_tool_update(const ScreenCoordsXY& screenCoords);
-static void window_map_set_peep_spawn_tool_update(const ScreenCoordsXY& screenCoords);
-static void window_map_place_park_entrance_tool_down(const ScreenCoordsXY& screenCoords);
-static void window_map_set_peep_spawn_tool_down(const ScreenCoordsXY& screenCoords);
-static void map_window_increase_map_size();
-static void map_window_decrease_map_size();
-static void map_window_set_pixels(rct_window* w);
+static void WindowMapSetLandRightsToolUpdate(const ScreenCoordsXY& screenCoords);
+static void WindowMapPlaceParkEntranceToolUpdate(const ScreenCoordsXY& screenCoords);
+static void WindowMapSetPeepSpawnToolUpdate(const ScreenCoordsXY& screenCoords);
+static void WindowMapPlaceParkEntranceToolDown(const ScreenCoordsXY& screenCoords);
+static void WindowMapSetPeepSpawnToolDown(const ScreenCoordsXY& screenCoords);
+static void MapWindowIncreaseMapSize();
+static void MapWindowDecreaseMapSize();
+static void MapWindowSetPixels(rct_window* w);
 
-static CoordsXY map_window_screen_to_map(ScreenCoordsXY screenCoords);
+static CoordsXY MapWindowScreenToMap(ScreenCoordsXY screenCoords);
 
 /**
  *
  *  rct2: 0x0068C88A
  */
-rct_window* window_map_open()
+rct_window* WindowMapOpen()
 {
     rct_window* w;
 
@@ -253,9 +258,9 @@ rct_window* window_map_open()
 
     w->map.rotation = get_current_rotation();
 
-    window_map_init_map();
+    WindowMapInitMap();
     gWindowSceneryRotation = 0;
-    window_map_centre_on_view_point();
+    WindowMapCentreOnViewPoint();
 
     // Reset land rights tool size
     _landRightsToolSize = 1;
@@ -263,7 +268,7 @@ rct_window* window_map_open()
     return w;
 }
 
-void window_map_reset()
+void WindowMapReset()
 {
     rct_window* w;
 
@@ -274,15 +279,15 @@ void window_map_reset()
         return;
     }
 
-    window_map_init_map();
-    window_map_centre_on_view_point();
+    WindowMapInitMap();
+    WindowMapCentreOnViewPoint();
 }
 
 /**
  *
  *  rct2: 0x0068D0F1
  */
-static void window_map_close(rct_window* w)
+static void WindowMapClose(rct_window* w)
 {
     _mapImageData.clear();
     _mapImageData.shrink_to_fit();
@@ -297,7 +302,7 @@ static void window_map_close(rct_window* w)
  *
  *  rct2: 0x0068CFC1
  */
-static void window_map_mouseup(rct_window* w, rct_widgetindex widgetIndex)
+static void WindowMapMouseup(rct_window* w, rct_widgetindex widgetIndex)
 {
     switch (widgetIndex)
     {
@@ -371,10 +376,10 @@ static void window_map_mouseup(rct_window* w, rct_widgetindex widgetIndex)
             show_construction_rights();
             break;
         case WIDX_LAND_TOOL:
-            window_map_inputsize_land(w);
+            WindowMapInputsizeLand(w);
             break;
         case WIDX_MAP_SIZE_SPINNER:
-            window_map_inputsize_map(w);
+            WindowMapInputsizeMap(w);
             break;
         case WIDX_MAP_GENERATOR:
             context_open_window(WC_MAPGEN);
@@ -396,7 +401,7 @@ static void window_map_mouseup(rct_window* w, rct_widgetindex widgetIndex)
  *
  *  rct2: 0x0068D7DC
  */
-static void window_map_resize(rct_window* w)
+static void WindowMapResize(rct_window* w)
 {
     w->flags |= WF_RESIZABLE;
     w->min_width = 245;
@@ -409,15 +414,15 @@ static void window_map_resize(rct_window* w)
  *
  *  rct2: 0x0068D040
  */
-static void window_map_mousedown(rct_window* w, rct_widgetindex widgetIndex, rct_widget* widget)
+static void WindowMapMousedown(rct_window* w, rct_widgetindex widgetIndex, rct_widget* widget)
 {
     switch (widgetIndex)
     {
         case WIDX_MAP_SIZE_SPINNER_UP:
-            map_window_increase_map_size();
+            MapWindowIncreaseMapSize();
             break;
         case WIDX_MAP_SIZE_SPINNER_DOWN:
-            map_window_decrease_map_size();
+            MapWindowDecreaseMapSize();
             break;
         case WIDX_LAND_TOOL_SMALLER:
             // Decrement land rights tool size
@@ -438,17 +443,17 @@ static void window_map_mousedown(rct_window* w, rct_widgetindex widgetIndex, rct
  *
  *  rct2: 0x0068D7FB
  */
-static void window_map_update(rct_window* w)
+static void WindowMapUpdate(rct_window* w)
 {
     if (get_current_rotation() != w->map.rotation)
     {
         w->map.rotation = get_current_rotation();
-        window_map_init_map();
-        window_map_centre_on_view_point();
+        WindowMapInitMap();
+        WindowMapCentreOnViewPoint();
     }
 
     for (int32_t i = 0; i < 16; i++)
-        map_window_set_pixels(w);
+        MapWindowSetPixels(w);
 
     w->Invalidate();
 
@@ -475,18 +480,18 @@ static void window_map_update(rct_window* w)
  *
  *  rct2: 0x0068D093
  */
-static void window_map_toolupdate(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
+static void WindowMapToolupdate(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
 {
     switch (widgetIndex)
     {
         case WIDX_SET_LAND_RIGHTS:
-            window_map_set_land_rights_tool_update(screenCoords);
+            WindowMapSetLandRightsToolUpdate(screenCoords);
             break;
         case WIDX_BUILD_PARK_ENTRANCE:
-            window_map_place_park_entrance_tool_update(screenCoords);
+            WindowMapPlaceParkEntranceToolUpdate(screenCoords);
             break;
         case WIDX_PEOPLE_STARTING_POSITION:
-            window_map_set_peep_spawn_tool_update(screenCoords);
+            WindowMapSetPeepSpawnToolUpdate(screenCoords);
             break;
     }
 }
@@ -495,15 +500,15 @@ static void window_map_toolupdate(rct_window* w, rct_widgetindex widgetIndex, co
  *
  *  rct2: 0x0068D074
  */
-static void window_map_tooldown(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
+static void WindowMapTooldown(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
 {
     switch (widgetIndex)
     {
         case WIDX_BUILD_PARK_ENTRANCE:
-            window_map_place_park_entrance_tool_down(screenCoords);
+            WindowMapPlaceParkEntranceToolDown(screenCoords);
             break;
         case WIDX_PEOPLE_STARTING_POSITION:
-            window_map_set_peep_spawn_tool_down(screenCoords);
+            WindowMapSetPeepSpawnToolDown(screenCoords);
             break;
     }
 }
@@ -512,7 +517,7 @@ static void window_map_tooldown(rct_window* w, rct_widgetindex widgetIndex, cons
  *
  *  rct2: 0x0068D088
  */
-static void window_map_tooldrag(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
+static void WindowMapTooldrag(rct_window* w, rct_widgetindex widgetIndex, const ScreenCoordsXY& screenCoords)
 {
     switch (widgetIndex)
     {
@@ -532,7 +537,7 @@ static void window_map_tooldrag(rct_window* w, rct_widgetindex widgetIndex, cons
  *
  *  rct2: 0x0068D055
  */
-static void window_map_toolabort(rct_window* w, rct_widgetindex widgetIndex)
+static void WindowMapToolabort(rct_window* w, rct_widgetindex widgetIndex)
 {
     switch (widgetIndex)
     {
@@ -562,9 +567,9 @@ static void window_map_toolabort(rct_window* w, rct_widgetindex widgetIndex)
  *
  *  rct2: 0x0068D7CC
  */
-static void window_map_scrollgetsize(rct_window* w, int32_t scrollIndex, int32_t* width, int32_t* height)
+static void WindowMapScrollgetsize(rct_window* w, int32_t scrollIndex, int32_t* width, int32_t* height)
 {
-    window_map_invalidate(w);
+    WindowMapInvalidate(w);
 
     *width = MAP_WINDOW_MAP_SIZE;
     *height = MAP_WINDOW_MAP_SIZE;
@@ -574,9 +579,9 @@ static void window_map_scrollgetsize(rct_window* w, int32_t scrollIndex, int32_t
  *
  *  rct2: 0x0068D726
  */
-static void window_map_scrollmousedown(rct_window* w, int32_t scrollIndex, const ScreenCoordsXY& screenCoords)
+static void WindowMapScrollmousedown(rct_window* w, int32_t scrollIndex, const ScreenCoordsXY& screenCoords)
 {
-    CoordsXY c = map_window_screen_to_map(screenCoords);
+    CoordsXY c = MapWindowScreenToMap(screenCoords);
     auto mapCoords = CoordsXY{ std::clamp(c.x, 0, MAXIMUM_MAP_SIZE_BIG - 1), std::clamp(c.y, 0, MAXIMUM_MAP_SIZE_BIG - 1) };
     auto mapZ = tile_element_height(mapCoords);
 
@@ -586,7 +591,7 @@ static void window_map_scrollmousedown(rct_window* w, int32_t scrollIndex, const
         window_scroll_to_location(mainWindow, { mapCoords, mapZ });
     }
 
-    if (land_tool_is_active())
+    if (LandToolIsActive())
     {
         // Set land terrain
         int32_t landToolSize = std::max<int32_t>(1, gLandToolSize);
@@ -628,7 +633,7 @@ static void window_map_scrollmousedown(rct_window* w, int32_t scrollIndex, const
     }
 }
 
-static void window_map_textinput(rct_window* w, rct_widgetindex widgetIndex, char* text)
+static void WindowMapTextinput(rct_window* w, rct_widgetindex widgetIndex, char* text)
 {
     int32_t size;
     char* end;
@@ -655,17 +660,8 @@ static void window_map_textinput(rct_window* w, rct_widgetindex widgetIndex, cha
                 size += 2;
                 size = std::clamp(size, MINIMUM_MAP_SIZE_TECHNICAL, MAXIMUM_MAP_SIZE_TECHNICAL);
 
-                int32_t currentSize = gMapSize;
-                while (size < currentSize)
-                {
-                    map_window_decrease_map_size();
-                    currentSize--;
-                }
-                while (size > currentSize)
-                {
-                    map_window_increase_map_size();
-                    currentSize++;
-                }
+                auto changeMapSizeAction = ChangeMapSizeAction(size);
+                GameActions::Execute(&changeMapSizeAction);
                 w->Invalidate();
             }
             break;
@@ -676,7 +672,7 @@ static void window_map_textinput(rct_window* w, rct_widgetindex widgetIndex, cha
  *
  *  rct2: 0x0068CA8F
  */
-static void window_map_invalidate(rct_window* w)
+static void WindowMapInvalidate(rct_window* w)
 {
     uint64_t pressedWidgets;
     int32_t i, height;
@@ -785,7 +781,7 @@ static void window_map_invalidate(rct_window* w)
             // if not in set land rights mode: show the default scenario editor buttons
             if (gCurrentToolWidget.widget_index != WIDX_SET_LAND_RIGHTS)
             {
-                window_map_show_default_scenario_editor_buttons(w);
+                WindowMapShowDefaultScenarioEditorButtons(w);
             }
             else
             { // if in set land rights mode: show land tool buttons + modes
@@ -802,7 +798,7 @@ static void window_map_invalidate(rct_window* w)
         else
         {
             // if no tool is active: show the default scenario editor buttons
-            window_map_show_default_scenario_editor_buttons(w);
+            WindowMapShowDefaultScenarioEditorButtons(w);
         }
     }
 }
@@ -811,10 +807,10 @@ static void window_map_invalidate(rct_window* w)
  *
  *  rct2: 0x0068CDA9
  */
-static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
+static void WindowMapPaint(rct_window* w, rct_drawpixelinfo* dpi)
 {
     WindowDrawWidgets(w, dpi);
-    window_map_draw_tab_images(w, dpi);
+    WindowMapDrawTabImages(w, dpi);
 
     auto screenCoords = w->windowPos
         + ScreenCoordsXY{ window_map_widgets[WIDX_LAND_TOOL].midX(), window_map_widgets[WIDX_LAND_TOOL].midY() };
@@ -822,9 +818,9 @@ static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
     // Draw land tool size
     if (WidgetIsActiveTool(w, WIDX_SET_LAND_RIGHTS) && _landRightsToolSize > MAX_TOOL_SIZE_WITH_SPRITE)
     {
-        DrawTextBasic(
-            dpi, screenCoords - ScreenCoordsXY{ 0, 2 }, STR_LAND_TOOL_SIZE_VALUE, &_landRightsToolSize,
-            { TextAlignment::CENTRE });
+        auto ft = Formatter();
+        ft.Add<uint16_t>(_landRightsToolSize);
+        DrawTextBasic(dpi, screenCoords - ScreenCoordsXY{ 0, 2 }, STR_LAND_TOOL_SIZE_VALUE, ft, { TextAlignment::CENTRE });
     }
     screenCoords.y = w->windowPos.y + window_map_widgets[WIDX_LAND_TOOL].bottom + 5;
 
@@ -853,7 +849,7 @@ static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
             {
                 gfx_fill_rect(
                     dpi, { screenCoords + ScreenCoordsXY{ 0, 2 }, screenCoords + ScreenCoordsXY{ 6, 8 } }, RideKeyColours[i]);
-                DrawTextBasic(dpi, screenCoords + ScreenCoordsXY{ LIST_ROW_HEIGHT, 0 }, mapLabels[i], w);
+                DrawTextBasic(dpi, screenCoords + ScreenCoordsXY{ LIST_ROW_HEIGHT, 0 }, mapLabels[i], {});
                 screenCoords.y += LIST_ROW_HEIGHT;
                 if (i == 3)
                 {
@@ -874,7 +870,7 @@ static void window_map_paint(rct_window* w, rct_drawpixelinfo* dpi)
  *
  *  rct2: 0x0068CF23
  */
-static void window_map_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_t scrollIndex)
+static void WindowMapScrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_t scrollIndex)
 {
     gfx_clear(dpi, PALETTE_INDEX_10);
 
@@ -890,20 +886,20 @@ static void window_map_scrollpaint(rct_window* w, rct_drawpixelinfo* dpi, int32_
 
     if (w->selected_tab == PAGE_PEEPS)
     {
-        window_map_paint_peep_overlay(dpi);
+        WindowMapPaintPeepOverlay(dpi);
     }
     else
     {
-        window_map_paint_train_overlay(dpi);
+        WindowMapPaintTrainOverlay(dpi);
     }
-    window_map_paint_hud_rectangle(dpi);
+    WindowMapPaintHudRectangle(dpi);
 }
 
 /**
  *
  *  rct2: 0x0068CA6C
  */
-static void window_map_init_map()
+static void WindowMapInitMap()
 {
     std::fill(_mapImageData.begin(), _mapImageData.end(), PALETTE_INDEX_10);
     _currentLine = 0;
@@ -913,7 +909,7 @@ static void window_map_init_map()
  *
  *  rct2: 0x0068C990
  */
-static void window_map_centre_on_view_point()
+static void WindowMapCentreOnViewPoint()
 {
     rct_window* w = window_get_main();
     rct_window* w_map;
@@ -966,7 +962,7 @@ static void window_map_centre_on_view_point()
  *
  *  rct2: 0x0068CD35 (part of 0x0068CA8F)
  */
-static void window_map_show_default_scenario_editor_buttons(rct_window* w)
+static void WindowMapShowDefaultScenarioEditorButtons(rct_window* w)
 {
     w->widgets[WIDX_BUILD_PARK_ENTRANCE].type = WindowWidgetType::FlatBtn;
     w->widgets[WIDX_PEOPLE_STARTING_POSITION].type = WindowWidgetType::FlatBtn;
@@ -983,21 +979,23 @@ static void window_map_show_default_scenario_editor_buttons(rct_window* w)
     ft.Add<uint16_t>(gMapSize - 2);
 }
 
-static void window_map_inputsize_land(rct_window* w)
+static void WindowMapInputsizeLand(rct_window* w)
 {
-    TextInputDescriptionArgs[0] = MINIMUM_TOOL_SIZE;
-    TextInputDescriptionArgs[1] = MAXIMUM_TOOL_SIZE;
-    window_text_input_open(w, WIDX_LAND_TOOL, STR_SELECTION_SIZE, STR_ENTER_SELECTION_SIZE, STR_NONE, STR_NONE, 3);
+    Formatter ft;
+    ft.Add<int16_t>(MINIMUM_TOOL_SIZE);
+    ft.Add<int16_t>(MAXIMUM_TOOL_SIZE);
+    WindowTextInputOpen(w, WIDX_LAND_TOOL, STR_SELECTION_SIZE, STR_ENTER_SELECTION_SIZE, ft, STR_NONE, STR_NONE, 3);
 }
 
-static void window_map_inputsize_map(rct_window* w)
+static void WindowMapInputsizeMap(rct_window* w)
 {
-    TextInputDescriptionArgs[0] = MINIMUM_MAP_SIZE_PRACTICAL;
-    TextInputDescriptionArgs[1] = MAXIMUM_MAP_SIZE_PRACTICAL;
-    window_text_input_open(w, WIDX_MAP_SIZE_SPINNER, STR_MAP_SIZE_2, STR_ENTER_MAP_SIZE, STR_NONE, STR_NONE, 4);
+    Formatter ft;
+    ft.Add<int16_t>(MINIMUM_MAP_SIZE_PRACTICAL);
+    ft.Add<int16_t>(MAXIMUM_MAP_SIZE_PRACTICAL);
+    WindowTextInputOpen(w, WIDX_MAP_SIZE_SPINNER, STR_MAP_SIZE_2, STR_ENTER_MAP_SIZE, ft, STR_NONE, STR_NONE, 4);
 }
 
-static void window_map_draw_tab_images(rct_window* w, rct_drawpixelinfo* dpi)
+static void WindowMapDrawTabImages(rct_window* w, rct_drawpixelinfo* dpi)
 {
     uint32_t image;
 
@@ -1023,7 +1021,7 @@ static void window_map_draw_tab_images(rct_window* w, rct_drawpixelinfo* dpi)
  *
  * part of window_map_paint_peep_overlay and window_map_paint_train_overlay
  */
-static MapCoordsXY window_map_transform_to_map_coords(CoordsXY c)
+static MapCoordsXY WindowMapTransformToMapCoords(CoordsXY c)
 {
     int32_t x = c.x, y = c.y;
 
@@ -1055,11 +1053,11 @@ static void DrawMapPeepPixel(Peep* peep, const uint8_t flashColour, rct_drawpixe
     if (peep->x == LOCATION_NULL)
         return;
 
-    MapCoordsXY c = window_map_transform_to_map_coords({ peep->x, peep->y });
+    MapCoordsXY c = WindowMapTransformToMapCoords({ peep->x, peep->y });
     auto leftTop = ScreenCoordsXY{ c.x, c.y };
     auto rightBottom = leftTop;
     uint8_t colour = DefaultPeepMapColour;
-    if (sprite_get_flashing(peep))
+    if (EntityGetFlashing(peep))
     {
         colour = flashColour;
         // If flashing then map peep pixel size is increased (by moving left top downwards)
@@ -1100,7 +1098,7 @@ static uint8_t MapGetStaffFlashColour()
  *
  *  rct2: 0x0068DADA
  */
-static void window_map_paint_peep_overlay(rct_drawpixelinfo* dpi)
+static void WindowMapPaintPeepOverlay(rct_drawpixelinfo* dpi)
 {
     auto flashColour = MapGetGuestFlashColour();
     for (auto guest : EntityList<Guest>())
@@ -1118,7 +1116,7 @@ static void window_map_paint_peep_overlay(rct_drawpixelinfo* dpi)
  *
  *  rct2: 0x0068DBC1
  */
-static void window_map_paint_train_overlay(rct_drawpixelinfo* dpi)
+static void WindowMapPaintTrainOverlay(rct_drawpixelinfo* dpi)
 {
     for (auto train : TrainManager::View())
     {
@@ -1127,7 +1125,7 @@ static void window_map_paint_train_overlay(rct_drawpixelinfo* dpi)
             if (vehicle->x == LOCATION_NULL)
                 continue;
 
-            MapCoordsXY c = window_map_transform_to_map_coords({ vehicle->x, vehicle->y });
+            MapCoordsXY c = WindowMapTransformToMapCoords({ vehicle->x, vehicle->y });
 
             gfx_fill_rect(dpi, { { c.x, c.y }, { c.x, c.y } }, PALETTE_INDEX_171);
         }
@@ -1140,7 +1138,7 @@ static void window_map_paint_train_overlay(rct_drawpixelinfo* dpi)
  *
  *  rct2: 0x0068D8CE
  */
-static void window_map_paint_hud_rectangle(rct_drawpixelinfo* dpi)
+static void WindowMapPaintHudRectangle(rct_drawpixelinfo* dpi)
 {
     rct_window* main_window = window_get_main();
     if (main_window == nullptr)
@@ -1178,14 +1176,14 @@ static void window_map_paint_hud_rectangle(rct_drawpixelinfo* dpi)
  *
  *  rct2: 0x0068D24E
  */
-static void window_map_set_land_rights_tool_update(const ScreenCoordsXY& screenCoords)
+static void WindowMapSetLandRightsToolUpdate(const ScreenCoordsXY& screenCoords)
 {
     rct_viewport* viewport;
 
     map_invalidate_selection_rect();
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE;
     auto mapCoords = screen_get_map_xy(screenCoords, &viewport);
-    if (!mapCoords)
+    if (!mapCoords.has_value())
         return;
 
     gMapSelectFlags |= MAP_SELECT_FLAG_ENABLE;
@@ -1209,18 +1207,18 @@ static void window_map_set_land_rights_tool_update(const ScreenCoordsXY& screenC
  *
  *  rct2: 0x00666EEF
  */
-static CoordsXYZD place_park_entrance_get_map_position(const ScreenCoordsXY& screenCoords)
+static CoordsXYZD PlaceParkEntranceGetMapPosition(const ScreenCoordsXY& screenCoords)
 {
     CoordsXYZD parkEntranceMapPosition{ 0, 0, 0, INVALID_DIRECTION };
     const CoordsXY mapCoords = ViewportInteractionGetTileStartAtCursor(screenCoords);
     parkEntranceMapPosition = { mapCoords.x, mapCoords.y, 0, INVALID_DIRECTION };
-    if (parkEntranceMapPosition.isNull())
+    if (parkEntranceMapPosition.IsNull())
         return parkEntranceMapPosition;
 
     auto surfaceElement = map_get_surface_element_at(mapCoords);
     if (surfaceElement == nullptr)
     {
-        parkEntranceMapPosition.setNull();
+        parkEntranceMapPosition.SetNull();
         return parkEntranceMapPosition;
     }
 
@@ -1245,7 +1243,7 @@ static CoordsXYZD place_park_entrance_get_map_position(const ScreenCoordsXY& scr
  *
  *  rct2: 0x00666FD0
  */
-static void window_map_place_park_entrance_tool_update(const ScreenCoordsXY& screenCoords)
+static void WindowMapPlaceParkEntranceToolUpdate(const ScreenCoordsXY& screenCoords)
 {
     int32_t sideDirection;
 
@@ -1254,8 +1252,8 @@ static void window_map_place_park_entrance_tool_update(const ScreenCoordsXY& scr
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE;
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE_ARROW;
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE_CONSTRUCT;
-    CoordsXYZD parkEntrancePosition = place_park_entrance_get_map_position(screenCoords);
-    if (parkEntrancePosition.isNull())
+    CoordsXYZD parkEntrancePosition = PlaceParkEntranceGetMapPosition(screenCoords);
+    if (parkEntrancePosition.IsNull())
     {
         park_entrance_remove_ghost();
         return;
@@ -1287,7 +1285,7 @@ static void window_map_place_park_entrance_tool_update(const ScreenCoordsXY& scr
  *
  *  rct2: 0x0068D4E9
  */
-static void window_map_set_peep_spawn_tool_update(const ScreenCoordsXY& screenCoords)
+static void WindowMapSetPeepSpawnToolUpdate(const ScreenCoordsXY& screenCoords)
 {
     int32_t mapZ, direction;
     TileElement* tileElement;
@@ -1296,11 +1294,11 @@ static void window_map_set_peep_spawn_tool_update(const ScreenCoordsXY& screenCo
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE;
     gMapSelectFlags &= ~MAP_SELECT_FLAG_ENABLE_ARROW;
     auto mapCoords = footpath_bridge_get_info_from_pos(screenCoords, &direction, &tileElement);
-    if (mapCoords.isNull())
+    if (mapCoords.IsNull())
         return;
 
     mapZ = tileElement->GetBaseZ();
-    if (tileElement->GetType() == TILE_ELEMENT_TYPE_SURFACE)
+    if (tileElement->GetType() == TileElementType::Surface)
     {
         if ((tileElement->AsSurface()->GetSlope() & TILE_ELEMENT_SLOPE_ALL_CORNERS_UP) != 0)
             mapZ += 16;
@@ -1322,18 +1320,18 @@ static void window_map_set_peep_spawn_tool_update(const ScreenCoordsXY& screenCo
  *
  *  rct2: 0x006670A4
  */
-static void window_map_place_park_entrance_tool_down(const ScreenCoordsXY& screenCoords)
+static void WindowMapPlaceParkEntranceToolDown(const ScreenCoordsXY& screenCoords)
 {
     park_entrance_remove_ghost();
 
-    CoordsXYZD parkEntrancePosition = place_park_entrance_get_map_position(screenCoords);
-    if (!parkEntrancePosition.isNull())
+    CoordsXYZD parkEntrancePosition = PlaceParkEntranceGetMapPosition(screenCoords);
+    if (!parkEntrancePosition.IsNull())
     {
         auto gameAction = PlaceParkEntranceAction(parkEntrancePosition, gFootpathSelectedId);
         auto result = GameActions::Execute(&gameAction);
-        if (result->Error == GameActions::Status::Ok)
+        if (result.Error == GameActions::Status::Ok)
         {
-            OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::PlaceItem, result->Position);
+            OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::PlaceItem, result.Position);
         }
     }
 }
@@ -1342,23 +1340,23 @@ static void window_map_place_park_entrance_tool_down(const ScreenCoordsXY& scree
  *
  *  rct2: 0x0068D573
  */
-static void window_map_set_peep_spawn_tool_down(const ScreenCoordsXY& screenCoords)
+static void WindowMapSetPeepSpawnToolDown(const ScreenCoordsXY& screenCoords)
 {
     TileElement* tileElement;
     int32_t mapZ, direction;
 
     // Verify footpath exists at location, and retrieve coordinates
     auto mapCoords = footpath_get_coordinates_from_pos(screenCoords, &direction, &tileElement);
-    if (mapCoords.isNull())
+    if (mapCoords.IsNull())
         return;
 
     mapZ = tileElement->GetBaseZ();
 
     auto gameAction = PlacePeepSpawnAction({ mapCoords, mapZ, static_cast<Direction>(direction) });
     auto result = GameActions::Execute(&gameAction);
-    if (result->Error == GameActions::Status::Ok)
+    if (result.Error == GameActions::Status::Ok)
     {
-        OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::PlaceItem, result->Position);
+        OpenRCT2::Audio::Play3D(OpenRCT2::Audio::SoundId::PlaceItem, result.Position);
     }
 }
 
@@ -1366,63 +1364,23 @@ static void window_map_set_peep_spawn_tool_down(const ScreenCoordsXY& screenCoor
  *
  *  rct2: 0x0068D641
  */
-static void map_window_increase_map_size()
+static void MapWindowIncreaseMapSize()
 {
-    if (gMapSize >= MAXIMUM_MAP_SIZE_TECHNICAL)
-    {
-        context_show_error(STR_CANT_INCREASE_MAP_SIZE_ANY_FURTHER, STR_NONE, {});
-        return;
-    }
-
-    gMapSize++;
-    gMapSizeUnits = (gMapSize - 1) * 32;
-    gMapSizeMinus2 = (gMapSize * 32) + MAXIMUM_MAP_SIZE_PRACTICAL;
-    gMapSizeMaxXY = ((gMapSize - 1) * 32) - 1;
-    map_extend_boundary_surface();
-    window_map_init_map();
-    window_map_centre_on_view_point();
-    gfx_invalidate_screen();
+    auto increaseMapSizeAction = ChangeMapSizeAction(gMapSize + 1);
+    GameActions::Execute(&increaseMapSizeAction);
 }
 
 /**
  *
  *  rct2: 0x0068D6B4
  */
-static void map_window_decrease_map_size()
+static void MapWindowDecreaseMapSize()
 {
-    if (gMapSize < 16)
-    {
-        context_show_error(STR_CANT_DECREASE_MAP_SIZE_ANY_FURTHER, STR_NONE, {});
-        return;
-    }
-
-    gMapSize--;
-    gMapSizeUnits = (gMapSize - 1) * 32;
-    gMapSizeMinus2 = (gMapSize * 32) + MAXIMUM_MAP_SIZE_PRACTICAL;
-    gMapSizeMaxXY = ((gMapSize - 1) * 32) - 1;
-    map_remove_out_of_range_elements();
-    window_map_init_map();
-    window_map_centre_on_view_point();
-    gfx_invalidate_screen();
+    auto decreaseMapSizeAction = ChangeMapSizeAction(gMapSize - 1);
+    GameActions::Execute(&decreaseMapSizeAction);
 }
 
 static constexpr const uint16_t WaterColour = MapColour(PALETTE_INDEX_195);
-static constexpr const uint16_t TerrainColour[] = {
-    MapColour(PALETTE_INDEX_73),                     // TERRAIN_GRASS
-    MapColour(PALETTE_INDEX_40),                     // TERRAIN_SAND
-    MapColour(PALETTE_INDEX_108),                    // TERRAIN_DIRT
-    MapColour(PALETTE_INDEX_12),                     // TERRAIN_ROCK
-    MapColour(PALETTE_INDEX_62),                     // TERRAIN_MARTIAN
-    MapColour2(PALETTE_INDEX_10, PALETTE_INDEX_16),  // TERRAIN_CHECKERBOARD
-    MapColour2(PALETTE_INDEX_73, PALETTE_INDEX_108), // TERRAIN_GRASS_CLUMPS
-    MapColour(PALETTE_INDEX_141),                    // TERRAIN_ICE
-    MapColour2(PALETTE_INDEX_172, PALETTE_INDEX_10), // TERRAIN_GRID_RED
-    MapColour2(PALETTE_INDEX_54, PALETTE_INDEX_10),  // TERRAIN_GRID_YELLOW
-    MapColour2(PALETTE_INDEX_162, PALETTE_INDEX_10), // TERRAIN_GRID_BLUE
-    MapColour2(PALETTE_INDEX_102, PALETTE_INDEX_10), // TERRAIN_GRID_GREEN
-    MapColour(PALETTE_INDEX_111),                    // TERRAIN_SAND_DARK
-    MapColour(PALETTE_INDEX_222),                    // TERRAIN_SAND_LIGHT
-};
 
 static constexpr const uint16_t ElementTypeMaskColour[] = {
     0xFFFF, // TILE_ELEMENT_TYPE_SURFACE
@@ -1433,7 +1391,6 @@ static constexpr const uint16_t ElementTypeMaskColour[] = {
     0xFFFF, // TILE_ELEMENT_TYPE_WALL
     0x0000, // TILE_ELEMENT_TYPE_LARGE_SCENERY
     0xFFFF, // TILE_ELEMENT_TYPE_BANNER
-    0x0000, // TILE_ELEMENT_TYPE_CORRUPT
 };
 
 static constexpr const uint16_t ElementTypeAddColour[] = {
@@ -1445,15 +1402,19 @@ static constexpr const uint16_t ElementTypeAddColour[] = {
     MapColour(PALETTE_INDEX_0),                     // TILE_ELEMENT_TYPE_WALL
     MapColour(PALETTE_INDEX_99),                    // TILE_ELEMENT_TYPE_LARGE_SCENERY
     MapColour(PALETTE_INDEX_0),                     // TILE_ELEMENT_TYPE_BANNER
-    MapColour(PALETTE_INDEX_68),                    // TILE_ELEMENT_TYPE_CORRUPT
 };
 
-static uint16_t map_window_get_pixel_colour_peep(const CoordsXY& c)
+static uint16_t MapWindowGetPixelColourPeep(const CoordsXY& c)
 {
     auto* surfaceElement = map_get_surface_element_at(c);
     if (surfaceElement == nullptr)
         return 0;
-    uint16_t colour = TerrainColour[surfaceElement->GetSurfaceStyle()];
+
+    uint16_t colour = MapColour(PALETTE_INDEX_0);
+    const auto* surfaceObject = surfaceElement->GetSurfaceStyleObject();
+    if (surfaceObject != nullptr)
+        colour = MapColour2(surfaceObject->MapColours[0], surfaceObject->MapColours[1]);
+
     if (surfaceElement->GetWaterHeight() > 0)
         colour = WaterColour;
 
@@ -1470,19 +1431,19 @@ static uint16_t map_window_get_pixel_colour_peep(const CoordsXY& c)
             break;
         }
 
-        int32_t tileElementType = tileElement->GetType() >> 2;
-        if (tileElementType >= maxSupportedTileElementType)
+        auto tileElementType = tileElement->GetType();
+        if (EnumValue(tileElementType) >= maxSupportedTileElementType)
         {
-            tileElementType = TILE_ELEMENT_TYPE_CORRUPT >> 2;
+            tileElementType = TileElementType::Surface;
         }
-        colour &= ElementTypeMaskColour[tileElementType];
-        colour |= ElementTypeAddColour[tileElementType];
+        colour &= ElementTypeMaskColour[EnumValue(tileElementType)];
+        colour |= ElementTypeAddColour[EnumValue(tileElementType)];
     }
 
     return colour;
 }
 
-static uint16_t map_window_get_pixel_colour_ride(const CoordsXY& c)
+static uint16_t MapWindowGetPixelColourRide(const CoordsXY& c)
 {
     Ride* ride;
     uint16_t colourA = 0;                           // highlight colour
@@ -1503,17 +1464,17 @@ static uint16_t map_window_get_pixel_colour_ride(const CoordsXY& c)
 
         switch (tileElement->GetType())
         {
-            case TILE_ELEMENT_TYPE_SURFACE:
+            case TileElementType::Surface:
                 if (tileElement->AsSurface()->GetWaterHeight() > 0)
                     // Why is this a different water colour as above (195)?
                     colourB = MapColour(PALETTE_INDEX_194);
                 if (!(tileElement->AsSurface()->GetOwnership() & OWNERSHIP_OWNED))
                     colourB = MapColourUnowned(colourB);
                 break;
-            case TILE_ELEMENT_TYPE_PATH:
+            case TileElementType::Path:
                 colourA = MapColour(PALETTE_INDEX_14); // lighter grey
                 break;
-            case TILE_ELEMENT_TYPE_ENTRANCE:
+            case TileElementType::Entrance:
                 if (tileElement->AsEntrance()->GetEntranceType() == ENTRANCE_TYPE_PARK_ENTRANCE)
                     break;
                 ride = get_ride(tileElement->AsEntrance()->GetRideIndex());
@@ -1523,7 +1484,7 @@ static uint16_t map_window_get_pixel_colour_ride(const CoordsXY& c)
                     colourA = RideKeyColours[static_cast<size_t>(colourKey)];
                 }
                 break;
-            case TILE_ELEMENT_TYPE_TRACK:
+            case TileElementType::Track:
                 ride = get_ride(tileElement->AsTrack()->GetRideIndex());
                 if (ride != nullptr)
                 {
@@ -1531,6 +1492,8 @@ static uint16_t map_window_get_pixel_colour_ride(const CoordsXY& c)
                     colourA = RideKeyColours[static_cast<size_t>(colourKey)];
                 }
 
+                break;
+            default:
                 break;
         }
     } while (!(tileElement++)->IsLastForTile());
@@ -1541,7 +1504,7 @@ static uint16_t map_window_get_pixel_colour_ride(const CoordsXY& c)
     return colourB;
 }
 
-static void map_window_set_pixels(rct_window* w)
+static void MapWindowSetPixels(rct_window* w)
 {
     uint16_t colour = 0;
     int32_t x = 0, y = 0, dx = 0, dy = 0;
@@ -1584,10 +1547,10 @@ static void map_window_set_pixels(rct_window* w)
             switch (w->selected_tab)
             {
                 case PAGE_PEEPS:
-                    colour = map_window_get_pixel_colour_peep({ x, y });
+                    colour = MapWindowGetPixelColourPeep({ x, y });
                     break;
                 case PAGE_RIDES:
-                    colour = map_window_get_pixel_colour_ride({ x, y });
+                    colour = MapWindowGetPixelColourRide({ x, y });
                     break;
             }
             destination[0] = (colour >> 8) & 0xFF;
@@ -1605,7 +1568,7 @@ static void map_window_set_pixels(rct_window* w)
         _currentLine = 0;
 }
 
-static CoordsXY map_window_screen_to_map(ScreenCoordsXY screenCoords)
+static CoordsXY MapWindowScreenToMap(ScreenCoordsXY screenCoords)
 {
     screenCoords.x = ((screenCoords.x + 8) - MAXIMUM_MAP_SIZE_TECHNICAL) / 2;
     screenCoords.y = ((screenCoords.y + 8)) / 2;

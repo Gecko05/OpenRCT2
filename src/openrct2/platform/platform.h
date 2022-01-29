@@ -7,8 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
-#ifndef _PLATFORM_H_
-#define _PLATFORM_H_
+#pragma once
 
 #include "../common.h"
 #include "../config/Config.h"
@@ -83,54 +82,24 @@ struct file_dialog_desc
 };
 
 // Platform shared definitions
-void platform_update_palette(const uint8_t* colours, int32_t start_index, int32_t num_colours);
 void platform_toggle_windowed_mode();
 void platform_refresh_video(bool recreate_window);
-void platform_get_date_utc(rct2_date* out_date);
-void platform_get_time_utc(rct2_time* out_time);
 
 // Platform specific definitions
-bool platform_directory_exists(const utf8* path);
-bool platform_original_game_data_exists(const utf8* path);
 time_t platform_file_get_modified_time(const utf8* path);
 bool platform_ensure_directory_exists(const utf8* path);
-bool platform_directory_delete(const utf8* path);
-std::string platform_get_absolute_path(const utf8* relative_path, const utf8* base_path);
 bool platform_lock_single_instance();
-bool platform_place_string_on_clipboard(utf8* target);
 
 // Returns the bitmask of the GetLogicalDrives function for windows, 0 for other systems
 int32_t platform_get_drives();
-
-bool platform_file_copy(const utf8* srcPath, const utf8* dstPath, bool overwrite);
-bool platform_file_move(const utf8* srcPath, const utf8* dstPath);
-bool platform_file_delete(const utf8* path);
 uint32_t platform_get_ticks();
 void platform_sleep(uint32_t ms);
-void platform_get_openrct2_data_path(utf8* outPath, size_t outSize);
 void platform_get_user_directory(utf8* outPath, const utf8* subDirectory, size_t outSize);
-std::string platform_get_username();
 bool platform_open_common_file_dialog(utf8* outFilename, file_dialog_desc* desc, size_t outSize);
-utf8* platform_open_directory_browser(const utf8* title);
-CurrencyType platform_get_locale_currency();
-CurrencyType platform_get_currency_value(const char* currencyCode);
-uint16_t platform_get_locale_language();
-MeasurementFormat platform_get_locale_measurement_format();
-TemperatureUnit platform_get_locale_temperature_format();
-uint8_t platform_get_locale_date_format();
-bool platform_process_is_elevated();
-bool platform_get_steam_path(utf8* outPath, size_t outSize);
 std::string platform_get_rct1_steam_dir();
 std::string platform_get_rct2_steam_dir();
-std::string platform_sanitise_filename(const std::string&);
-
-#ifndef NO_TTF
-bool platform_get_font_path(TTFFontDescriptor* font, utf8* buffer, size_t size);
-#endif // NO_TTF
 
 datetime64 platform_get_datetime_now_utc();
-
-float platform_get_default_scale();
 
 // Called very early in the program before parsing commandline arguments.
 void core_init();
@@ -153,19 +122,3 @@ bool platform_setup_uri_protocol();
 // as it requires external linkage, which 'static' prevents
 __declspec(dllexport) int32_t StartOpenRCT2(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int32_t nCmdShow);
 #endif // _WIN32
-
-#ifdef __ANDROID__
-class AndroidClassLoader
-{
-public:
-    AndroidClassLoader();
-    ~AndroidClassLoader();
-    static jobject _classLoader;
-    static jmethodID _findClassMethod;
-};
-
-void platform_android_init_class_loader();
-jclass platform_android_find_class(JNIEnv* env, const char* name);
-#endif // __ANDROID__
-
-#endif

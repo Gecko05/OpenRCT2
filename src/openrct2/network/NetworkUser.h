@@ -11,9 +11,10 @@
 
 #include "../common.h"
 #include "../core/JsonFwd.hpp"
-#include "../core/Nullable.hpp"
+#include "../core/String.hpp"
 
 #include <map>
+#include <optional>
 #include <string>
 
 class NetworkUser final
@@ -21,7 +22,7 @@ class NetworkUser final
 public:
     std::string Hash;
     std::string Name;
-    Nullable<uint8_t> GroupId;
+    std::optional<uint8_t> GroupId;
     bool Remove;
 
     /**
@@ -67,5 +68,5 @@ private:
     std::map<std::string, NetworkUser*> _usersByHash;
 
     void DisposeUsers();
-    static void GetStorePath(utf8* buffer, size_t bufferSize);
+    static u8string GetStorePath();
 };

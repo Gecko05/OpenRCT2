@@ -14,6 +14,7 @@
 #include "../OpenRCT2.h"
 #include "../interface/Window.h"
 #include "../localisation/Date.h"
+#include "../profiling/Profiling.h"
 #include "../scripting/ScriptEngine.h"
 #include "../world/Footpath.h"
 #include "../world/Map.h"
@@ -46,9 +47,9 @@ enum
     PROXIMITY_WATER_LOW,                    // 0x0138B59A
     PROXIMITY_WATER_HIGH,                   // 0x0138B59C
     PROXIMITY_SURFACE_TOUCH,                // 0x0138B59E
-    PROXIMITY_PATH_ZERO_OVER,               // 0x0138B5A0
-    PROXIMITY_PATH_ZERO_TOUCH_ABOVE,        // 0x0138B5A2
-    PROXIMITY_PATH_ZERO_TOUCH_UNDER,        // 0x0138B5A4
+    PROXIMITY_QUEUE_PATH_OVER,              // 0x0138B5A0
+    PROXIMITY_QUEUE_PATH_TOUCH_ABOVE,       // 0x0138B5A2
+    PROXIMITY_QUEUE_PATH_TOUCH_UNDER,       // 0x0138B5A4
     PROXIMITY_PATH_TOUCH_ABOVE,             // 0x0138B5A6
     PROXIMITY_PATH_TOUCH_UNDER,             // 0x0138B5A8
     PROXIMITY_OWN_TRACK_TOUCH_ABOVE,        // 0x0138B5AA
@@ -118,6 +119,8 @@ void ride_ratings_update_ride(const Ride& ride)
  */
 void ride_ratings_update_all()
 {
+    PROFILED_FUNCTION();
+
     if (gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR)
         return;
 
@@ -159,14 +162,14 @@ static void ride_ratings_update_state_0(RideRatingUpdateState& state)
 {
     ride_id_t currentRide = state.CurrentRide;
 
-    currentRide++;
-    if (currentRide >= MAX_RIDES)
+    currentRide = static_cast<ride_id_t>(EnumValue(currentRide) + 1);
+    if (currentRide >= static_cast<ride_id_t>(MAX_RIDES))
     {
-        currentRide = 0;
+        currentRide = {};
     }
 
     auto ride = get_ride(currentRide);
-    if (ride != nullptr && ride->status != RideStatus::Closed)
+    if (ride != nullptr && ride->status != RideStatus::Closed && !(ride->lifecycle_flags & RIDE_LIFECYCLE_FIXED_RATINGS))
     {
         state.State = RIDE_RATINGS_STATE_INITIALISE;
     }
@@ -218,7 +221,7 @@ static void ride_ratings_update_state_2(RideRatingUpdateState& state)
     {
         if (tileElement->IsGhost())
             continue;
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_TRACK)
+        if (tileElement->GetType() != TileElementType::Track)
             continue;
         if (tileElement->GetBaseZ() != loc.z)
             continue;
@@ -237,7 +240,7 @@ static void ride_ratings_update_state_2(RideRatingUpdateState& state)
             {
                 int32_t entranceIndex = tileElement->AsTrack()->GetStationIndex();
                 state.StationFlags &= ~RIDE_RATING_STATION_FLAG_NO_ENTRANCE;
-                if (ride_get_entrance_location(ride, entranceIndex).isNull())
+                if (ride_get_entrance_location(ride, entranceIndex).IsNull())
                 {
                     state.StationFlags |= RIDE_RATING_STATION_FLAG_NO_ENTRANCE;
                 }
@@ -285,7 +288,7 @@ static void ride_ratings_update_state_3(RideRatingUpdateState& state)
     ride_ratings_calculate(state, ride);
     ride_ratings_calculate_value(ride);
 
-    window_invalidate_by_number(WC_RIDE, state.CurrentRide);
+    window_invalidate_by_number(WC_RIDE, EnumValue(state.CurrentRide));
     state.State = RIDE_RATINGS_STATE_FIND_NEXT_RIDE;
 }
 
@@ -325,7 +328,7 @@ static void ride_ratings_update_state_5(RideRatingUpdateState& state)
     {
         if (tileElement->IsGhost())
             continue;
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_TRACK)
+        if (tileElement->GetType() != TileElementType::Track)
             continue;
         if (tileElement->GetBaseZ() != loc.z)
             continue;
@@ -386,10 +389,10 @@ static void ride_ratings_begin_proximity_loop(RideRatingUpdateState& state)
 
     for (int32_t i = 0; i < MAX_STATIONS; i++)
     {
-        if (!ride->stations[i].Start.isNull())
+        if (!ride->stations[i].Start.IsNull())
         {
             state.StationFlags &= ~RIDE_RATING_STATION_FLAG_NO_ENTRANCE;
-            if (ride_get_entrance_location(ride, i).isNull())
+            if (ride_get_entrance_location(ride, i).IsNull())
             {
                 state.StationFlags |= RIDE_RATING_STATION_FLAG_NO_ENTRANCE;
             }
@@ -431,7 +434,7 @@ static void ride_ratings_score_close_proximity_in_direction(
 
         switch (tileElement->GetType())
         {
-            case TILE_ELEMENT_TYPE_SURFACE:
+            case TileElementType::Surface:
                 if (state.ProximityBaseHeight <= inputTileElement->base_height)
                 {
                     if (inputTileElement->clearance_height <= tileElement->base_height)
@@ -440,13 +443,13 @@ static void ride_ratings_score_close_proximity_in_direction(
                     }
                 }
                 break;
-            case TILE_ELEMENT_TYPE_PATH:
+            case TileElementType::Path:
                 if (abs(inputTileElement->GetBaseZ() - tileElement->GetBaseZ()) <= 2 * COORDS_Z_STEP)
                 {
                     proximity_score_increment(state, PROXIMITY_PATH_SIDE_CLOSE);
                 }
                 break;
-            case TILE_ELEMENT_TYPE_TRACK:
+            case TileElementType::Track:
                 if (inputTileElement->AsTrack()->GetRideIndex() != tileElement->AsTrack()->GetRideIndex())
                 {
                     if (abs(inputTileElement->GetBaseZ() - tileElement->GetBaseZ()) <= 2 * COORDS_Z_STEP)
@@ -455,8 +458,8 @@ static void ride_ratings_score_close_proximity_in_direction(
                     }
                 }
                 break;
-            case TILE_ELEMENT_TYPE_SMALL_SCENERY:
-            case TILE_ELEMENT_TYPE_LARGE_SCENERY:
+            case TileElementType::SmallScenery:
+            case TileElementType::LargeScenery:
                 if (tileElement->GetBaseZ() < inputTileElement->GetClearanceZ())
                 {
                     if (inputTileElement->GetBaseZ() > tileElement->GetClearanceZ())
@@ -468,6 +471,8 @@ static void ride_ratings_score_close_proximity_in_direction(
                         proximity_score_increment(state, PROXIMITY_SCENERY_SIDE_BELOW);
                     }
                 }
+                break;
+            default:
                 break;
         }
     } while (!(tileElement++)->IsLastForTile());
@@ -483,38 +488,33 @@ static void ride_ratings_score_close_proximity_loops_helper(RideRatingUpdateStat
         if (tileElement->IsGhost())
             continue;
 
-        switch (tileElement->GetType())
+        auto type = tileElement->GetType();
+        if (type == TileElementType::Path)
         {
-            case TILE_ELEMENT_TYPE_PATH:
+            int32_t zDiff = static_cast<int32_t>(tileElement->base_height)
+                - static_cast<int32_t>(coordsElement.element->base_height);
+            if (zDiff >= 0 && zDiff <= 16)
+            {
+                proximity_score_increment(state, PROXIMITY_PATH_TROUGH_VERTICAL_LOOP);
+            }
+        }
+        else if (type == TileElementType::Track)
+        {
+            bool elementsAreAt90DegAngle = ((tileElement->GetDirection() ^ coordsElement.element->GetDirection()) & 1) != 0;
+            if (elementsAreAt90DegAngle)
             {
                 int32_t zDiff = static_cast<int32_t>(tileElement->base_height)
                     - static_cast<int32_t>(coordsElement.element->base_height);
                 if (zDiff >= 0 && zDiff <= 16)
                 {
-                    proximity_score_increment(state, PROXIMITY_PATH_TROUGH_VERTICAL_LOOP);
-                }
-            }
-            break;
-
-            case TILE_ELEMENT_TYPE_TRACK:
-            {
-                bool elementsAreAt90DegAngle = ((tileElement->GetDirection() ^ coordsElement.element->GetDirection()) & 1) != 0;
-                if (elementsAreAt90DegAngle)
-                {
-                    int32_t zDiff = static_cast<int32_t>(tileElement->base_height)
-                        - static_cast<int32_t>(coordsElement.element->base_height);
-                    if (zDiff >= 0 && zDiff <= 16)
+                    proximity_score_increment(state, PROXIMITY_TRACK_THROUGH_VERTICAL_LOOP);
+                    if (tileElement->AsTrack()->GetTrackType() == TrackElemType::LeftVerticalLoop
+                        || tileElement->AsTrack()->GetTrackType() == TrackElemType::RightVerticalLoop)
                     {
-                        proximity_score_increment(state, PROXIMITY_TRACK_THROUGH_VERTICAL_LOOP);
-                        if (tileElement->AsTrack()->GetTrackType() == TrackElemType::LeftVerticalLoop
-                            || tileElement->AsTrack()->GetTrackType() == TrackElemType::RightVerticalLoop)
-                        {
-                            proximity_score_increment(state, PROXIMITY_INTERSECTING_VERTICAL_LOOP);
-                        }
+                        proximity_score_increment(state, PROXIMITY_INTERSECTING_VERTICAL_LOOP);
                     }
                 }
             }
-            break;
         }
     } while (!(tileElement++)->IsLastForTile());
 }
@@ -559,7 +559,7 @@ static void ride_ratings_score_close_proximity(RideRatingUpdateState& state, Til
         int32_t waterHeight;
         switch (tileElement->GetType())
         {
-            case TILE_ELEMENT_TYPE_SURFACE:
+            case TileElementType::Surface:
                 state.ProximityBaseHeight = tileElement->base_height;
                 if (tileElement->GetBaseZ() == state.Proximity.z)
                 {
@@ -589,9 +589,8 @@ static void ride_ratings_score_close_proximity(RideRatingUpdateState& state, Til
                     }
                 }
                 break;
-            case TILE_ELEMENT_TYPE_PATH:
-                // Bonus for normal path
-                if (tileElement->AsPath()->GetSurfaceEntryIndex() != 0)
+            case TileElementType::Path:
+                if (!tileElement->AsPath()->IsQueue())
                 {
                     if (tileElement->GetClearanceZ() == inputTileElement->GetBaseZ())
                     {
@@ -604,22 +603,21 @@ static void ride_ratings_score_close_proximity(RideRatingUpdateState& state, Til
                 }
                 else
                 {
-                    // Bonus for path in first object entry
                     if (tileElement->GetClearanceZ() <= inputTileElement->GetBaseZ())
                     {
-                        proximity_score_increment(state, PROXIMITY_PATH_ZERO_OVER);
+                        proximity_score_increment(state, PROXIMITY_QUEUE_PATH_OVER);
                     }
                     if (tileElement->GetClearanceZ() == inputTileElement->GetBaseZ())
                     {
-                        proximity_score_increment(state, PROXIMITY_PATH_ZERO_TOUCH_ABOVE);
+                        proximity_score_increment(state, PROXIMITY_QUEUE_PATH_TOUCH_ABOVE);
                     }
                     if (tileElement->GetBaseZ() == inputTileElement->GetClearanceZ())
                     {
-                        proximity_score_increment(state, PROXIMITY_PATH_ZERO_TOUCH_UNDER);
+                        proximity_score_increment(state, PROXIMITY_QUEUE_PATH_TOUCH_UNDER);
                     }
                 }
                 break;
-            case TILE_ELEMENT_TYPE_TRACK:
+            case TileElementType::Track:
             {
                 auto trackType = tileElement->AsTrack()->GetTrackType();
                 if (trackType == TrackElemType::LeftVerticalLoop || trackType == TrackElemType::RightVerticalLoop)
@@ -702,8 +700,10 @@ static void ride_ratings_score_close_proximity(RideRatingUpdateState& state, Til
                         }
                     }
                 }
+                break;
             }
-            break;
+            default:
+                break;
         } // switch tileElement->GetType
     } while (!(tileElement++)->IsLastForTile());
 
@@ -753,7 +753,7 @@ static void ride_ratings_calculate(RideRatingUpdateState& state, Ride* ride)
 
         // Create event args object
         auto obj = DukObject(ctx);
-        obj.Set("rideId", ride->id);
+        obj.Set("rideId", EnumValue(ride->id));
         obj.Set("excitement", originalExcitement);
         obj.Set("intensity", originalIntensity);
         obj.Set("nausea", originalNausea);
@@ -789,7 +789,7 @@ static void ride_ratings_calculate_value(Ride* ride)
         { 120, 81, 256, 0 },  // 0.32x
         { 128, 81, 512, 0 },  // 0.16x
         { 200, 81, 1024, 0 }, // 0.08x
-        { 200, 9, 16, 0 }     // 0.56x "easter egg"
+        { 200, 9, 16, 0 },    // 0.56x "easter egg"
     };
 
 #ifdef ORIGINAL_RATINGS
@@ -803,7 +803,7 @@ static void ride_ratings_calculate_value(Ride* ride)
         { 120, 81, 256, 0 },  // 0.32x
         { 128, 81, 512, 0 },  // 0.16x
         { 200, 81, 1024, 0 }, // 0.08x
-        { 200, 9, 16, 0 }     // 0.56x "easter egg"
+        { 200, 9, 16, 0 },    // 0.56x "easter egg"
     };
 #endif
 
@@ -883,7 +883,7 @@ static uint16_t ride_compute_upkeep(RideRatingUpdateState& state, Ride* ride)
     dropFactor &= 3;
     upkeep += trackCost * dropFactor;
 
-    uint32_t totalLength = ride_get_total_length(ride) >> 16;
+    uint32_t totalLength = ride->GetTotalLength() >> 16;
 
     // The data originally here was 20's and 0's. The 20's all represented
     // rides that had tracks. The 0's were fixed rides like crooked house or
@@ -1072,9 +1072,9 @@ static uint32_t ride_ratings_get_proximity_score(RideRatingUpdateState& state)
     result += get_proximity_score_helper_1(scores[PROXIMITY_WATER_LOW], 10, 0x020000);
     result += get_proximity_score_helper_1(scores[PROXIMITY_WATER_HIGH], 40, 0x00A000);
     result += get_proximity_score_helper_1(scores[PROXIMITY_SURFACE_TOUCH], 70, 0x01B6DB);
-    result += get_proximity_score_helper_1(scores[PROXIMITY_PATH_ZERO_OVER] + 8, 12, 0x064000);
-    result += get_proximity_score_helper_3(scores[PROXIMITY_PATH_ZERO_TOUCH_ABOVE], 40);
-    result += get_proximity_score_helper_3(scores[PROXIMITY_PATH_ZERO_TOUCH_UNDER], 45);
+    result += get_proximity_score_helper_1(scores[PROXIMITY_QUEUE_PATH_OVER] + 8, 12, 0x064000);
+    result += get_proximity_score_helper_3(scores[PROXIMITY_QUEUE_PATH_TOUCH_ABOVE], 40);
+    result += get_proximity_score_helper_3(scores[PROXIMITY_QUEUE_PATH_TOUCH_UNDER], 45);
     result += get_proximity_score_helper_2(scores[PROXIMITY_PATH_TOUCH_ABOVE], 10, 20, 0x03C000);
     result += get_proximity_score_helper_2(scores[PROXIMITY_PATH_TOUCH_UNDER], 10, 20, 0x044000);
     result += get_proximity_score_helper_2(scores[PROXIMITY_OWN_TRACK_TOUCH_ABOVE], 10, 15, 0x035555);
@@ -1102,7 +1102,7 @@ static uint32_t ride_ratings_get_proximity_score(RideRatingUpdateState& state)
  */
 static ShelteredEights get_num_of_sheltered_eighths(Ride* ride)
 {
-    int32_t totalLength = ride_get_total_length(ride);
+    int32_t totalLength = ride->GetTotalLength();
     int32_t shelteredLength = ride->sheltered_length;
     int32_t lengthEighth = totalLength / 8;
     int32_t lengthCounter = lengthEighth;
@@ -1463,7 +1463,7 @@ static int32_t ride_ratings_get_scenery_score(Ride* ride)
              xx++)
         {
             // Count scenery items on this tile
-            TileElement* tileElement = map_get_first_element_at(TileCoordsXY{ xx, yy }.ToCoordsXY());
+            TileElement* tileElement = map_get_first_element_at(TileCoordsXY{ xx, yy });
             if (tileElement == nullptr)
                 continue;
             do
@@ -1471,8 +1471,8 @@ static int32_t ride_ratings_get_scenery_score(Ride* ride)
                 if (tileElement->IsGhost())
                     continue;
 
-                int32_t type = tileElement->GetType();
-                if (type == TILE_ELEMENT_TYPE_SMALL_SCENERY || type == TILE_ELEMENT_TYPE_LARGE_SCENERY)
+                const auto type = tileElement->GetType();
+                if (type == TileElementType::SmallScenery || type == TileElementType::LargeScenery)
                     numSceneryItems++;
             } while (!(tileElement++)->IsLastForTile());
         }
@@ -1506,7 +1506,7 @@ static void ride_ratings_add(RatingTuple* rating, int32_t excitement, int32_t in
 
 static void ride_ratings_apply_length(RatingTuple* ratings, Ride* ride, int32_t maxLength, int32_t excitementMultiplier)
 {
-    ride_ratings_add(ratings, (std::min(ride_get_total_length(ride) >> 16, maxLength) * excitementMultiplier) >> 16, 0, 0);
+    ride_ratings_add(ratings, (std::min(ride->GetTotalLength() >> 16, maxLength) * excitementMultiplier) >> 16, 0, 0);
 }
 
 static void ride_ratings_apply_synchronisation(RatingTuple* ratings, Ride* ride, int32_t excitement, int32_t intensity)
@@ -1540,7 +1540,7 @@ static void ride_ratings_apply_average_speed(
 
 static void ride_ratings_apply_duration(RatingTuple* ratings, Ride* ride, int32_t maxDuration, int32_t excitementMultiplier)
 {
-    ride_ratings_add(ratings, (std::min(ride_get_total_time(ride), maxDuration) * excitementMultiplier) >> 16, 0, 0);
+    ride_ratings_add(ratings, (std::min(ride->GetTotalTime(), maxDuration) * excitementMultiplier) >> 16, 0, 0);
 }
 
 static void ride_ratings_apply_gforces(
@@ -2199,7 +2199,7 @@ void ride_ratings_calculate_launched_freefall(Ride* ride, RideRatingUpdateState&
         ride_ratings_add(&ratings, RIDE_RATING(0, 30), RIDE_RATING(0, 65), RIDE_RATING(0, 45));
     }
 
-    int32_t excitementModifier = ((ride_get_total_length(ride) >> 16) * 32768) >> 16;
+    int32_t excitementModifier = ((ride->GetTotalLength() >> 16) * 32768) >> 16;
     ride_ratings_add(&ratings, excitementModifier, 0, 0);
 
 #ifdef ORIGINAL_RATINGS
@@ -2215,7 +2215,7 @@ void ride_ratings_calculate_launched_freefall(Ride* ride, RideRatingUpdateState&
         // Fix #3282: When the ride mode is in downward launch mode, the intensity and
         //            nausea were fixed regardless of how high the ride is. The following
         //            calculation is based on roto-drop which is a similar mechanic.
-        int32_t lengthFactor = ((ride_get_total_length(ride) >> 16) * 209715) >> 16;
+        int32_t lengthFactor = ((ride->GetTotalLength() >> 16) * 209715) >> 16;
         ride_ratings_add(&ratings, lengthFactor, lengthFactor * 2, lengthFactor * 2);
     }
 #endif
@@ -2283,7 +2283,7 @@ void ride_ratings_calculate_observation_tower(Ride* ride, RideRatingUpdateState&
     RatingTuple ratings;
     ride_ratings_set(&ratings, RIDE_RATING(1, 50), RIDE_RATING(0, 00), RIDE_RATING(0, 10));
     ride_ratings_add(
-        &ratings, ((ride_get_total_length(ride) >> 16) * 45875) >> 16, 0, ((ride_get_total_length(ride) >> 16) * 26214) >> 16);
+        &ratings, ((ride->GetTotalLength() >> 16) * 45875) >> 16, 0, ((ride->GetTotalLength() >> 16) * 26214) >> 16);
     ride_ratings_apply_proximity(state, &ratings, 20130);
     ride_ratings_apply_scenery(&ratings, ride, 83662);
 
@@ -3012,7 +3012,7 @@ void ride_ratings_calculate_lift(Ride* ride, RideRatingUpdateState& state)
     RatingTuple ratings;
     ride_ratings_set(&ratings, RIDE_RATING(1, 11), RIDE_RATING(0, 35), RIDE_RATING(0, 30));
 
-    int32_t totalLength = ride_get_total_length(ride) >> 16;
+    int32_t totalLength = ride->GetTotalLength() >> 16;
     ride_ratings_add(&ratings, (totalLength * 45875) >> 16, 0, (totalLength * 26214) >> 16);
 
     ride_ratings_apply_proximity(state, &ratings, 11183);
@@ -3811,7 +3811,7 @@ void ride_ratings_calculate_roto_drop(Ride* ride, RideRatingUpdateState& state)
     RatingTuple ratings;
     ride_ratings_set(&ratings, RIDE_RATING(2, 80), RIDE_RATING(3, 50), RIDE_RATING(3, 50));
 
-    int32_t lengthFactor = ((ride_get_total_length(ride) >> 16) * 209715) >> 16;
+    int32_t lengthFactor = ((ride->GetTotalLength() >> 16) * 209715) >> 16;
     ride_ratings_add(&ratings, lengthFactor, lengthFactor * 2, lengthFactor * 2);
 
     ride_ratings_apply_proximity(state, &ratings, 11183);

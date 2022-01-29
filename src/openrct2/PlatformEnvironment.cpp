@@ -135,19 +135,19 @@ std::unique_ptr<IPlatformEnvironment> OpenRCT2::CreatePlatformEnvironment()
     basePaths[static_cast<size_t>(DIRBASE::DOCUMENTATION)] = Platform::GetDocsPath();
 
     // Override paths that have been specified via the command line
-    if (!String::IsNullOrEmpty(gCustomRCT1DataPath))
+    if (!gCustomRCT1DataPath.empty())
     {
         basePaths[static_cast<size_t>(DIRBASE::RCT1)] = gCustomRCT1DataPath;
     }
-    if (!String::IsNullOrEmpty(gCustomRCT2DataPath))
+    if (!gCustomRCT2DataPath.empty())
     {
         basePaths[static_cast<size_t>(DIRBASE::RCT2)] = gCustomRCT2DataPath;
     }
-    if (!String::IsNullOrEmpty(gCustomOpenRCT2DataPath))
+    if (!gCustomOpenRCT2DataPath.empty())
     {
         basePaths[static_cast<size_t>(DIRBASE::OPENRCT2)] = gCustomOpenRCT2DataPath;
     }
-    if (!String::IsNullOrEmpty(gCustomUserDataPath))
+    if (!gCustomUserDataPath.empty())
     {
         basePaths[static_cast<size_t>(DIRBASE::USER)] = gCustomUserDataPath;
         basePaths[static_cast<size_t>(DIRBASE::CONFIG)] = gCustomUserDataPath;
@@ -164,17 +164,17 @@ std::unique_ptr<IPlatformEnvironment> OpenRCT2::CreatePlatformEnvironment()
     // Now load the config so we can get the RCT1 and RCT2 paths
     auto configPath = env->GetFilePath(PATHID::CONFIG);
     config_set_defaults();
-    if (!config_open(configPath.c_str()))
+    if (!config_open(configPath))
     {
-        config_save(configPath.c_str());
+        config_save(configPath);
     }
-    if (String::IsNullOrEmpty(gCustomRCT1DataPath))
+    if (gCustomRCT1DataPath.empty())
     {
         env->SetBasePath(DIRBASE::RCT1, String::ToStd(gConfigGeneral.rct1_path));
     }
-    if (String::IsNullOrEmpty(gCustomRCT2DataPath))
+    if (gCustomRCT2DataPath.empty())
     {
-        env->SetBasePath(DIRBASE::RCT2, String::ToStd(gConfigGeneral.rct2_path));
+        env->SetBasePath(DIRBASE::RCT2, gConfigGeneral.rct2_path);
     }
 
     // Log base paths
@@ -228,6 +228,7 @@ const char * PlatformEnvironment::DirectoryNamesOpenRCT2[] =
     "heightmap",            // HEIGHTMAP
     "replay",               // REPLAY
     "desyncs",              // DESYNCS
+    "crash",                // CRASH
 };
 
 const char * PlatformEnvironment::FileNames[] =

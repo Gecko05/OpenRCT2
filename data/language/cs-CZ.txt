@@ -1736,7 +1736,7 @@ STR_2383    :Vodní plochy
 STR_2384    :{WINDOW_COLOUR_2}Cíl scénáře:
 STR_2385    :{BLACK}žádný
 STR_2386    :{BLACK}Mít v parku alespoň {COMMA16} návštěvníků na konci {MONTHYEAR}, s hodnocením parku alespoň 600
-STR_2387    :{BLACK}Dosáhnout hodnoty parku alespoň {POP16}{POP16}{CURRENCY} na konci {PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}
+STR_2387    :{BLACK}Dosáhnout hodnoty parku alespoň {POP16}{POP16}{CURRENCY} na konci {PUSH16}{PUSH16}{PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}
 STR_2388    :{BLACK}Příjemnou zábavu!
 STR_2389    :{BLACK}Postav ten nejlepší {STRINGID}!
 STR_2390    :{BLACK}Mít v parku 10 druhů kolotočů v provozu, každý s hodnotou zábavnosti alespoň 6.00
@@ -2056,51 +2056,6 @@ STR_2854    :{RED}Návštěvníci nemohou najít vstup do {STRINGID} !{NEWLINE}P
 STR_2855    :{RED}{STRINGID} nemá postavenou vestu z východu!{NEWLINE}Postavte cestu z východu atrakce
 STR_2858    :Nelze zahájit reklamní kampaň…
 STR_2861    :{WINDOW_COLOUR_2}Licencováno Infogrames Interactive Inc.
-STR_2862    :Poděkování za hudbu…
-STR_2863    :Poděkování za hudbu
-STR_2864    :{WINDOW_COLOUR_2}Děti pluku - pochod:   (Fučík) non copyright
-STR_2865    :{WINDOW_COLOUR_2}Heyken's Serenade:   (J.Heyken) British Standard Music Coy; GEMA, BRITICO
-STR_2866    :{WINDOW_COLOUR_2}La Belle Espagnole:   (Robert Vollstedt) non copyright
-STR_2867    :{WINDOW_COLOUR_2}Wedding Journey:   (Traditional)
-STR_2868    :{WINDOW_COLOUR_2}Tales from the Vienna Woods:   (Johann Strauss) non copyright
-STR_2869    :{WINDOW_COLOUR_2}Slavonic Dance:   (Traditional)
-STR_2870    :{WINDOW_COLOUR_2}Das Alpenhorn:   (Traditional)
-STR_2871    :{WINDOW_COLOUR_2}The Blond Sailor:   (Traditional)
-STR_2872    :{WINDOW_COLOUR_2}Overture - Poet and Peasant:   (Suppe) non copyright
-STR_2873    :{WINDOW_COLOUR_2}Waltz Medley:   (Johann Strauss) non copyright
-STR_2874    :{WINDOW_COLOUR_2}Bella Bella Bimba:   (Traditional)
-STR_2875    :{WINDOW_COLOUR_2}Original recordings (P) 1976 C.J.Mears Organization, used with consent
-STR_2876    :{WINDOW_COLOUR_2}RollerCoaster Tycoon 2 Title Music:   (Allister Brimble) copyright © Chris Sawyer
-STR_2877    :{WINDOW_COLOUR_2}Dodgems Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2878    :{WINDOW_COLOUR_2}Mid Summer's Heat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2879    :{WINDOW_COLOUR_2}Pharaoh's Tomb:   (Allister Brimble) copyright © Chris Sawyer
-STR_2880    :{WINDOW_COLOUR_2}Caesar's March:   (Allister Brimble) copyright © Chris Sawyer
-STR_2881    :{WINDOW_COLOUR_2}Drifting To Heaven:   (Allister Brimble) copyright © Chris Sawyer
-STR_2882    :{WINDOW_COLOUR_2}Invaders:   (Allister Brimble) copyright © Chris Sawyer
-STR_2883    :{WINDOW_COLOUR_2}Eternal Toybox:   (Allister Brimble) copyright © Chris Sawyer
-STR_2884    :{WINDOW_COLOUR_2}Jungle Juice:   (Allister Brimble) copyright © Chris Sawyer
-STR_2885    :{WINDOW_COLOUR_2}Ninja's Noodles:   (Allister Brimble) copyright © Chris Sawyer
-STR_2886    :{WINDOW_COLOUR_2}Voyage to Andromeda:   (Allister Brimble) copyright © Chris Sawyer
-STR_2887    :{WINDOW_COLOUR_2}Brimble's Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2888    :{WINDOW_COLOUR_2}Atlantis:   (Allister Brimble) copyright © Chris Sawyer
-STR_2889    :{WINDOW_COLOUR_2}Wild West Kid:   (Allister Brimble) copyright © Chris Sawyer
-STR_2890    :{WINDOW_COLOUR_2}Vampire's Lair:   (Allister Brimble) copyright © Chris Sawyer
-STR_2891    :{WINDOW_COLOUR_2}Blockbuster:   (Allister Brimble) copyright © Chris Sawyer
-STR_2892    :{WINDOW_COLOUR_2}Airtime Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2893    :{WINDOW_COLOUR_2}Searchlight Rag:   (Scott Joplin/Allister Brimble) copyright © Chris Sawyer
-STR_2894    :{WINDOW_COLOUR_2}Flight of Fantasy:   (Steve Blenkinsopp) copyright © Chris Sawyer
-STR_2895    :{WINDOW_COLOUR_2}Big Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2896    :{WINDOW_COLOUR_2}Hypothermia:   (Allister Brimble) copyright © Chris Sawyer
-STR_2897    :{WINDOW_COLOUR_2}Last Sleigh Ride:   (Allister Brimble) copyright © Chris Sawyer
-STR_2898    :{WINDOW_COLOUR_2}Pipes of Glencairn:   (Allister Brimble) copyright © Chris Sawyer
-STR_2899    :{WINDOW_COLOUR_2}Traffic Jam:   (Allister Brimble) copyright © Chris Sawyer
-STR_2901    :{WINDOW_COLOUR_2}(Samples courtesy of Spectrasonics „Liquid Grooves“)
-STR_2902    :{WINDOW_COLOUR_2}Toccata:   (C.M.Widor, played by Peter James Adcock) recording © Chris Sawyer
-STR_2903    :{WINDOW_COLOUR_2}Space Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2904    :{WINDOW_COLOUR_2}Manic Mechanic:   (Allister Brimble) copyright © Chris Sawyer
-STR_2905    :{WINDOW_COLOUR_2}Techno Torture:   (Allister Brimble) copyright © Chris Sawyer
-STR_2906    :{WINDOW_COLOUR_2}Sweat Dreams:   (Allister Brimble) copyright © Chris Sawyer
-STR_2907    :{WINDOW_COLOUR_2}What shall we do with the Drunken Sailor:   (Anon/Allister Brimble) copyright © Chris Sawyer
 STR_2971    :Primární barevná kombinace
 STR_2972    :Alternativní barevná kombinace 1
 STR_2973    :Alternativní barevná kombinace 2
@@ -3008,8 +2963,6 @@ STR_5723    :Déšť
 STR_5724    :Bouřka
 STR_5725    :{BLACK}Vynutit počasí:
 STR_5726    :Nastaví momentální počasí v parku
-STR_5727    :Metoda škálování:
-STR_5731    :Lineární
 STR_5734    :Vykreslování
 STR_5735    :Stav připojení
 STR_5736    :Hráč
@@ -3094,7 +3047,6 @@ STR_5814    :{WINDOW_COLOUR_1}„{STRING}“
 #tooltips
 STR_5815    :Zobrazovat počítadlo FPS ve hře
 STR_5816    :Nastaví poměr stran pro škálování{NEWLINE} velikosti herního okna.{NEWLINE}Nejužitečnější je tato volba při hře ve vysokém rozlišení.
-STR_5817    :Nastaví typ škálování UI prvků. Vyžaduje hardwarové vykreslování.{NEWLINE}Lineární škálování má hladký, ale rozmazaný obraz. Metoda vyhlazeného nejbližšího souseda má ostrý obraz, ale může způsobovat mírný výkonostní propad.
 STR_5819    :[Vyžaduje hardwarové zobrazování]{NEWLINE}Pozastavit hru, pokud je {NEWLINE}zapnutý Steam in-game overlay
 STR_5820    :Minimalizovat hru, pokud je v{NEWLINE}režimu celé obrazovky a jiné okno se stane aktivním
 STR_5822    :Zapnout cyklus dne a noci.{NEWLINE}Jeden cyklus trvá jeden herní měsíc
@@ -3206,56 +3158,56 @@ STR_5930    :Detaily velkých kulis
 STR_5931    :Detaily banneru
 STR_5932    :Detaily poškozených elementů
 STR_5933    :Vlastnosti
-STR_5934    :{WINDOW_COLOUR_2}Textura terénu: {BLACK}{STRINGID}
-STR_5935    :{WINDOW_COLOUR_2}Hrana terénu: {BLACK}{STRINGID}
-STR_5936    :{WINDOW_COLOUR_2}Pozemková práva: {BLACK}{STRINGID}
+STR_5934    :Textura terénu: {BLACK}{STRINGID}
+STR_5935    :Hrana terénu: {BLACK}{STRINGID}
+STR_5936    :Pozemková práva: {BLACK}{STRINGID}
 STR_5937    :Není vlastněno a není na prodej
-STR_5938    :{WINDOW_COLOUR_2}Úroveň vody: {BLACK}{COMMA16}
+STR_5938    :Úroveň vody: {BLACK}{COMMA16}
 STR_5939    :Odebrat plot parku
 STR_5940    :Obnovit plot parku
-STR_5941    :{WINDOW_COLOUR_2}Základní výška:
-STR_5942    :{WINDOW_COLOUR_2}Jméno cesty: {BLACK}{STRINGID}
-STR_5943    :{WINDOW_COLOUR_2}Dodatky: {BLACK}{STRINGID}
-STR_5944    :{WINDOW_COLOUR_2}Dodatky: {BLACK}None
-STR_5945    :{WINDOW_COLOUR_2}Připojené hrany:
-STR_5946    :{WINDOW_COLOUR_2}Typ atrakce: {BLACK}{STRINGID}
-STR_5947    :{WINDOW_COLOUR_2}ID atrakce: {BLACK}{COMMA16}
-STR_5948    :{WINDOW_COLOUR_2}Název atrakce: {BLACK}{STRINGID}
-STR_5949    :{WINDOW_COLOUR_2}Řetězový výtah
-STR_5950    :{WINDOW_COLOUR_2}Aplikovat změny pro celou část traťi
-STR_5951    :{WINDOW_COLOUR_2}ID části traťi: {BLACK}{COMMA16}
-STR_5952    :{WINDOW_COLOUR_2}Číslo sekvence: {BLACK}{COMMA16}
+STR_5941    :Základní výška:
+STR_5942    :Jméno cesty: {BLACK}{STRINGID}
+STR_5943    :Dodatky: {BLACK}{STRINGID}
+STR_5944    :Dodatky: {BLACK}None
+STR_5945    :Připojené hrany:
+STR_5946    :Typ atrakce: {BLACK}{STRINGID}
+STR_5947    :ID atrakce: {BLACK}{COMMA16}
+STR_5948    :Název atrakce: {BLACK}{STRINGID}
+STR_5949    :Řetězový výtah
+STR_5950    :Aplikovat změny pro celou část traťi
+STR_5951    :ID části traťi: {BLACK}{COMMA16}
+STR_5952    :Číslo sekvence: {BLACK}{COMMA16}
 STR_5953    :Seřadit elementy mapy vybrané dlaždice podle jejich základní výšky
-STR_5954    :{WINDOW_COLOUR_2}Stáří kulis: {BLACK}{COMMA16}
-STR_5955    :{WINDOW_COLOUR_2}Kvadrant umístění: {BLACK}{STRINGID}
+STR_5954    :Stáří kulis: {BLACK}{COMMA16}
+STR_5955    :Kvadrant umístění: {BLACK}{STRINGID}
 STR_5956    :Jihozápad
 STR_5957    :Severozápad
 STR_5958    :Severovýchod
 STR_5959    :Jihovýchod
-STR_5960    :{WINDOW_COLOUR_2}Kvadrant umístění:
-STR_5961    :{WINDOW_COLOUR_2}Index vstupu: {BLACK}{COMMA16}
-STR_5962    :{WINDOW_COLOUR_2}Detekce kolizí:
-STR_5963    :{WINDOW_COLOUR_2}Zdvihnuté rohy:
-STR_5964    :{WINDOW_COLOUR_2}Diagonální
-STR_5965    :{WINDOW_COLOUR_2}Typ vstupu: {BLACK}{STRINGID}
-STR_5966    :{WINDOW_COLOUR_2}Část vstupu do parku: {BLACK}{STRINGID}
+STR_5960    :Kvadrant umístění:
+STR_5961    :Index vstupu: {BLACK}{COMMA16}
+STR_5962    :Detekce kolizí:
+STR_5963    :Zdvihnuté rohy:
+STR_5964    :Diagonální
+STR_5965    :Typ vstupu: {BLACK}{STRINGID}
+STR_5966    :Část vstupu do parku: {BLACK}{STRINGID}
 STR_5967    :Prostředek
 STR_5968    :Levý
 STR_5969    :Pravý
-STR_5970    :{WINDOW_COLOUR_2}ID vstupu: {BLACK}{COMMA16}
-STR_5971    :{WINDOW_COLOUR_2}ID východu: {BLACK}{COMMA16}
-STR_5972    :{WINDOW_COLOUR_2}ID atrakce: {BLACK}{COMMA16}
+STR_5970    :ID vstupu: {BLACK}{COMMA16}
+STR_5971    :ID východu: {BLACK}{COMMA16}
+STR_5972    :ID atrakce: {BLACK}{COMMA16}
 STR_5973    :Omezit dalším
 STR_5974    :Nastaví základní a celkovou výšku stejnou, jako je výška dalšího elementu na stejné dlaždici. To usnadní stavění na této dlaždici.
 STR_5975    :Sklon:
 STR_5976    :Rovina
 STR_5977    :Pravá strana
 STR_5978    :Levá strana
-STR_5979    :{WINDOW_COLOUR_2}Typ plotu: {BLACK}{COMMA16}
-STR_5980    :{WINDOW_COLOUR_2}Text banneru: {BLACK}{STRINGID}
-STR_5981    :{WINDOW_COLOUR_2}To není banner
-STR_5982    :{WINDOW_COLOUR_2}Typ velké kulisy: {BLACK}{COMMA16}
-STR_5983    :{WINDOW_COLOUR_2}ID velké kulisy: {BLACK}{COMMA16}
+STR_5979    :Typ plotu: {BLACK}{COMMA16}
+STR_5980    :Text banneru: {BLACK}{STRINGID}
+STR_5981    :To není banner
+STR_5982    :Typ velké kulisy: {BLACK}{COMMA16}
+STR_5983    :ID velké kulisy: {BLACK}{COMMA16}
 STR_5984    :Zablokované cesty:
 STR_5985    :Nová složka
 STR_5986    :Napiště název nové složky
@@ -3423,7 +3375,6 @@ STR_6155    :Není nainstalován KDialog ani Zenity. Jeden z nich prosím nainst
 STR_6156    :Tento název je rezervován a nelze jej použít.
 STR_6157    :Konzole
 STR_6158    :Tento soubor nelze načíst…{NEWLINE}Nekompatibilní verze RCTC: {COMMA16}
-STR_6159    :Vyhlazený nejbližší soused
 STR_6160    :{WINDOW_COLOUR_2}Dostupné vozy: {BLACK}{STRING} 
 STR_6161    :Přepnout vykreslování mřížky
 STR_6162    :Točící se divoká myš
@@ -3527,7 +3478,7 @@ STR_6273    :Hudba
 STR_6274    :Nelze nastavit schéma barev…
 STR_6275    :{WINDOW_COLOUR_2}Styl stanice:
 STR_6276    :{RED}Na atrakci {STRINGID} se zasekávají návštěvníci, zkontrolujte typ atrakce a mód provozu.
-STR_6277    :{WINDOW_COLOUR_2}Index stanice: {BLACK}{STRINGID}
+STR_6277    :Index stanice: {BLACK}{STRINGID}
 STR_6278    :Počet autouložení
 STR_6279    :Maximální počet autouložených her
 STR_6280    :Chat
@@ -3560,9 +3511,9 @@ STR_6315    :{WINDOW_COLOUR_2}Cíl hledání cesty: {BLACK}{INT32}, {INT32}, {IN
 STR_6316    :{WINDOW_COLOUR_2}Historie hledání cest:
 STR_6317    :{BLACK}{INT32}, {INT32}, {INT32} směr {INT32}
 STR_6318    :Detekována síťová desynchronizace.{NEWLINE}Log: {STRING}
-STR_6319    :{WINDOW_COLOUR_2}Uzavřený brzdný blok
-STR_6320    :{WINDOW_COLOUR_2}Nezničitelné
-STR_6321    :{WINDOW_COLOUR_2}Rozbitá část
+STR_6319    :Uzavřený brzdný blok
+STR_6320    :Nezničitelné
+STR_6321    :Rozbitá část
 STR_6322    :{WINDOW_COLOUR_2}Sprite Id: {BLACK}{INT32}
 STR_6323    :Probíhá simulace
 STR_6324    :Simulovat
@@ -3608,7 +3559,7 @@ STR_6363    :Text zkopírován do schránky
 STR_6364    :{RED}{COMMA16} zemřel(a) při nehodě na {STRINGID}
 STR_6365    :Oběti atrakce
 STR_6366    :Zaseklá vozidla
-STR_6367    :{WINDOW_COLOUR_2}Snímek animace:
+STR_6367    :Snímek animace:
 STR_6368    :Z důvodů kompatibility není doporučeno spuštět OpenRCT2 pod Wine. OpenRCT2 má nativví podporu pro macOS, Linux, FreeBSD a OpenBSD.
 STR_6369    :Povolit stavbu trati v jakémkoliv výšce
 STR_6370    :Umožní stavět dráhu v neplatné výšce

@@ -1736,7 +1736,7 @@ STR_2383    :Aigua
 STR_2384    :{WINDOW_COLOUR_2}El vostre objectiu:
 STR_2385    :{BLACK}Cap
 STR_2386    :{BLACK}Tenir al menys {COMMA16} visitants al parc al final de {MONTHYEAR}, amb una valoració del parc d'almenys 600.
-STR_2387    :{BLACK}Aconseguir una valoració del parc d'almenys {POP16}{POP16}{CURRENCY} al final de {PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}.
+STR_2387    :{BLACK}Aconseguir una valoració del parc d'almenys {POP16}{POP16}{CURRENCY} al final de {PUSH16}{PUSH16}{PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}.
 STR_2388    :{BLACK}Divertiu-vos!
 STR_2389    :{BLACK}Construïu el millor {STRINGID} que pugueu!
 STR_2390    :{BLACK}Tenir 10 tipus diferents de muntanyes russes operant al parc, cadascuna d'elles amb un valor d'emoció d'almenys 6,00.
@@ -2056,51 +2056,6 @@ STR_2854    :{RED}Els visitants no troben l'entrada de {STRINGID}!{NEWLINE}Const
 STR_2855    :{RED}{STRINGID} no disposa de camí a la sortida!{NEWLINE}Construïu-hi un camí de sortida.
 STR_2858    :No es pot començar la campanya de màrqueting…
 STR_2861    :{WINDOW_COLOUR_2}Sota llicència d'Infogrames Interactive Inc.
-STR_2862    :Agraïments per la música…
-STR_2863    :Agraïments per la música
-STR_2864    :{WINDOW_COLOUR_2}Marxa - Children of the Regiment:   (Fucik) sense copyright
-STR_2865    :{WINDOW_COLOUR_2}Heyken's Serenade:   (J.Heyken) British Standard Music Coy; GEMA, BRITICO
-STR_2866    :{WINDOW_COLOUR_2}La Belle Espagnole:   (Robert Vollstedt) sense copyright
-STR_2867    :{WINDOW_COLOUR_2}Viatge de bodes:   (tradicional)
-STR_2868    :{WINDOW_COLOUR_2}Contes dels boscos de Viena:   (Johann Strauss) sense copyright
-STR_2869    :{WINDOW_COLOUR_2}Dansa eslava:   (tradicional)
-STR_2870    :{WINDOW_COLOUR_2}Das Alpenhorn:   (tradicional)
-STR_2871    :{WINDOW_COLOUR_2}The Blond Sailor:   (tradicional)
-STR_2872    :{WINDOW_COLOUR_2}Obertura - Poet and Peasant:   (Suppe) sense copyright
-STR_2873    :{WINDOW_COLOUR_2}Popurri de valsos:   (Johann Strauss) sense copyright
-STR_2874    :{WINDOW_COLOUR_2}Bella Bella Bimba:   (tradicional)
-STR_2875    :{WINDOW_COLOUR_2}Gravacions originals (P) 1976 C.J.Mears Organization, amb els permisos corresponents
-STR_2876    :{WINDOW_COLOUR_2}Música principal del RollerCoaster Tycoon 2:   (Allister Brimble) copyright © Chris Sawyer
-STR_2877    :{WINDOW_COLOUR_2}Dodgems Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2878    :{WINDOW_COLOUR_2}Mid Summer's Heat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2879    :{WINDOW_COLOUR_2}Pharaoh's Tomb:   (Allister Brimble) copyright © Chris Sawyer
-STR_2880    :{WINDOW_COLOUR_2}Caesar's March:   (Allister Brimble) copyright © Chris Sawyer
-STR_2881    :{WINDOW_COLOUR_2}Drifting To Heaven:   (Allister Brimble) copyright © Chris Sawyer
-STR_2882    :{WINDOW_COLOUR_2}Invaders:   (Allister Brimble) copyright © Chris Sawyer
-STR_2883    :{WINDOW_COLOUR_2}Eternal Toybox:   (Allister Brimble) copyright © Chris Sawyer
-STR_2884    :{WINDOW_COLOUR_2}Jungle Juice:   (Allister Brimble) copyright © Chris Sawyer
-STR_2885    :{WINDOW_COLOUR_2}Ninja's Noodles:   (Allister Brimble) copyright © Chris Sawyer
-STR_2886    :{WINDOW_COLOUR_2}Voyage to Andromeda:   (Allister Brimble) copyright © Chris Sawyer
-STR_2887    :{WINDOW_COLOUR_2}Brimble's Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2888    :{WINDOW_COLOUR_2}Atlantis:   (Allister Brimble) copyright © Chris Sawyer
-STR_2889    :{WINDOW_COLOUR_2}Wild West Kid:   (Allister Brimble) copyright © Chris Sawyer
-STR_2890    :{WINDOW_COLOUR_2}Vampire's Lair:   (Allister Brimble) copyright © Chris Sawyer
-STR_2891    :{WINDOW_COLOUR_2}Blockbuster:   (Allister Brimble) copyright © Chris Sawyer
-STR_2892    :{WINDOW_COLOUR_2}Airtime Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2893    :{WINDOW_COLOUR_2}Searchlight Rag:   (Scott Joplin/Allister Brimble) copyright © Chris Sawyer
-STR_2894    :{WINDOW_COLOUR_2}Flight of Fantasy:   (Steve Blenkinsopp) copyright © Chris Sawyer
-STR_2895    :{WINDOW_COLOUR_2}Big Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2896    :{WINDOW_COLOUR_2}Hypothermia:   (Allister Brimble) copyright © Chris Sawyer
-STR_2897    :{WINDOW_COLOUR_2}Last Sleigh Ride:   (Allister Brimble) copyright © Chris Sawyer
-STR_2898    :{WINDOW_COLOUR_2}Pipes of Glencairn:   (Allister Brimble) copyright © Chris Sawyer
-STR_2899    :{WINDOW_COLOUR_2}Traffic Jam:   (Allister Brimble) copyright © Chris Sawyer
-STR_2901    :{WINDOW_COLOUR_2}(Mostres cortesia de Spectrasonics «Liquid Grooves»)
-STR_2902    :{WINDOW_COLOUR_2}Toccata:   (C.M.Widor, interpretat per Peter James Adcock) enregistraments © Chris Sawyer
-STR_2903    :{WINDOW_COLOUR_2}Space Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2904    :{WINDOW_COLOUR_2}Manic Mechanic:   (Allister Brimble) copyright © Chris Sawyer
-STR_2905    :{WINDOW_COLOUR_2}Techno Torture:   (Allister Brimble) copyright © Chris Sawyer
-STR_2906    :{WINDOW_COLOUR_2}Sweat Dreams:   (Allister Brimble) copyright © Chris Sawyer
-STR_2907    :{WINDOW_COLOUR_2}What shall we do with the Drunken Sailor:   (Anon/Allister Brimble) copyright © Chris Sawyer
 STR_2971    :Esquema de color principal
 STR_2972    :Esquema de color alternatiu 1
 STR_2973    :Esquema de color alternatiu 2
@@ -3010,8 +2965,6 @@ STR_5723    :Pluja forta
 STR_5724    :Tempesta
 STR_5725    :{BLACK}Canviar clima a:
 STR_5726    :Establiu el clima actual al parc
-STR_5727    :Qualitat d'escalat:
-STR_5731    :Lineal
 # tooltip for tab in options window
 STR_5734    :Renderitzat
 STR_5735    :Estat de la xarxa
@@ -3098,7 +3051,6 @@ STR_5814    :{WINDOW_COLOUR_1}«{STRING}»
 #tooltips
 STR_5815    :Mostra el comptador de FPS del joc.
 STR_5816    :Estableix la relació d'escala del joc.{NEWLINE}Sol ser útil quan es juga amb{NEWLINE}pantalles d'alta resolució.
-STR_5817    :Estableix el tipus d'escalat de la interfície gràfica. Requereix renderitzat per maquinari.{NEWLINE}El mètode lineal és més suau, però la imatge pot semblar borrosa. El mètode «Nearest Neighbour suau» crea imatges nítides, però pot causar problemes de rendiment.
 STR_5819    :[Requereix renderitzat per maquinari]{NEWLINE}Posa la partida en pausa{NEWLINE}si s'activa l'Steam.
 STR_5820    :Minimitza el joc si es perd el focus{NEWLINE}mentre s'està en mode de pantalla completa.
 STR_5822    :Mostra el cicle dia/nit.{NEWLINE}El cicle sencer equival a un mes a la partida.
@@ -3210,56 +3162,56 @@ STR_5930    :Detalls de la decoració gran
 STR_5931    :Detalls del cartell
 STR_5932    :Detalls de l'element corrupte
 STR_5933    :Propietats
-STR_5934    :{WINDOW_COLOUR_2}Textura del terreny: {BLACK}{STRINGID}
-STR_5935    :{WINDOW_COLOUR_2}Vora del terreny: {BLACK}{STRINGID}
-STR_5936    :{WINDOW_COLOUR_2}Propietari del terreny: {BLACK}{STRINGID}
+STR_5934    :Textura del terreny: {BLACK}{STRINGID}
+STR_5935    :Vora del terreny: {BLACK}{STRINGID}
+STR_5936    :Propietari del terreny: {BLACK}{STRINGID}
 STR_5937    :Sense propietari ni a la venta
-STR_5938    :{WINDOW_COLOUR_2}Nivell de l'aigua: {BLACK}{COMMA16}
+STR_5938    :Nivell de l'aigua: {BLACK}{COMMA16}
 STR_5939    :Treu les tanques del parc
 STR_5940    :Restaura les tanques del parc
-STR_5941    :{WINDOW_COLOUR_2}Alçada base:
-STR_5942    :{WINDOW_COLOUR_2}Nom del camí: {BLACK}{STRINGID}
-STR_5943    :{WINDOW_COLOUR_2}Afegits: {BLACK}{STRINGID}
-STR_5944    :{WINDOW_COLOUR_2}Afegits: {BLACK}cap
-STR_5945    :{WINDOW_COLOUR_2}Vores connectades:
-STR_5946    :{WINDOW_COLOUR_2}Tipus d'atracció: {BLACK}{STRINGID}
-STR_5947    :{WINDOW_COLOUR_2}Id d'atracció: {BLACK}{COMMA16}
-STR_5948    :{WINDOW_COLOUR_2}Nom de l'atracció: {BLACK}{STRINGID}
-STR_5949    :{WINDOW_COLOUR_2}Cadena d'elevació
-STR_5950    :{WINDOW_COLOUR_2}Aplica els canvis a la via sencera.
-STR_5951    :{WINDOW_COLOUR_2}Id de secció: {BLACK}{COMMA16}
-STR_5952    :{WINDOW_COLOUR_2}Número de seqüència: {BLACK}{COMMA16}
+STR_5941    :Alçada base:
+STR_5942    :Nom del camí: {BLACK}{STRINGID}
+STR_5943    :Afegits: {BLACK}{STRINGID}
+STR_5944    :Afegits: {BLACK}cap
+STR_5945    :Vores connectades:
+STR_5946    :Tipus d'atracció: {BLACK}{STRINGID}
+STR_5947    :Id d'atracció: {BLACK}{COMMA16}
+STR_5948    :Nom de l'atracció: {BLACK}{STRINGID}
+STR_5949    :Cadena d'elevació
+STR_5950    :Aplica els canvis a la via sencera.
+STR_5951    :Id de secció: {BLACK}{COMMA16}
+STR_5952    :Número de seqüència: {BLACK}{COMMA16}
 STR_5953    :Ordena els elements del mapa de la casella seleccionada segons la seva alçada base.
-STR_5954    :{WINDOW_COLOUR_2}Edat de la decoració: {BLACK}{COMMA16}
-STR_5955    :{WINDOW_COLOUR_2}Posició al quadrant: {BLACK}{STRINGID}
+STR_5954    :Edat de la decoració: {BLACK}{COMMA16}
+STR_5955    :Posició al quadrant: {BLACK}{STRINGID}
 STR_5956    :Sud-oest
 STR_5957    :Nord-oest
 STR_5958    :Nord-est
 STR_5959    :Sud-est
-STR_5960    :{WINDOW_COLOUR_2}Posició al quadrant:
-STR_5961    :{WINDOW_COLOUR_2}Índex d'entrada: {BLACK}{COMMA16}
-STR_5962    :{WINDOW_COLOUR_2}Detecció de col·lisions:
-STR_5963    :{WINDOW_COLOUR_2}Cantonades aixecades:
-STR_5964    :{WINDOW_COLOUR_2}Diagonal
-STR_5965    :{WINDOW_COLOUR_2}Tipus d'entrada: {BLACK}{STRINGID}
-STR_5966    :{WINDOW_COLOUR_2}Part de l'entrada al parc: {BLACK}{STRINGID}
+STR_5960    :Posició al quadrant:
+STR_5961    :Índex d'entrada: {BLACK}{COMMA16}
+STR_5962    :Detecció de col·lisions:
+STR_5963    :Cantonades aixecades:
+STR_5964    :Diagonal
+STR_5965    :Tipus d'entrada: {BLACK}{STRINGID}
+STR_5966    :Part de l'entrada al parc: {BLACK}{STRINGID}
 STR_5967    :Mig
 STR_5968    :Esquerra
 STR_5969    :Dreta
-STR_5970    :{WINDOW_COLOUR_2}Id d'entrada: {BLACK}{COMMA16}
-STR_5971    :{WINDOW_COLOUR_2}Id de sortida: {BLACK}{COMMA16}
-STR_5972    :{WINDOW_COLOUR_2}Id d'atracció: {BLACK}{COMMA16}
+STR_5970    :Id d'entrada: {BLACK}{COMMA16}
+STR_5971    :Id de sortida: {BLACK}{COMMA16}
+STR_5972    :Id d'atracció: {BLACK}{COMMA16}
 STR_5973    :Subjecta al següent
 STR_5974    :Canvia la base i els límits de funcionament de manera que siguin els mateixos que el proper element d'aquesta casella. Això fa que sigui més fàcil construir en aquesta casella.
 STR_5975    :Inclinació:
 STR_5976    :plana
 STR_5977    :costat dret a dalt
 STR_5978    :costat esquerre a dalt
-STR_5979    :{WINDOW_COLOUR_2}Tipus de tanca: {BLACK}{COMMA16}
-STR_5980    :{WINDOW_COLOUR_2}Text del cartell: {BLACK}{STRINGID}
-STR_5981    :{WINDOW_COLOUR_2}No és un cartell
-STR_5982    :{WINDOW_COLOUR_2}Tipus de decoració gran: {BLACK}{COMMA16}
-STR_5983    :{WINDOW_COLOUR_2}Id de peça d'escenari gran: {BLACK}{COMMA16}
+STR_5979    :Tipus de tanca: {BLACK}{COMMA16}
+STR_5980    :Text del cartell: {BLACK}{STRINGID}
+STR_5981    :No és un cartell
+STR_5982    :Tipus de decoració gran: {BLACK}{COMMA16}
+STR_5983    :Id de peça d'escenari gran: {BLACK}{COMMA16}
 STR_5984    :Camins blocats:
 STR_5985    :Nova carpeta
 STR_5986    :Escriviu el nom de la carpeta nova
@@ -3427,7 +3379,6 @@ STR_6155    :Ni el KDialog ni el Zenity estan instal·lats. Si us plau, instal·
 STR_6156    :El nom està reservat.
 STR_6157    :Consola
 STR_6158    :Aquest arxiu no s'ha pogut carregar…{NEWLINE}Versió RCTC incompatible: {COMMA16}
-STR_6159    :«Nearest Neighbour» suau
 STR_6160    :{WINDOW_COLOUR_2}Vehicles disponibles: {BLACK}{STRING}
 STR_6161    :Mostra les línies de la quadrícula
 STR_6162    :«Wild Mouse» giratori
@@ -3531,7 +3482,7 @@ STR_6273    :Música
 STR_6274    :No es poden establir els colors…
 STR_6275    :{WINDOW_COLOUR_2}Estil d'estació:
 STR_6276    :{RED}Hi ha visitants bloquejats en {STRINGID}, probablement a causa d'un tipus d'atracció no vàlid o un mode d'operació incorrecte.
-STR_6277    :{WINDOW_COLOUR_2}Índex d'estació: {BLACK}{STRINGID}
+STR_6277    :Índex d'estació: {BLACK}{STRINGID}
 STR_6278    :Nombre de desades automàtiques:
 STR_6279    :Nombre de desades automàtiques que es mantindran.
 STR_6280    :Xat
@@ -3564,9 +3515,9 @@ STR_6315    :{WINDOW_COLOUR_2}Objectiu de l'encaminador: {BLACK}{INT32}, {INT32}
 STR_6316    :{WINDOW_COLOUR_2}Historial de l'encaminador:
 STR_6317    :{BLACK}{INT32}, {INT32}, {INT32} dir {INT32}
 STR_6318    :S'ha detectat una dessincronització amb la xarxa.{NEWLINE}Fitxer de registre: {STRING}
-STR_6319    :{WINDOW_COLOUR_2}Frens de bloc tancats
-STR_6320    :{WINDOW_COLOUR_2}Indestructible
-STR_6321    :{WINDOW_COLOUR_2}L'adició està trencada
+STR_6319    :Frens de bloc tancats
+STR_6320    :Indestructible
+STR_6321    :L'adició està trencada
 STR_6322    :{WINDOW_COLOUR_2}ID de l'sprite: {BLACK}{INT32}
 STR_6323    :S'està simulant
 STR_6324    :Simula
@@ -3612,7 +3563,7 @@ STR_6363    :S'ha copiat el text al porta-retalls.
 STR_6364    :{RED}{COMMA16} persona ha mort en l'accident de {STRINGID}
 STR_6365    :Morts en atraccions
 STR_6366    :Vehicles parats o avariats
-STR_6367    :{WINDOW_COLOUR_2}Fotograma:
+STR_6367    :Fotograma:
 STR_6368    :Per motius de compatibilitat, no es recomana executar l'OpenRCT2 amb el Wine. L'OpenRCT2 té versions natives per a macOS, Linux, FreeBSD i OpenBSD.
 STR_6369    :Permet la construcció de vies a alçades no vàlides
 STR_6370    :Permet posar trossos de via en qualsevol alçada.

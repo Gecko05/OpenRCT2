@@ -1735,7 +1735,7 @@ STR_2383    :Água
 STR_2384    :{WINDOW_COLOUR_2}Seu objetivo:
 STR_2385    :{BLACK}Nenhum
 STR_2386    :{BLACK}Ter pelo menos {COMMA16} visitantes em seu parque até o fim de {MONTHYEAR}, com classificação de parque de pelo menos 600
-STR_2387    :{BLACK}Alcançar um valor do parque de pelo menos {POP16}{POP16}{CURRENCY} até o fim de {PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}
+STR_2387    :{BLACK}Alcançar um valor do parque de pelo menos {POP16}{POP16}{CURRENCY} até o fim de {PUSH16}{PUSH16}{PUSH16}{PUSH16}{PUSH16}{MONTHYEAR}
 STR_2388    :{BLACK}Divirta-se!
 STR_2389    :{BLACK}Construir o melhor {STRINGID} que puder!
 STR_2390    :{BLACK}Ter 10 tipos de montanha-russa diferentes operando em seu parque, cada uma com um valor de emoção de pelo menos 6.00
@@ -2055,51 +2055,6 @@ STR_2854    :{RED}Os visitantes não conseguem entrar em {STRINGID}!{NEWLINE}Con
 STR_2855    :{RED}{STRINGID} não tem um caminho de saída!{NEWLINE}Construa um caminho a partir da saída da atração
 STR_2858    :Impossível iniciar campanha de marketing…
 STR_2861    :{WINDOW_COLOUR_2}Licenciado para Infogrames Interactive Inc.
-STR_2862    :Créditos das músicas…
-STR_2863    :Créditos das músicas
-STR_2864    :{WINDOW_COLOUR_2}March - Children of the Regiment:   (Fucik) sem direitos autorais
-STR_2865    :{WINDOW_COLOUR_2}Heyken's Serenade:   (J.Heyken) British Standard Music Coy; GEMA, BRITICO
-STR_2866    :{WINDOW_COLOUR_2}La Belle Espagnole:   (Robert Vollstedt) sem direitos autorais
-STR_2867    :{WINDOW_COLOUR_2}Wedding Journey:   (Tradicional)
-STR_2868    :{WINDOW_COLOUR_2}Tales from the Vienna Woods:   (Johann Strauss) sem direitos autorais
-STR_2869    :{WINDOW_COLOUR_2}Slavonic Dance:   (Tradicional)
-STR_2870    :{WINDOW_COLOUR_2}Das Alpenhorn:   (Tradicional)
-STR_2871    :{WINDOW_COLOUR_2}The Blond Sailor:   (Tradicional)
-STR_2872    :{WINDOW_COLOUR_2}Overture - Poet and Peasant:   (Suppe) sem direitos autorais
-STR_2873    :{WINDOW_COLOUR_2}Waltz Medley:   (Johann Strauss) sem direitos autorais
-STR_2874    :{WINDOW_COLOUR_2}Bella Bella Bimba:   (Tradicional)
-STR_2875    :{WINDOW_COLOUR_2}Gravações originais (P) 1976 C.J.Mears Organization, usado com autorização
-STR_2876    :{WINDOW_COLOUR_2}Música Título - RollerCoaster Tycoon 2: (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2877    :{WINDOW_COLOUR_2}Dodgems Beat:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2878    :{WINDOW_COLOUR_2}Mid Summer's Heat:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2879    :{WINDOW_COLOUR_2}Pharaoh's Tomb:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2880    :{WINDOW_COLOUR_2}Caesar's March:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2881    :{WINDOW_COLOUR_2}Drifting To Heaven:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2882    :{WINDOW_COLOUR_2}Invaders:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2883    :{WINDOW_COLOUR_2}Eternal Toybox:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2884    :{WINDOW_COLOUR_2}Jungle Juice:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2885    :{WINDOW_COLOUR_2}Ninja's Noodles:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2886    :{WINDOW_COLOUR_2}Voyage to Andromeda:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2887    :{WINDOW_COLOUR_2}Brimble's Beat:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2888    :{WINDOW_COLOUR_2}Atlantis:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2889    :{WINDOW_COLOUR_2}Wild West Kid:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2890    :{WINDOW_COLOUR_2}Vampire's Lair:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2891    :{WINDOW_COLOUR_2}Blockbuster:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2892    :{WINDOW_COLOUR_2}Airtime Rock:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2893    :{WINDOW_COLOUR_2}Searchlight Rag:   (Scott Joplin/Allister Brimble) direitos autorais © Chris Sawyer
-STR_2894    :{WINDOW_COLOUR_2}Flight of Fantasy:   (Steve Blenkinsopp) direitos autorais © Chris Sawyer
-STR_2895    :{WINDOW_COLOUR_2}Big Rock:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2896    :{WINDOW_COLOUR_2}Hypothermia:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2897    :{WINDOW_COLOUR_2}Last Sleigh Ride:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2898    :{WINDOW_COLOUR_2}Pipes of Glencairn:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2899    :{WINDOW_COLOUR_2}Traffic Jam:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2901    :{WINDOW_COLOUR_2}(Amostras Grátis de Spectrasonics “Liquid Grooves”)
-STR_2902    :{WINDOW_COLOUR_2}Toccata:   (C.M.Widor, executada por Peter James Adcock) gravada por © Chris Sawyer
-STR_2903    :{WINDOW_COLOUR_2}Space Rock:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2904    :{WINDOW_COLOUR_2}Manic Mechanic:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2905    :{WINDOW_COLOUR_2}Techno Torture:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2906    :{WINDOW_COLOUR_2}Sweat Dreams:   (Allister Brimble) direitos autorais © Chris Sawyer
-STR_2907    :{WINDOW_COLOUR_2}What shall we do with the Drunken Sailor:   (Anon/Allister Brimble) direitos autorais © Chris Sawyer
 STR_2971    :Esquema de cor principal
 STR_2972    :Esquema de cor alternativo 1
 STR_2973    :Esquema de cor alternativo 2
@@ -2282,7 +2237,7 @@ STR_3185    :Cenário Pequeno
 STR_3186    :Cenário Grande
 STR_3187    :Muros/Cercas
 STR_3188    :Placa para Caminho
-STR_3189    :Calçadas
+STR_3189    :Calçadas Obsoletas
 STR_3190    :Caminhos Extras
 STR_3191    :Grupo de Cenários
 STR_3192    :Entrada do Parque
@@ -3007,8 +2962,6 @@ STR_5723    :Chuva Forte
 STR_5724    :Tempestade
 STR_5725    :{BLACK}Mudar clima para:
 STR_5726    :Define o clima atual no parque
-STR_5727    :Qualidade da escala:
-STR_5731    :Linear
 # tooltip for tab in options window
 STR_5734    :Renderizando
 STR_5735    :Estado da Rede
@@ -3095,7 +3048,6 @@ STR_5814    :{WINDOW_COLOUR_1}“{STRING}”
 #tooltips
 STR_5815    :Mostra o contador de FPS dentro do jogo
 STR_5816    :Define a proporção de dimensionamento do jogo.{NEWLINE}Mais útil quando está jogando em{NEWLINE}alta resolução
-STR_5817    :Define o tipo de escala da interface de usuário. Requer exibição por hardware para ser usado.{NEWLINE}Escala linear é suave, mas embaçada. Suavizar Vizinho Mais Próximo é nítido, mas podem causar uma pequena queda no desempenho.
 STR_5819    :[Requer exibição por hardware]{NEWLINE}Pausa o jogo quando a interface da Steam{NEWLINE}estiver sobrepondo durante o jogo
 STR_5820    :Minimiza o jogo se o foco for{NEWLINE}perdido enquanto estiver em modo tela cheia
 STR_5822    :Alterna entre dia e noite.{NEWLINE}Ciclo completo leva um mês do jogo
@@ -3207,56 +3159,56 @@ STR_5930    :Detalhes de cenário grande
 STR_5931    :Detalhes de banner
 STR_5932    :Detalhes de elemento corrompido
 STR_5933    :Propriedades
-STR_5934    :{WINDOW_COLOUR_2}Textura do terreno: {BLACK}{STRINGID}
-STR_5935    :{WINDOW_COLOUR_2}Borda do terreno: {BLACK}{STRINGID}
-STR_5936    :{WINDOW_COLOUR_2}Posse de terra: {BLACK}{STRINGID}
+STR_5934    :Textura do terreno: {BLACK}{STRINGID}
+STR_5935    :Borda do terreno: {BLACK}{STRINGID}
+STR_5936    :Posse de terra: {BLACK}{STRINGID}
 STR_5937    :Não comprado e não está à venda
-STR_5938    :{WINDOW_COLOUR_2}Nível da água: {BLACK}{COMMA16}
+STR_5938    :Nível da água: {BLACK}{COMMA16}
 STR_5939    :Remover cercas do parque
 STR_5940    :Restaurar cercas do parque
-STR_5941    :{WINDOW_COLOUR_2}Altura da base:
-STR_5942    :{WINDOW_COLOUR_2}Nome do caminho: {BLACK}{STRINGID}
-STR_5943    :{WINDOW_COLOUR_2}Adições: {BLACK}{STRINGID}
-STR_5944    :{WINDOW_COLOUR_2}Adições: {BLACK}Nenhuma
-STR_5945    :{WINDOW_COLOUR_2}Bordas conectadas:
-STR_5946    :{WINDOW_COLOUR_2}Tipo de atração: {BLACK}{STRINGID}
-STR_5947    :{WINDOW_COLOUR_2}ID da atração: {BLACK}{COMMA16}
-STR_5948    :{WINDOW_COLOUR_2}Nome da atração: {BLACK}{STRINGID}
-STR_5949    :{WINDOW_COLOUR_2}Corrente de elevação
-STR_5950    :{WINDOW_COLOUR_2}Aplicar mudanças para a pista toda
-STR_5951    :{WINDOW_COLOUR_2}ID do pedaço de pista: {BLACK}{COMMA16}
-STR_5952    :{WINDOW_COLOUR_2}Número sequencial: {BLACK}{COMMA16}
+STR_5941    :Altura da base:
+STR_5942    :Nome do caminho: {BLACK}{STRINGID}
+STR_5943    :Adições: {BLACK}{STRINGID}
+STR_5944    :Adições: {BLACK}Nenhuma
+STR_5945    :Bordas conectadas:
+STR_5946    :Tipo de atração: {BLACK}{STRINGID}
+STR_5947    :ID da atração: {BLACK}{COMMA16}
+STR_5948    :Nome da atração: {BLACK}{STRINGID}
+STR_5949    :Corrente de elevação
+STR_5950    :Aplicar mudanças para a pista toda
+STR_5951    :ID do pedaço de pista: {BLACK}{COMMA16}
+STR_5952    :Número sequencial: {BLACK}{COMMA16}
 STR_5953    :Sortear os elementos do mapa no azulejo atual baseado em sua altura base.
-STR_5954    :{WINDOW_COLOUR_2}Idade do cenário: {BLACK}{COMMA16}
-STR_5955    :{WINDOW_COLOUR_2}Posicionamento em quadrante: {BLACK}{STRINGID}
+STR_5954    :Idade do cenário: {BLACK}{COMMA16}
+STR_5955    :Posicionamento em quadrante: {BLACK}{STRINGID}
 STR_5956    :Sudoeste
 STR_5957    :Noroeste
 STR_5958    :Nordeste
 STR_5959    :Sudeste
-STR_5960    :{WINDOW_COLOUR_2}Posicionamento em quadrante:
-STR_5961    :{WINDOW_COLOUR_2}Índice de entrada: {BLACK}{COMMA16}
-STR_5962    :{WINDOW_COLOUR_2}Detecção de colisão:
-STR_5963    :{WINDOW_COLOUR_2}Cantos elevados:
-STR_5964    :{WINDOW_COLOUR_2}Diagonal
-STR_5965    :{WINDOW_COLOUR_2}Tipo de entrada: {BLACK}{STRINGID}
-STR_5966    :{WINDOW_COLOUR_2}Parte de entrada do parque: {BLACK}{STRINGID}
+STR_5960    :Posicionamento em quadrante:
+STR_5961    :Índice de entrada: {BLACK}{COMMA16}
+STR_5962    :Detecção de colisão:
+STR_5963    :Cantos elevados:
+STR_5964    :Diagonal
+STR_5965    :Tipo de entrada: {BLACK}{STRINGID}
+STR_5966    :Parte de entrada do parque: {BLACK}{STRINGID}
 STR_5967    :Meio
 STR_5968    :Esquerda
 STR_5969    :Direita
-STR_5970    :{WINDOW_COLOUR_2}ID da entrada: {BLACK}{COMMA16}
-STR_5971    :{WINDOW_COLOUR_2}ID da saída: {BLACK}{COMMA16}
-STR_5972    :{WINDOW_COLOUR_2}ID da atração: {BLACK}{COMMA16}
+STR_5970    :ID da entrada: {BLACK}{COMMA16}
+STR_5971    :ID da saída: {BLACK}{COMMA16}
+STR_5972    :ID da atração: {BLACK}{COMMA16}
 STR_5973    :Prender ao próximo
 STR_5974    :Muda a base e a altura de segurança para que sejam as mesmas que o próximo elemento no azulejo atual. Fazendo isto fica mais fácil de construir neste azulejo.
 STR_5975    :Inclinação:
 STR_5976    :Reto
 STR_5977    :Direita para cima
 STR_5978    :Esquerda para cima
-STR_5979    :{WINDOW_COLOUR_2}Tipo de cerca: {BLACK}{COMMA16}
-STR_5980    :{WINDOW_COLOUR_2}Texto do banner: {BLACK}{STRINGID}
-STR_5981    :{WINDOW_COLOUR_2}Não é um banner
-STR_5982    :{WINDOW_COLOUR_2}Tipo de cenário grande: {BLACK}{COMMA16}
-STR_5983    :{WINDOW_COLOUR_2}ID da peça de cenário grande: {BLACK}{COMMA16}
+STR_5979    :Tipo de cerca: {BLACK}{COMMA16}
+STR_5980    :Texto do banner: {BLACK}{STRINGID}
+STR_5981    :Não é um banner
+STR_5982    :Tipo de cenário grande: {BLACK}{COMMA16}
+STR_5983    :ID da peça de cenário grande: {BLACK}{COMMA16}
 STR_5984    :Caminhos bloqueados:
 STR_5985    :Nova pasta
 STR_5986    :Insira o nome da nova pasta.
@@ -3424,7 +3376,6 @@ STR_6155    :Nem KDialog ou Zenity estão instalados. Por favor, instale um, ou 
 STR_6156    :Nome está reservado
 STR_6157    :Console
 STR_6158    :Falha ao carregar este arquivo…{NEWLINE}Versão do RCTC incompatível: {COMMA16}
-STR_6159    :Suavizar Vizinho Mais Próximo
 STR_6160    :{WINDOW_COLOUR_2}Veículos disponíveis: {BLACK}{STRING}
 STR_6161    :Alternar exibição de grade
 STR_6162    :Rato Maluco Giratório
@@ -3528,7 +3479,7 @@ STR_6273    :Música
 STR_6274    :Impossível definir esquema de cor…
 STR_6275    :{WINDOW_COLOUR_2}Estilo da estação:
 STR_6276    :{RED}{STRINGID} está deixando visitantes presos, possivelmente por um tipo de brinquedo ou modo de operação inválido.
-STR_6277    :{WINDOW_COLOUR_2}Índice de estação: {BLACK}{STRINGID}
+STR_6277    :Índice de estação: {BLACK}{STRINGID}
 STR_6278    :Quantidade de Autosave
 STR_6279    :Número de autosaves que devem ser guardados
 STR_6280    :Bate-papo
@@ -3561,9 +3512,9 @@ STR_6315    :{WINDOW_COLOUR_2}Objetivo de Desbravamento: {BLACK}{INT32}, {INT32}
 STR_6316    :{WINDOW_COLOUR_2}Histórico de Desbravamento:
 STR_6317    :{BLACK}{INT32}, {INT32}, {INT32} dir {INT32}
 STR_6318    :Assincronia de rede detectada.{NEWLINE}Arquivo de registro: {STRING}
-STR_6319    :{WINDOW_COLOUR_2}Freios Bloqueadores Fechados
-STR_6320    :{WINDOW_COLOUR_2}Indestrutível
-STR_6321    :{WINDOW_COLOUR_2}Adição quebrada
+STR_6319    :Freios Bloqueadores Fechados
+STR_6320    :Indestrutível
+STR_6321    :Adição quebrada
 STR_6322    :{WINDOW_COLOUR_2}Id da Sprite: {BLACK}{INT32}
 STR_6323    :Simulando
 STR_6324    :Simular
@@ -3609,7 +3560,7 @@ STR_6363    :Texto copiado para a área de transferência
 STR_6364    :{RED}{COMMA16} pessoa morreu em um acidente em {STRINGID}
 STR_6365    :Acidentes em atrações
 STR_6366    :Veículos presos ou parados
-STR_6367    :{WINDOW_COLOUR_2}Quadro de animação:
+STR_6367    :Quadro de animação:
 STR_6368    :Por questão de compatibilidade, não é recomendado executar o OpenRCT2 com Wine. O OpenRCT2 tem suporte nativo a macOS, Linux, FreeBSD e OpenBSD.
 STR_6369    :Permitir construção de trilhos em alturas inválidas
 STR_6370    :Permite a construção de trilhos em qualquer intervalo de altura
@@ -3679,8 +3630,8 @@ STR_6433    :Remover
 STR_6434    :Remover todos os vínculos desse atalho.
 STR_6435    :{WINDOW_COLOUR_2}Vândalos impedidos: {BLACK}{COMMA16}
 STR_6436    :Liga/desliga invisibilidade
-STR_6437    :Invisível
-STR_6438    :I
+STR_6437    :Visível
+STR_6438    :V
 STR_6439    :Inspetor de Azulejo: Liga/desliga invisibilidade
 STR_6440    :Água transparente
 STR_6441    :Pelo menos um objeto de superfície de calçada que não seja fila deve ser selecionado.
@@ -3696,6 +3647,13 @@ STR_6450    :{BLACK}“{STRING}”
 STR_6451    :{BLACK}“{STRING}” - {STRING}
 STR_6452    :{WINDOW_COLOUR_2}Vende: {BLACK}{STRING}
 STR_6453    :Copiar informações da versão
+STR_6454    :Não é possível renomear o banner…
+STR_6455    :Não é possível renomear a placa…
+STR_6456    :Captura Gigante de Tela
+STR_6457    :Relatar um problema pelo GitHub
+STR_6458    :Seguir isto na Visão Principal
+STR_6460    :D
+STR_6461    :Direção
 
 #############
 # Scenarios #

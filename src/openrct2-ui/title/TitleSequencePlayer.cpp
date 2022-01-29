@@ -23,6 +23,7 @@
 #include <openrct2/core/Guard.hpp>
 #include <openrct2/core/Path.hpp>
 #include <openrct2/core/String.hpp>
+#include <openrct2/entity/EntityRegistry.h>
 #include <openrct2/interface/Viewport.h>
 #include <openrct2/interface/Window.h>
 #include <openrct2/management/NewsItem.h>
@@ -38,7 +39,6 @@
 #include <openrct2/windows/Intent.h>
 #include <openrct2/world/Map.h>
 #include <openrct2/world/Scenery.h>
-#include <openrct2/world/Sprite.h>
 
 using namespace OpenRCT2;
 
@@ -249,7 +249,8 @@ private:
             case TitleScript::Wait:
                 // The waitCounter is measured in 25-ms game ticks. Previously it was seconds * 40 ticks/second, now it is ms /
                 // 25 ms/tick
-                _waitCounter = std::max<int32_t>(1, command.Milliseconds / static_cast<uint32_t>(GAME_UPDATE_TIME_MS));
+                _waitCounter = std::max<int32_t>(
+                    1, command.Milliseconds / static_cast<uint32_t>(GAME_UPDATE_TIME_MS * 1000.0f));
                 break;
             case TitleScript::Location:
             {
@@ -267,7 +268,7 @@ private:
                 RotateView(command.Rotations);
                 break;
             case TitleScript::Zoom:
-                SetViewZoom(command.Zoom);
+                SetViewZoom(ZoomLevel{ static_cast<int8_t>(command.Zoom) });
                 break;
             case TitleScript::Speed:
                 gGameSpeed = std::clamp<uint8_t>(command.Speed, 1, 4);
@@ -317,7 +318,7 @@ private:
         return true;
     }
 
-    void SetViewZoom(const uint32_t& zoom)
+    void SetViewZoom(ZoomLevel zoom)
     {
         rct_window* w = window_get_main();
         if (w != nullptr && w->viewport != nullptr)
@@ -374,7 +375,7 @@ private:
                 auto result = parkImporter->Load(path);
 
                 auto& objectManager = GetContext()->GetObjectManager();
-                objectManager.LoadObjects(result.RequiredObjects.data(), result.RequiredObjects.size());
+                objectManager.LoadObjects(result.RequiredObjects);
 
                 parkImporter->Import();
             }
@@ -413,7 +414,7 @@ private:
                 auto result = parkImporter->LoadFromStream(stream, isScenario);
 
                 auto& objectManager = GetContext()->GetObjectManager();
-                objectManager.LoadObjects(result.RequiredObjects.data(), result.RequiredObjects.size());
+                objectManager.LoadObjects(result.RequiredObjects);
 
                 parkImporter->Import();
             }
@@ -456,7 +457,7 @@ private:
     {
         auto windowManager = GetContext()->GetUiContext()->GetWindowManager();
         windowManager->SetMainView(gSavedView, gSavedViewZoom, gSavedViewRotation);
-        reset_sprite_spatial_index();
+        ResetEntitySpatialIndices();
         reset_all_sprite_quadrant_placements();
         auto intent = Intent(INTENT_ACTION_REFRESH_NEW_RIDES);
         context_broadcast_intent(&intent);
@@ -464,6 +465,7 @@ private:
         News::InitQueue();
         load_palette();
         gScreenAge = 0;
+        gGamePaused = false;
         gGameSpeed = 1;
     }
 

@@ -16,6 +16,7 @@
 #    include "../Version.h"
 
 #    include <datetimeapi.h>
+#    include <lmcons.h>
 #    include <memory>
 #    include <shlobj.h>
 #    undef GetEnvironmentVariable
@@ -33,10 +34,13 @@
 #    include "../common.h"
 #    include "../core/Path.hpp"
 #    include "../core/String.hpp"
+#    include "../localisation/Date.h"
+#    include "../localisation/Language.h"
 #    include "Platform2.h"
 #    include "platform.h"
 
 #    include <iterator>
+#    include <locale>
 
 #    if _WIN32_WINNT < 0x600
 #        define swprintf_s(a, b, c, d, ...) swprintf(a, b, c, ##__VA_ARGS__)
@@ -60,7 +64,7 @@ namespace Platform
         return platform_get_ticks();
     }
 
-    std::string GetEnvironmentVariable(const std::string& name)
+    std::string GetEnvironmentVariable(std::string_view name)
     {
         std::wstring result;
         auto wname = String::ToWideChar(name);
@@ -361,6 +365,7 @@ namespace Platform
     void SetUpFileAssociations()
     {
         // Setup file extensions
+        SetUpFileAssociation(".park", "OpenRCT2 park (.park)", "Play", "\"%1\"", 0);
         SetUpFileAssociation(".sc4", "RCT1 Scenario (.sc4)", "Play", "\"%1\"", 0);
         SetUpFileAssociation(".sc6", "RCT2 Scenario (.sc6)", "Play", "\"%1\"", 0);
         SetUpFileAssociation(".sv4", "RCT1 Saved Game (.sc4)", "Play", "\"%1\"", 0);
@@ -506,6 +511,7 @@ namespace Platform
     void RemoveFileAssociations()
     {
         // Remove file extensions
+        RemoveFileAssociation(".park");
         RemoveFileAssociation(".sc4");
         RemoveFileAssociation(".sc6");
         RemoveFileAssociation(".sv4");
@@ -524,19 +530,19 @@ namespace Platform
         return false;
     }
 
-    bool FindApp(const std::string& app, std::string* output)
+    bool FindApp(std::string_view app, std::string* output)
     {
         log_warning("FindApp() not implemented for Windows!");
         return false;
     }
 
-    int32_t Execute(const std::string& command, std::string* output)
+    int32_t Execute(std::string_view command, std::string* output)
     {
         log_warning("Execute() not implemented for Windows!");
         return -1;
     }
 
-    uint64_t GetLastModified(const std::string& path)
+    uint64_t GetLastModified(std::string_view path)
     {
         uint64_t lastModified = 0;
         auto pathW = String::ToWideChar(path);
@@ -579,32 +585,14 @@ namespace Platform
         return c == '\\' || c == '/';
     }
 
-    utf8* GetAbsolutePath(utf8* buffer, size_t bufferSize, const utf8* relativePath)
-    {
-        auto relativePathW = String::ToWideChar(relativePath);
-        wchar_t absolutePathW[MAX_PATH];
-        DWORD length = GetFullPathNameW(
-            relativePathW.c_str(), static_cast<DWORD>(std::size(absolutePathW)), absolutePathW, nullptr);
-        if (length == 0)
-        {
-            return String::Set(buffer, bufferSize, relativePath);
-        }
-        else
-        {
-            auto absolutePath = String::ToUtf8(absolutePathW);
-            String::Set(buffer, bufferSize, absolutePath.c_str());
-            return buffer;
-        }
-    }
-
-    std::string ResolveCasing(const std::string& path, bool fileExists)
+    std::string ResolveCasing(std::string_view path, bool fileExists)
     {
         std::string result;
         if (fileExists)
         {
             // Windows is case insensitive so it will exist and that is all that matters
             // for now. We can properly resolve the casing if we ever need to.
-            result = path;
+            result = std::string(path);
         }
         return result;
     }
@@ -614,6 +602,261 @@ namespace Platform
         // Windows is apparently able to switch to hardware rendering on the fly although
         // using the same window in an unaccelerated and accelerated context is unsupported by SDL2
         return openGL;
+    }
+
+    std::string GetUsername()
+    {
+        std::string result;
+        wchar_t usernameW[UNLEN + 1]{};
+        DWORD usernameLength = UNLEN + 1;
+        if (GetUserNameW(usernameW, &usernameLength))
+        {
+            result = String::ToUtf8(usernameW);
+        }
+        return result;
+    }
+
+    uint16_t GetLocaleLanguage()
+    {
+        CHAR langCode[4];
+
+        if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SABBREVLANGNAME, reinterpret_cast<LPSTR>(&langCode), sizeof(langCode))
+            == 0)
+        {
+            return LANGUAGE_UNDEFINED;
+        }
+
+        if (strcmp(langCode, "ENG") == 0)
+        {
+            return LANGUAGE_ENGLISH_UK;
+        }
+        if (strcmp(langCode, "ENU") == 0)
+        {
+            return LANGUAGE_ENGLISH_US;
+        }
+        if (strcmp(langCode, "DEU") == 0)
+        {
+            return LANGUAGE_GERMAN;
+        }
+        if (strcmp(langCode, "NLD") == 0)
+        {
+            return LANGUAGE_DUTCH;
+        }
+        if (strcmp(langCode, "FRA") == 0)
+        {
+            return LANGUAGE_FRENCH;
+        }
+        if (strcmp(langCode, "HUN") == 0)
+        {
+            return LANGUAGE_HUNGARIAN;
+        }
+        if (strcmp(langCode, "PLK") == 0)
+        {
+            return LANGUAGE_POLISH;
+        }
+        if (strcmp(langCode, "ESP") == 0)
+        {
+            return LANGUAGE_SPANISH;
+        }
+        if (strcmp(langCode, "SVE") == 0)
+        {
+            return LANGUAGE_SWEDISH;
+        }
+        if (strcmp(langCode, "ITA") == 0)
+        {
+            return LANGUAGE_ITALIAN;
+        }
+        if (strcmp(langCode, "POR") == 0)
+        {
+            return LANGUAGE_PORTUGUESE_BR;
+        }
+        if (strcmp(langCode, "FIN") == 0)
+        {
+            return LANGUAGE_FINNISH;
+        }
+        if (strcmp(langCode, "NOR") == 0)
+        {
+            return LANGUAGE_NORWEGIAN;
+        }
+        if (strcmp(langCode, "DAN") == 0)
+        {
+            return LANGUAGE_DANISH;
+        }
+        return LANGUAGE_UNDEFINED;
+    }
+
+    CurrencyType GetLocaleCurrency()
+    {
+        CHAR currCode[4];
+        if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SINTLSYMBOL, reinterpret_cast<LPSTR>(&currCode), sizeof(currCode)) == 0)
+        {
+            return Platform::GetCurrencyValue(nullptr);
+        }
+
+        return Platform::GetCurrencyValue(currCode);
+    }
+
+    MeasurementFormat GetLocaleMeasurementFormat()
+    {
+        UINT measurement_system;
+        if (GetLocaleInfo(
+                LOCALE_USER_DEFAULT, LOCALE_IMEASURE | LOCALE_RETURN_NUMBER, reinterpret_cast<LPSTR>(&measurement_system),
+                sizeof(measurement_system))
+            == 0)
+        {
+            return MeasurementFormat::Metric;
+        }
+
+        switch (measurement_system)
+        {
+            case 1:
+                return MeasurementFormat::Imperial;
+            case 0:
+            default:
+                return MeasurementFormat::Metric;
+        }
+    }
+
+    uint8_t GetLocaleDateFormat()
+    {
+#    if _WIN32_WINNT >= 0x0600
+        // Retrieve short date format, eg "MM/dd/yyyy"
+        wchar_t dateFormat[20];
+        if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SSHORTDATE, dateFormat, static_cast<int>(std::size(dateFormat)))
+            == 0)
+        {
+            return DATE_FORMAT_DAY_MONTH_YEAR;
+        }
+
+        // The only valid characters for format types are: dgyM
+        // We try to find 3 strings of format types, ignore any characters in between.
+        // We also ignore 'g', as it represents 'era' and we don't have that concept
+        // in our date formats.
+        // https://msdn.microsoft.com/en-us/library/windows/desktop/dd317787(v=vs.85).aspx
+        //
+        wchar_t first[sizeof(dateFormat)];
+        wchar_t second[sizeof(dateFormat)];
+        if (swscanf_s(
+                dateFormat, L"%l[dyM]%*l[^dyM]%l[dyM]%*l[^dyM]%*l[dyM]", first, static_cast<uint32_t>(std::size(first)), second,
+                static_cast<uint32_t>(std::size(second)))
+            != 2)
+        {
+            return DATE_FORMAT_DAY_MONTH_YEAR;
+        }
+
+        if (wcsncmp(L"d", first, 1) == 0)
+        {
+            return DATE_FORMAT_DAY_MONTH_YEAR;
+        }
+        if (wcsncmp(L"M", first, 1) == 0)
+        {
+            return DATE_FORMAT_MONTH_DAY_YEAR;
+        }
+        if (wcsncmp(L"y", first, 1) == 0)
+        {
+            if (wcsncmp(L"d", second, 1) == 0)
+            {
+                return DATE_FORMAT_YEAR_DAY_MONTH;
+            }
+
+            // Closest possible option
+            return DATE_FORMAT_YEAR_MONTH_DAY;
+        }
+#    endif
+
+        // Default fallback
+        return DATE_FORMAT_DAY_MONTH_YEAR;
+    }
+
+    TemperatureUnit GetLocaleTemperatureFormat()
+    {
+        UINT fahrenheit;
+
+        // GetLocaleInfo will set fahrenheit to 1 if the locale on this computer
+        // uses the United States measurement system or 0 otherwise.
+        if (GetLocaleInfo(
+                LOCALE_USER_DEFAULT, LOCALE_IMEASURE | LOCALE_RETURN_NUMBER, reinterpret_cast<LPSTR>(&fahrenheit),
+                sizeof(fahrenheit))
+            == 0)
+        {
+            // Assume celsius by default if function call fails
+            return TemperatureUnit::Celsius;
+        }
+
+        if (fahrenheit)
+            return TemperatureUnit::Fahrenheit;
+
+        return TemperatureUnit::Celsius;
+    }
+
+    bool ProcessIsElevated()
+    {
+        BOOL isElevated = FALSE;
+        HANDLE hToken = nullptr;
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+        {
+            TOKEN_ELEVATION Elevation;
+            DWORD tokenSize = sizeof(TOKEN_ELEVATION);
+            if (GetTokenInformation(hToken, TokenElevation, &Elevation, sizeof(Elevation), &tokenSize))
+            {
+                isElevated = Elevation.TokenIsElevated;
+            }
+        }
+        if (hToken)
+        {
+            CloseHandle(hToken);
+        }
+        return isElevated;
+    }
+
+    std::string GetSteamPath()
+    {
+        wchar_t* wSteamPath;
+        HKEY hKey;
+        DWORD type, size;
+        LRESULT result;
+
+        if (RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", &hKey) != ERROR_SUCCESS)
+            return {};
+
+        // Get the size of the path first
+        if (RegQueryValueExW(hKey, L"SteamPath", nullptr, &type, nullptr, &size) != ERROR_SUCCESS)
+        {
+            RegCloseKey(hKey);
+            return {};
+        }
+
+        std::string outPath = "";
+        wSteamPath = reinterpret_cast<wchar_t*>(malloc(size));
+        result = RegQueryValueExW(hKey, L"SteamPath", nullptr, &type, reinterpret_cast<LPBYTE>(wSteamPath), &size);
+        if (result == ERROR_SUCCESS)
+        {
+            auto utf8SteamPath = String::ToUtf8(wSteamPath);
+            outPath = Path::Combine(utf8SteamPath, "steamapps", "common");
+        }
+        free(wSteamPath);
+        RegCloseKey(hKey);
+        return outPath;
+    }
+
+    std::string GetFontPath(const TTFFontDescriptor& font)
+    {
+#    if !defined(__MINGW32__) && ((NTDDI_VERSION >= NTDDI_VISTA) && !defined(_USING_V110_SDK71_) && !defined(_ATL_XP_TARGETING))
+        wchar_t* fontFolder;
+        if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Fonts, 0, nullptr, &fontFolder)))
+        {
+            // Convert wchar to utf8, then copy the font folder path to the buffer.
+            auto outPathTemp = String::ToUtf8(fontFolder);
+            CoTaskMemFree(fontFolder);
+
+            return Path::Combine(outPathTemp, font.filename);
+        }
+
+        return {};
+#    else
+        log_warning("Compatibility hack: falling back to C:\\Windows\\Fonts");
+        return Path::Combine("C:\\Windows\\Fonts\\", font.filename);
+#    endif
     }
 } // namespace Platform
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#include "../System.hpp"
 #include "../actions/GameAction.h"
+#include "../object/Object.h"
 #include "NetworkConnection.h"
 #include "NetworkGroup.h"
 #include "NetworkPlayer.h"
@@ -12,21 +14,26 @@
 
 #ifndef DISABLE_NETWORK
 
-class NetworkBase
+namespace OpenRCT2
+{
+    struct IContext;
+}
+
+class NetworkBase : public OpenRCT2::System
 {
 public:
-    NetworkBase();
+    NetworkBase(OpenRCT2::IContext& context);
 
 public: // Uncategorized
     bool BeginServer(uint16_t port, const std::string& address);
     bool BeginClient(const std::string& host, uint16_t port);
 
 public: // Common
-    void SetEnvironment(const std::shared_ptr<OpenRCT2::IPlatformEnvironment>& env);
     bool Init();
     void Close();
     uint32_t GetServerTick();
-    void Update();
+    // FIXME: This is currently the wrong function to override in System, will be refactored later.
+    void Update() override final;
     void Flush();
     void ProcessPending();
     void ProcessPlayerList();
@@ -34,12 +41,12 @@ public: // Common
     std::vector<std::unique_ptr<NetworkGroup>>::iterator GetGroupIteratorByID(uint8_t id);
     NetworkPlayer* GetPlayerByID(uint8_t id);
     NetworkGroup* GetGroupByID(uint8_t id);
-    void SetPassword(const char* password);
+    void SetPassword(u8string_view password);
     uint8_t GetDefaultGroup();
     std::string BeginLog(const std::string& directory, const std::string& midName, const std::string& filenameFormat);
-    void AppendLog(std::ostream& fs, const std::string& s);
+    void AppendLog(std::ostream& fs, std::string_view s);
     void BeginChatLog();
-    void AppendChatLog(const std::string& s);
+    void AppendChatLog(std::string_view s);
     void CloseChatLog();
     NetworkStats_t GetStats() const;
     json_t GetServerInfoAsJson() const;
@@ -90,13 +97,13 @@ public: // Server
     void Server_Send_EVENT_PLAYER_JOINED(const char* playerName);
     void Server_Send_EVENT_PLAYER_DISCONNECTED(const char* playerName, const char* reason);
     void Server_Send_OBJECTS_LIST(NetworkConnection& connection, const std::vector<const ObjectRepositoryItem*>& objects) const;
-    void Server_Send_SCRIPTS(NetworkConnection& connection) const;
+    void Server_Send_SCRIPTS(NetworkConnection& connection);
 
     // Handlers
     void Server_Handle_REQUEST_GAMESTATE(NetworkConnection& connection, NetworkPacket& packet);
     void Server_Handle_HEARTBEAT(NetworkConnection& connection, NetworkPacket& packet);
     void Server_Handle_AUTH(NetworkConnection& connection, NetworkPacket& packet);
-    void Server_Client_Joined(const char* name, const std::string& keyhash, NetworkConnection& connection);
+    void Server_Client_Joined(std::string_view name, const std::string& keyhash, NetworkConnection& connection);
     void Server_Handle_CHAT(NetworkConnection& connection, NetworkPacket& packet);
     void Server_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPacket& packet);
     void Server_Handle_PING(NetworkConnection& connection, NetworkPacket& packet);
@@ -132,7 +139,7 @@ public: // Client
     void Client_Send_GAME_ACTION(const GameAction* action);
     void Client_Send_PING();
     void Client_Send_GAMEINFO();
-    void Client_Send_MAPREQUEST(const std::vector<std::string>& objects);
+    void Client_Send_MAPREQUEST(const std::vector<ObjectEntryDescriptor>& objects);
     void Client_Send_HEARTBEAT(NetworkConnection& connection) const;
 
     // Handlers.
@@ -173,7 +180,6 @@ public: // Public common
 private: // Common Data
     using CommandHandler = void (NetworkBase::*)(NetworkConnection& connection, NetworkPacket& packet);
 
-    std::shared_ptr<OpenRCT2::IPlatformEnvironment> _env;
     std::vector<uint8_t> chunk_buffer;
     std::ofstream _chat_log_fs;
     uint32_t _lastUpdateTime = 0;
@@ -213,7 +219,7 @@ private: // Client Data
     std::map<uint32_t, PlayerListUpdate> _pendingPlayerLists;
     std::multimap<uint32_t, NetworkPlayer> _pendingPlayerInfo;
     std::map<uint32_t, ServerTickData_t> _serverTickData;
-    std::vector<std::string> _missingObjects;
+    std::vector<ObjectEntryDescriptor> _missingObjects;
     std::string _host;
     std::string _chatLogPath;
     std::string _chatLogFilenameFormat = "%Y%m%d-%H%M%S.txt";

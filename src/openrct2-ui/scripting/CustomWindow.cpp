@@ -21,6 +21,7 @@
 #    include <openrct2-ui/windows/Window.h>
 #    include <openrct2/drawing/Drawing.h>
 #    include <openrct2/interface/Window.h>
+#    include <openrct2/localisation/Formatter.h>
 #    include <openrct2/localisation/Language.h>
 #    include <openrct2/localisation/Localisation.h>
 #    include <openrct2/localisation/StringIds.h>
@@ -28,6 +29,7 @@
 #    include <openrct2/sprites.h>
 #    include <optional>
 #    include <string>
+#    include <utility>
 #    include <vector>
 
 using namespace OpenRCT2;
@@ -35,7 +37,7 @@ using namespace OpenRCT2::Scripting;
 
 namespace OpenRCT2::Ui::Windows
 {
-    enum CUSTOM_WINDOW_WIDX
+    enum CustomWindowWidx
     {
         WIDX_BACKGROUND,
         WIDX_TITLE,
@@ -62,7 +64,7 @@ namespace OpenRCT2::Ui::Windows
         std::string Name;
         ImageId Image;
         std::string Text;
-        TextAlignment TextAlign;
+        TextAlignment TextAlign{};
         colour_t Colour{};
         std::string Tooltip;
         std::vector<std::string> Items;
@@ -354,17 +356,15 @@ namespace OpenRCT2::Ui::Windows
                 {
                     return &Desc.Widgets[widgetDescIndex];
                 }
-                else
+
+                auto page = static_cast<size_t>(w->page);
+                if (Desc.Tabs.size() > page)
                 {
-                    auto page = static_cast<size_t>(w->page);
-                    if (Desc.Tabs.size() > page)
+                    auto& widgets = Desc.Tabs[page].Widgets;
+                    auto tabWidgetIndex = widgetDescIndex - Desc.Widgets.size();
+                    if (tabWidgetIndex < widgets.size())
                     {
-                        auto& widgets = Desc.Tabs[page].Widgets;
-                        auto tabWidgetIndex = widgetDescIndex - Desc.Widgets.size();
-                        if (tabWidgetIndex < widgets.size())
-                        {
-                            return &widgets[widgetDescIndex];
-                        }
+                        return &widgets[widgetDescIndex];
                     }
                 }
             }
@@ -788,12 +788,7 @@ namespace OpenRCT2::Ui::Windows
                     auto wheight = viewportWidget->height() - 1;
                     if (viewport == nullptr)
                     {
-                        auto mapX = 0;
-                        auto mapY = 0;
-                        auto mapZ = 0;
-                        viewport_create(
-                            this, { left, top }, wwidth, wheight, 0, { mapX, mapY, mapZ }, VIEWPORT_FOCUS_TYPE_COORDINATE,
-                            SPRITE_INDEX_NULL);
+                        viewport_create(this, { left, top }, wwidth, wheight, Focus(CoordsXYZ(0, 0, 0)));
                         flags |= WF_NO_SCROLLING;
                         Invalidate();
                     }
@@ -812,6 +807,14 @@ namespace OpenRCT2::Ui::Windows
                         }
                     }
                 }
+                else
+                {
+                    RemoveViewport();
+                }
+            }
+            else
+            {
+                RemoveViewport();
             }
         }
 
@@ -972,7 +975,7 @@ namespace OpenRCT2::Ui::Windows
                 }
             }
 
-            widgetList.push_back({ WIDGETS_END });
+            widgetList.push_back(WIDGETS_END);
             widgets = widgetList.data();
 
             WindowInitScrollWidgets(this);

@@ -1731,7 +1731,7 @@ STR_2383    :Su
 STR_2384    :{WINDOW_COLOUR_2}Hedefiniz:
 STR_2385    :{BLACK}Yok
 STR_2386    :{BLACK}Parkınızda en az {COMMA16} müşteri {MONTHYEAR} sonuna kadar bulunması ve park değerlendirmesinin en az 600 olması gerekli
-STR_2387    :{BLACK}Park değeri en az {POP16}{POP16}{CURRENCY} {PUSH16}{PUSH16}{PUSH16}{MONTHYEAR} kadar olmalı
+STR_2387    :{BLACK}Park değeri en az {POP16}{POP16}{CURRENCY} {PUSH16}{PUSH16}{PUSH16}{PUSH16}{PUSH16}{MONTHYEAR} kadar olmalı
 STR_2388    :{BLACK}Iyi eğlenceler!
 STR_2389    :{BLACK}Kendinize göre en iyi {STRINGID} inşa ediniz!
 STR_2390    :{BLACK}Parkınızda heyecan oranı en az 6.00 olan, 10 çesitli hız treni inşa edilmeli
@@ -2051,51 +2051,6 @@ STR_2854    :{RED}Müşteriler {STRINGID} aletinin girişini bulamıyor!{NEWLINE
 STR_2855    :{RED}{STRINGID} aletinin çıkışı yok !{NEWLINE}Alet çıkışına yol inşa ediniz
 STR_2858    :Pazarlama kampanyası başlatılamıyor…
 STR_2861    :{WINDOW_COLOUR_2}Infogrames Interactive Inc.'e lisanslı
-STR_2862    :Müzik…
-STR_2863    :Müzik
-STR_2864    :{WINDOW_COLOUR_2}March - Children of the Regiment:   (Fucik) non copyright
-STR_2865    :{WINDOW_COLOUR_2}Heyken's Serenade:   (J.Heyken) British Standard Music Coy; GEMA, BRITICO
-STR_2866    :{WINDOW_COLOUR_2}La Belle Espagnole:   (Robert Vollstedt) non copyright
-STR_2867    :{WINDOW_COLOUR_2}Wedding Journey:   (Traditional)
-STR_2868    :{WINDOW_COLOUR_2}Tales from the Vienna Woods:   (Johann Strauss) non copyright
-STR_2869    :{WINDOW_COLOUR_2}Slavonic Dance:   (Traditional)
-STR_2870    :{WINDOW_COLOUR_2}Das Alpenhorn:   (Traditional)
-STR_2871    :{WINDOW_COLOUR_2}The Blond Sailor:   (Traditional)
-STR_2872    :{WINDOW_COLOUR_2}Overture - Poet and Peasant:   (Suppe) non copyright
-STR_2873    :{WINDOW_COLOUR_2}Waltz Medley:   (Johann Strauss) non copyright
-STR_2874    :{WINDOW_COLOUR_2}Bella Bella Bimba:   (Traditional)
-STR_2875    :{WINDOW_COLOUR_2}Original recordings (P) 1976 C.J.Mears Organization, used with consent
-STR_2876    :{WINDOW_COLOUR_2}RollerCoaster Tycoon 2 Title Music:   (Allister Brimble) copyright © Chris Sawyer
-STR_2877    :{WINDOW_COLOUR_2}Dodgems Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2878    :{WINDOW_COLOUR_2}Mid Summer's Heat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2879    :{WINDOW_COLOUR_2}Pharaoh's Tomb:   (Allister Brimble) copyright © Chris Sawyer
-STR_2880    :{WINDOW_COLOUR_2}Caesar's March:   (Allister Brimble) copyright © Chris Sawyer
-STR_2881    :{WINDOW_COLOUR_2}Drifting To Heaven:   (Allister Brimble) copyright © Chris Sawyer
-STR_2882    :{WINDOW_COLOUR_2}Invaders:   (Allister Brimble) copyright © Chris Sawyer
-STR_2883    :{WINDOW_COLOUR_2}Eternal Toybox:   (Allister Brimble) copyright © Chris Sawyer
-STR_2884    :{WINDOW_COLOUR_2}Jungle Juice:   (Allister Brimble) copyright © Chris Sawyer
-STR_2885    :{WINDOW_COLOUR_2}Ninja's Noodles:   (Allister Brimble) copyright © Chris Sawyer
-STR_2886    :{WINDOW_COLOUR_2}Voyage to Andromeda:   (Allister Brimble) copyright © Chris Sawyer
-STR_2887    :{WINDOW_COLOUR_2}Brimble's Beat:   (Allister Brimble) copyright © Chris Sawyer
-STR_2888    :{WINDOW_COLOUR_2}Atlantis:   (Allister Brimble) copyright © Chris Sawyer
-STR_2889    :{WINDOW_COLOUR_2}Wild West Kid:   (Allister Brimble) copyright © Chris Sawyer
-STR_2890    :{WINDOW_COLOUR_2}Vampire's Lair:   (Allister Brimble) copyright © Chris Sawyer
-STR_2891    :{WINDOW_COLOUR_2}Blockbuster:   (Allister Brimble) copyright © Chris Sawyer
-STR_2892    :{WINDOW_COLOUR_2}Airtime Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2893    :{WINDOW_COLOUR_2}Searchlight Rag:   (Scott Joplin/Allister Brimble) copyright © Chris Sawyer
-STR_2894    :{WINDOW_COLOUR_2}Flight of Fantasy:   (Steve Blenkinsopp) copyright © Chris Sawyer
-STR_2895    :{WINDOW_COLOUR_2}Big Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2896    :{WINDOW_COLOUR_2}Hypothermia:   (Allister Brimble) copyright © Chris Sawyer
-STR_2897    :{WINDOW_COLOUR_2}Last Sleigh Ride:   (Allister Brimble) copyright © Chris Sawyer
-STR_2898    :{WINDOW_COLOUR_2}Pipes of Glencairn:   (Allister Brimble) copyright © Chris Sawyer
-STR_2899    :{WINDOW_COLOUR_2}Traffic Jam:   (Allister Brimble) copyright © Chris Sawyer
-STR_2901    :{WINDOW_COLOUR_2}(Samples courtesy of Spectrasonics ”Liquid Grooves”)
-STR_2902    :{WINDOW_COLOUR_2}Toccata:   (C.M.Widor, played by Peter James Adcock) recording © Chris Sawyer
-STR_2903    :{WINDOW_COLOUR_2}Space Rock:   (Allister Brimble) copyright © Chris Sawyer
-STR_2904    :{WINDOW_COLOUR_2}Manic Mechanic:   (Allister Brimble) copyright © Chris Sawyer
-STR_2905    :{WINDOW_COLOUR_2}Techno Torture:   (Allister Brimble) copyright © Chris Sawyer
-STR_2906    :{WINDOW_COLOUR_2}Sweat Dreams:   (Allister Brimble) copyright © Chris Sawyer
-STR_2907    :{WINDOW_COLOUR_2}What shall we do with the Drunken Sailor:   (Anon/Allister Brimble) copyright © Chris Sawyer
 STR_2971    :Ana renkler
 STR_2972    :Alternatif renkler 1
 STR_2973    :Alternatif renkler 2
@@ -3003,8 +2958,6 @@ STR_5723    :Yoğun yağışlı
 STR_5724    :Sağanak yağışlı
 STR_5725    :{BLACK}Hava durumu:
 STR_5726    :Şu anki hava durumunu değiştiriniz
-STR_5727    :Ölçekleme kalitesi:
-STR_5731    :Lineer
 # tooltip for tab in options window
 STR_5734    :Rendering
 STR_5735    :Ağ durumu
@@ -3090,7 +3043,6 @@ STR_5814    :{WINDOW_COLOUR_1}“{STRING}”
 #tooltips
 STR_5815    :FPS'yi göster
 STR_5816    :Oyunu ölçekleme oranı{NEWLINE}Yüksek cözünürlükde tavsiye edilir
-STR_5817    :Kullanıcı arayüzü ölçekliği.{NEWLINE} Grafiksel aygıt olara Hardware desteği gereklidir .{NEWLINE}Lineer ölçekleme pürüzsüz fakat bulanık. 'Smooth Nearest Neighbour' net, fakat performansı etkileyebilir
 STR_5819    :[Hardware Desteği gerektirir]{NEWLINE}Steam arayüzü kullanıldığında oyun durdurulsun
 STR_5820    :Tam ekran modunda oyun penceresi ön plandan giderse{NEWLINE}oyunu simge durumuna getir
 STR_5822    :Gece ve gündüz değişimi uyuglansın
@@ -3202,56 +3154,56 @@ STR_5930    :Büyük dekorasyon bilgileri
 STR_5931    :Banner bilgileri
 STR_5932    :Arızalı madde bilgileri
 STR_5933    :Özellikler
-STR_5934    :{WINDOW_COLOUR_2}Zemin türü: {BLACK}{STRINGID}
-STR_5935    :{WINDOW_COLOUR_2}Duvar türü: {BLACK}{STRINGID}
-STR_5936    :{WINDOW_COLOUR_2}Arazi durumu: {BLACK}{STRINGID}
+STR_5934    :Zemin türü: {BLACK}{STRINGID}
+STR_5935    :Duvar türü: {BLACK}{STRINGID}
+STR_5936    :Arazi durumu: {BLACK}{STRINGID}
 STR_5937    :Hazine malı ve satılık değil
-STR_5938    :{WINDOW_COLOUR_2}Su seviyesi: {BLACK}{COMMA16}
+STR_5938    :Su seviyesi: {BLACK}{COMMA16}
 STR_5939    :Park sınırını kaldır
 STR_5940    :Park sınırını geri ekle
-STR_5941    :{WINDOW_COLOUR_2}Yükseklik seviyesi:
-STR_5942    :{WINDOW_COLOUR_2}Yol türü: {BLACK}{STRINGID}
-STR_5943    :{WINDOW_COLOUR_2}Eklenti: {BLACK}{STRINGID}
-STR_5944    :{WINDOW_COLOUR_2}Eklenti: {BLACK}Yok
-STR_5945    :{WINDOW_COLOUR_2}Bağlantı noktaları:
-STR_5946    :{WINDOW_COLOUR_2}Tür: {BLACK}{STRINGID}
-STR_5947    :{WINDOW_COLOUR_2}ID: {BLACK}{COMMA16}
-STR_5948    :{WINDOW_COLOUR_2}Isim: {BLACK}{STRINGID}
-STR_5949    :{WINDOW_COLOUR_2}Tırmanma zinciri
-STR_5950    :{WINDOW_COLOUR_2}Değişiklikleri tüm raylara uygula
-STR_5951    :{WINDOW_COLOUR_2}Parça ID'si: {BLACK}{COMMA16}
-STR_5952    :{WINDOW_COLOUR_2}Seviye sıralama numarası: {BLACK}{COMMA16}
+STR_5941    :Yükseklik seviyesi:
+STR_5942    :Yol türü: {BLACK}{STRINGID}
+STR_5943    :Eklenti: {BLACK}{STRINGID}
+STR_5944    :Eklenti: {BLACK}Yok
+STR_5945    :Bağlantı noktaları:
+STR_5946    :Tür: {BLACK}{STRINGID}
+STR_5947    :ID: {BLACK}{COMMA16}
+STR_5948    :Isim: {BLACK}{STRINGID}
+STR_5949    :Tırmanma zinciri
+STR_5950    :Değişiklikleri tüm raylara uygula
+STR_5951    :Parça ID'si: {BLACK}{COMMA16}
+STR_5952    :Seviye sıralama numarası: {BLACK}{COMMA16}
 STR_5953    :Maddeleri yükseklik seviyesine göre sırala
-STR_5954    :{WINDOW_COLOUR_2}Dekorasyon yaşı: {BLACK}{COMMA16}
-STR_5955    :{WINDOW_COLOUR_2}Kare içindeki pozisyonu: {BLACK}{STRINGID}
+STR_5954    :Dekorasyon yaşı: {BLACK}{COMMA16}
+STR_5955    :Kare içindeki pozisyonu: {BLACK}{STRINGID}
 STR_5956    :Güneybatı
 STR_5957    :Kuzeybatı
 STR_5958    :Kuzeydoğu
 STR_5959    :Güneydoğu
-STR_5960    :{WINDOW_COLOUR_2}Kare içindeki pozisyonu:
-STR_5961    :{WINDOW_COLOUR_2}Kayıt endeksi: {BLACK}{COMMA16}
-STR_5962    :{WINDOW_COLOUR_2}Çarpışma tespidi:
-STR_5963    :{WINDOW_COLOUR_2}Kenar yükseltme:
-STR_5964    :{WINDOW_COLOUR_2}Eğimli
-STR_5965    :{WINDOW_COLOUR_2}Giriş türü: {BLACK}{STRINGID}
-STR_5966    :{WINDOW_COLOUR_2}Park girişi yönü: {BLACK}{STRINGID}
+STR_5960    :Kare içindeki pozisyonu:
+STR_5961    :Kayıt endeksi: {BLACK}{COMMA16}
+STR_5962    :Çarpışma tespidi:
+STR_5963    :Kenar yükseltme:
+STR_5964    :Eğimli
+STR_5965    :Giriş türü: {BLACK}{STRINGID}
+STR_5966    :Park girişi yönü: {BLACK}{STRINGID}
 STR_5967    :Orta
 STR_5968    :Sol
 STR_5969    :Sağ
-STR_5970    :{WINDOW_COLOUR_2}Giriş ID'si: {BLACK}{COMMA16}
-STR_5971    :{WINDOW_COLOUR_2}Çıkış ID'si: {BLACK}{COMMA16}
-STR_5972    :{WINDOW_COLOUR_2}Alet ID'si: {BLACK}{COMMA16}
+STR_5970    :Giriş ID'si: {BLACK}{COMMA16}
+STR_5971    :Çıkış ID'si: {BLACK}{COMMA16}
+STR_5972    :Alet ID'si: {BLACK}{COMMA16}
 STR_5973    :Bir sonrakine yapıştır
 STR_5974    :Arızalı maddenin taban ve açıklık yükseğini seçdiğiniz maddeden kopyalayıp arızalı maddeye ekleyiniz
 STR_5975    :Eğim:
 STR_5976    :Düz
 STR_5977    :Sağ taraf yukarı
 STR_5978    :Sol taraf yukarı
-STR_5979    :{WINDOW_COLOUR_2}Duvar türü: {BLACK}{COMMA16}
-STR_5980    :{WINDOW_COLOUR_2}Banner metni: {BLACK}{STRINGID}
-STR_5981    :{WINDOW_COLOUR_2}Banner değil
-STR_5982    :{WINDOW_COLOUR_2}Büyük dekorasyon türü: {BLACK}{COMMA16}
-STR_5983    :{WINDOW_COLOUR_2}Büyük dekorasyon ID'si: {BLACK}{COMMA16}
+STR_5979    :Duvar türü: {BLACK}{COMMA16}
+STR_5980    :Banner metni: {BLACK}{STRINGID}
+STR_5981    :Banner değil
+STR_5982    :Büyük dekorasyon türü: {BLACK}{COMMA16}
+STR_5983    :Büyük dekorasyon ID'si: {BLACK}{COMMA16}
 STR_5984    :Blocked paths:
 STR_5985    :Yeni klasör
 STR_5986    :Yeni klasör ismi giriniz
@@ -3419,7 +3371,6 @@ STR_6155    :Ne KDialog nede Zenity kurulu. Ya ikisinden birisini kurunuz yada k
 STR_6156    :Isim kullanılıyor
 STR_6157    :Konsol
 STR_6158    :Bu dosya yüklenemedi…{NEWLINE}RCTC versiyonu uyumsuz: {COMMA16}
-STR_6159    :Smooth Nearest Neighbour
 STR_6160    :{WINDOW_COLOUR_2}Mevcut araçlar/tasarımlar: {BLACK}{STRING}
 STR_6161    :Zemin çizgisi
 STR_6162    :Rotasyonlu Vahşi Fare

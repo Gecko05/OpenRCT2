@@ -13,6 +13,7 @@
 #include "../OpenRCT2.h"
 #include "../PlatformEnvironment.h"
 #include "../core/Collections.hpp"
+#include "../core/File.h"
 #include "../core/FileScanner.h"
 #include "../core/Memory.hpp"
 #include "../core/Path.hpp"
@@ -85,11 +86,11 @@ namespace TitleSequenceManager
         const utf8* path = item->Path.c_str();
         if (item->IsZip)
         {
-            platform_file_delete(path);
+            File::Delete(path);
         }
         else
         {
-            platform_directory_delete(path);
+            Path::DeleteDirectory(path);
         }
         _items.erase(_items.begin() + i);
     }
@@ -103,11 +104,11 @@ namespace TitleSequenceManager
         if (item->IsZip)
         {
             newPath += TITLE_SEQUENCE_EXTENSION;
-            platform_file_move(oldPath.c_str(), newPath.c_str());
+            File::Move(oldPath, newPath);
         }
         else
         {
-            platform_file_move(oldPath.c_str(), newPath.c_str());
+            File::Move(oldPath, newPath);
         }
 
         item->Name = newName;
@@ -124,7 +125,7 @@ namespace TitleSequenceManager
         const auto& srcPath = item->Path;
 
         std::string dstPath = GetNewTitleSequencePath(std::string(name), item->IsZip);
-        if (!platform_file_copy(srcPath.c_str(), dstPath.c_str(), true))
+        if (!File::Copy(srcPath, dstPath, true))
         {
             return SIZE_MAX;
         }
@@ -185,7 +186,7 @@ namespace TitleSequenceManager
                 {
                     return true;
                 }
-                else if (a.PredefinedIndex > b.PredefinedIndex)
+                if (a.PredefinedIndex > b.PredefinedIndex)
                 {
                     return false;
                 }
@@ -273,7 +274,7 @@ namespace TitleSequenceManager
     {
         for (const auto& pseq : TitleSequenceManager::PredefinedSequences)
         {
-            auto predefinedName = Path::GetFileNameWithoutExtension(std::string(pseq.Filename));
+            auto predefinedName = Path::GetFileNameWithoutExtension(pseq.Filename);
             if (String::Equals(name, predefinedName, true))
             {
                 return true;

@@ -11,19 +11,27 @@
 
 #include "GameAction.h"
 
-DEFINE_GAME_ACTION(StaffSetPatrolAreaAction, GameCommand::SetStaffPatrol, GameActions::Result)
+enum class StaffSetPatrolAreaMode : uint8_t
+{
+    Set,
+    Unset,
+    ClearAll
+};
+
+class StaffSetPatrolAreaAction final : public GameActionBase<GameCommand::SetStaffPatrol>
 {
 private:
     uint16_t _spriteId{ SPRITE_INDEX_NULL };
     CoordsXY _loc;
+    StaffSetPatrolAreaMode _mode;
 
 public:
     StaffSetPatrolAreaAction() = default;
-    StaffSetPatrolAreaAction(uint16_t spriteId, const CoordsXY& loc);
+    StaffSetPatrolAreaAction(uint16_t spriteId, const CoordsXY& loc, const StaffSetPatrolAreaMode mode);
 
     uint16_t GetActionFlags() const override;
 
-    void Serialise(DataSerialiser & stream) override;
-    GameActions::Result::Ptr Query() const override;
-    GameActions::Result::Ptr Execute() const override;
+    void Serialise(DataSerialiser& stream) override;
+    GameActions::Result Query() const override;
+    GameActions::Result Execute() const override;
 };

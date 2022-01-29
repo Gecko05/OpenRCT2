@@ -17,6 +17,7 @@
 #    include "../OpenRCT2.h"
 #    include "../audio/audio.h"
 #    include "../core/Console.hpp"
+#    include "../core/File.h"
 #    include "../core/Imaging.h"
 #    include "../drawing/Drawing.h"
 #    include "../interface/Viewport.h"
@@ -42,14 +43,14 @@ static void fixup_pointers(std::vector<RecordedPaintSession>& s)
         auto& quadrants = s[i].Session.Quadrants;
         for (size_t j = 0; j < entries.size(); j++)
         {
-            if (entries[j].basic.next_quadrant_ps == reinterpret_cast<paint_struct*>(-1))
+            if (entries[j].AsBasic()->next_quadrant_ps == reinterpret_cast<paint_struct*>(-1))
             {
-                entries[j].basic.next_quadrant_ps = nullptr;
+                entries[j].AsBasic()->next_quadrant_ps = nullptr;
             }
             else
             {
-                auto nextQuadrantPs = reinterpret_cast<size_t>(entries[j].basic.next_quadrant_ps) / sizeof(paint_entry);
-                entries[j].basic.next_quadrant_ps = &s[i].Entries[nextQuadrantPs].basic;
+                auto nextQuadrantPs = reinterpret_cast<size_t>(entries[j].AsBasic()->next_quadrant_ps) / sizeof(paint_entry);
+                entries[j].AsBasic()->next_quadrant_ps = s[i].Entries[nextQuadrantPs].AsBasic();
             }
         }
         for (size_t j = 0; j < std::size(quadrants); j++)
@@ -61,7 +62,7 @@ static void fixup_pointers(std::vector<RecordedPaintSession>& s)
             else
             {
                 auto ps = reinterpret_cast<size_t>(quadrants[j]) / sizeof(paint_entry);
-                quadrants[j] = &entries[ps].basic;
+                quadrants[j] = entries[ps].AsBasic();
             }
         }
     }
@@ -111,7 +112,7 @@ static std::vector<RecordedPaintSession> extract_paint_session(std::string_view 
         y = ((customX + customY) / 2) - z;
 
         viewport.viewPos = { x - ((viewport.view_width) / 2), y - ((viewport.view_height) / 2) };
-        viewport.zoom = 0;
+        viewport.zoom = ZoomLevel{ 0 };
         gCurrentRotation = 0;
 
         // Ensure sprites appear regardless of rotation
@@ -126,7 +127,7 @@ static std::vector<RecordedPaintSession> extract_paint_session(std::string_view 
         dpi.bits = static_cast<uint8_t*>(malloc(dpi.width * dpi.height));
 
         log_info("Obtaining sprite data...");
-        viewport_render(&dpi, &viewport, 0, 0, viewport.width, viewport.height, &sessions);
+        viewport_render(&dpi, &viewport, { { 0, 0 }, { viewport.width, viewport.height } }, &sessions);
 
         free(dpi.bits);
         drawing_engine_dispose();
@@ -150,7 +151,7 @@ static void BM_paint_session_arrange(benchmark::State& state, const std::vector<
         state.PauseTiming();
         std::copy_n(local_s, std::size(sessions), sessions.begin());
         state.ResumeTiming();
-        PaintSessionArrange(&sessions[0].Session);
+        PaintSessionArrange(sessions[0].Session);
         benchmark::DoNotOptimize(sessions);
     }
     state.SetItemsProcessed(state.iterations() * std::size(sessions));
@@ -164,7 +165,7 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
         std::vector<RecordedPaintSession> sessions(1);
         for (auto& ps : sessions[0].Entries)
         {
-            ps.basic.next_quadrant_ps = reinterpret_cast<paint_struct*>(-1);
+            ps.AsBasic()->next_quadrant_ps = reinterpret_cast<paint_struct*>(-1);
         }
         for (auto& quad : sessions[0].Session.Quadrants)
         {
@@ -183,7 +184,7 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
     // Extract file names from argument list. If there is no such file, consider it benchmark option.
     for (int i = 0; i < argc; i++)
     {
-        if (Platform::FileExists(argv[i]))
+        if (File::Exists(argv[i]))
         {
             // Register benchmark for sv6 if valid
             std::vector<RecordedPaintSession> sessions = extract_paint_session(argv[i]);

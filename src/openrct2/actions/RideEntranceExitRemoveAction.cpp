@@ -69,28 +69,28 @@ static TileElement* FindEntranceElement(
     return nullptr;
 }
 
-GameActions::Result::Ptr RideEntranceExitRemoveAction::Query() const
+GameActions::Result RideEntranceExitRemoveAction::Query() const
 {
     auto ride = get_ride(_rideIndex);
     if (ride == nullptr)
     {
-        log_warning("Invalid ride id %d for entrance/exit removal", static_cast<int32_t>(_rideIndex));
-        return std::make_unique<GameActions::Result>(GameActions::Status::InvalidParameters, STR_NONE);
+        log_warning("Invalid ride id %d for entrance/exit removal", EnumValue(_rideIndex));
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
     if (ride->status != RideStatus::Closed && ride->status != RideStatus::Simulating)
     {
-        return MakeResult(GameActions::Status::InvalidParameters, STR_MUST_BE_CLOSED_FIRST);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_MUST_BE_CLOSED_FIRST, STR_NONE);
     }
 
     if (ride->lifecycle_flags & RIDE_LIFECYCLE_INDESTRUCTIBLE_TRACK)
     {
-        return MakeResult(GameActions::Status::InvalidParameters, STR_NOT_ALLOWED_TO_MODIFY_STATION);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NOT_ALLOWED_TO_MODIFY_STATION, STR_NONE);
     }
 
     if (!LocationValid(_loc))
     {
-        return MakeResult(GameActions::Status::InvalidParameters, STR_LAND_NOT_OWNED_BY_PARK);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_LAND_NOT_OWNED_BY_PARK, STR_NONE);
     }
 
     auto* entranceElement = FindEntranceElement(
@@ -99,28 +99,28 @@ GameActions::Result::Ptr RideEntranceExitRemoveAction::Query() const
     if (entranceElement == nullptr)
     {
         log_warning(
-            "Track Element not found. x = %d, y = %d, ride = %d, station = %d", _loc.x, _loc.y,
-            static_cast<int32_t>(_rideIndex), _stationNum);
-        return MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+            "Track Element not found. x = %d, y = %d, ride = %d, station = %d", _loc.x, _loc.y, EnumValue(_rideIndex),
+            _stationNum);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
-    return MakeResult();
+    return GameActions::Result();
 }
 
-GameActions::Result::Ptr RideEntranceExitRemoveAction::Execute() const
+GameActions::Result RideEntranceExitRemoveAction::Execute() const
 {
     auto ride = get_ride(_rideIndex);
     if (ride == nullptr)
     {
-        log_warning("Invalid ride id %d for entrance/exit removal", static_cast<int32_t>(_rideIndex));
-        return std::make_unique<GameActions::Result>(GameActions::Status::InvalidParameters, STR_NONE);
+        log_warning("Invalid ride id %d for entrance/exit removal", EnumValue(_rideIndex));
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
     const bool isGhost = GetFlags() & GAME_COMMAND_FLAG_GHOST;
     if (!isGhost)
     {
         ride_clear_for_construction(ride);
-        ride_remove_peeps(ride);
+        ride->RemovePeeps();
         invalidate_test_results(ride);
     }
 
@@ -130,15 +130,15 @@ GameActions::Result::Ptr RideEntranceExitRemoveAction::Execute() const
     if (entranceElement == nullptr)
     {
         log_warning(
-            "Track Element not found. x = %d, y = %d, ride = %d, station = %d", _loc.x, _loc.y,
-            static_cast<int32_t>(_rideIndex), _stationNum);
-        return MakeResult(GameActions::Status::InvalidParameters, STR_NONE);
+            "Track Element not found. x = %d, y = %d, ride = %d, station = %d", _loc.x, _loc.y, EnumValue(_rideIndex),
+            _stationNum);
+        return GameActions::Result(GameActions::Status::InvalidParameters, STR_NONE, STR_NONE);
     }
 
-    auto res = MakeResult();
-    res->Position.x = _loc.x + 16;
-    res->Position.y = _loc.y + 16;
-    res->Position.z = tile_element_height(res->Position);
+    auto res = GameActions::Result();
+    res.Position.x = _loc.x + 16;
+    res.Position.y = _loc.y + 16;
+    res.Position.z = tile_element_height(res.Position);
 
     footpath_queue_chain_reset();
     maze_entrance_hedge_replacement({ _loc, entranceElement });

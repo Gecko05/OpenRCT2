@@ -20,31 +20,31 @@
 
 /** rct2: 0x008B0460 */
 static void inverted_impulse_rc_track_flat(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19662, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19662, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 29);
             break;
         case 1:
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19663, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19663, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 29);
             break;
     }
 
     paint_util_set_segment_support_height(
         session, paint_util_rotate_segments(SEGMENT_C4 | SEGMENT_CC | SEGMENT_D0, direction), 0xFFFF, 0);
-    if (track_paint_util_should_paint_supports(session->MapPosition))
+    if (track_paint_util_should_paint_supports(session.MapPosition))
     {
         metal_a_supports_paint_setup(
-            session, METAL_SUPPORTS_TUBES_INVERTED, 4, 0, height + 44, session->TrackColours[SCHEME_SUPPORTS]);
+            session, METAL_SUPPORTS_TUBES_INVERTED, 4, 0, height + 44, session.TrackColours[SCHEME_SUPPORTS]);
     }
 
     paint_util_push_tunnel_rotated(session, direction, height, TUNNEL_INVERTED_3);
@@ -53,8 +53,8 @@ static void inverted_impulse_rc_track_flat(
 
 /** rct2: 0x008B0470, 0x008B0480, 0x008B0490 */
 static void inverted_impulse_rc_track_station(
-    paint_session* session, ride_id_t rideIndex, [[maybe_unused]] uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, [[maybe_unused]] uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     static constexpr const uint32_t imageIds[4][3] = {
         { SPR_STATION_BASE_C_SW_NE, 19662, SPR_STATION_INVERTED_BAR_B_SW_NE },
@@ -64,15 +64,15 @@ static void inverted_impulse_rc_track_station(
     };
 
     PaintAddImageAsParentRotated(
-        session, direction, imageIds[direction][0] | session->TrackColours[SCHEME_MISC], 0, 0, 32, 28, 1, height, 0, 2, height);
+        session, direction, imageIds[direction][0] | session.TrackColours[SCHEME_MISC], 0, 0, 32, 28, 1, height, 0, 2, height);
     PaintAddImageAsParentRotated(
-        session, direction, imageIds[direction][1] | session->TrackColours[SCHEME_TRACK], 0, 0, 32, 20, 3, height + 29, 0, 6,
+        session, direction, imageIds[direction][1] | session.TrackColours[SCHEME_TRACK], 0, 0, 32, 20, 3, height + 29, 0, 6,
         height + 29);
     PaintAddImageAsChildRotated(
-        session, direction, imageIds[direction][2] | session->TrackColours[SCHEME_SUPPORTS], 0, 6, 32, 20, 3, height + 29, 0, 6,
+        session, direction, imageIds[direction][2] | session.TrackColours[SCHEME_SUPPORTS], 0, 6, 32, 20, 3, height + 29, 0, 6,
         height + 29);
-    track_paint_util_draw_station_metal_supports_2(session, direction, height, session->TrackColours[SCHEME_SUPPORTS], 11);
-    track_paint_util_draw_station_inverted(session, rideIndex, direction, height, tileElement, STATION_VARIANT_TALL);
+    track_paint_util_draw_station_metal_supports_2(session, direction, height, session.TrackColours[SCHEME_SUPPORTS], 11);
+    track_paint_util_draw_station_inverted(session, ride, direction, height, trackElement, STATION_VARIANT_TALL);
     paint_util_push_tunnel_rotated(session, direction, height, TUNNEL_SQUARE_INVERTED_9);
     paint_util_set_segment_support_height(session, SEGMENTS_ALL, 0xFFFF, 0);
     paint_util_set_general_support_height(session, height + 48, 0x20);
@@ -80,54 +80,54 @@ static void inverted_impulse_rc_track_station(
 
 /** rct2: 0x008B04A0 */
 static void inverted_impulse_rc_track_25_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19672, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19672, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 45);
             break;
         case 1:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19673, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19673, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 45);
             break;
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19674, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19674, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 45);
             break;
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19675, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19675, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 45);
             break;
     }
 
     paint_util_set_segment_support_height(
         session, paint_util_rotate_segments(SEGMENT_C4 | SEGMENT_CC | SEGMENT_D0, direction), 0xFFFF, 0);
-    if (track_paint_util_should_paint_supports(session->MapPosition))
+    if (track_paint_util_should_paint_supports(session.MapPosition))
     {
         switch (direction)
         {
             case 0:
                 metal_a_supports_paint_setup(
-                    session, METAL_SUPPORTS_TUBES_INVERTED, 6, 0, height + 62, session->TrackColours[SCHEME_SUPPORTS]);
+                    session, METAL_SUPPORTS_TUBES_INVERTED, 6, 0, height + 62, session.TrackColours[SCHEME_SUPPORTS]);
                 break;
             case 1:
                 metal_a_supports_paint_setup(
-                    session, METAL_SUPPORTS_TUBES_INVERTED, 8, 0, height + 62, session->TrackColours[SCHEME_SUPPORTS]);
+                    session, METAL_SUPPORTS_TUBES_INVERTED, 8, 0, height + 62, session.TrackColours[SCHEME_SUPPORTS]);
                 break;
             case 2:
                 metal_a_supports_paint_setup(
-                    session, METAL_SUPPORTS_TUBES_INVERTED, 7, 0, height + 62, session->TrackColours[SCHEME_SUPPORTS]);
+                    session, METAL_SUPPORTS_TUBES_INVERTED, 7, 0, height + 62, session.TrackColours[SCHEME_SUPPORTS]);
                 break;
             case 3:
                 metal_a_supports_paint_setup(
-                    session, METAL_SUPPORTS_TUBES_INVERTED, 5, 0, height + 62, session->TrackColours[SCHEME_SUPPORTS]);
+                    session, METAL_SUPPORTS_TUBES_INVERTED, 5, 0, height + 62, session.TrackColours[SCHEME_SUPPORTS]);
                 break;
         }
     }
@@ -145,29 +145,29 @@ static void inverted_impulse_rc_track_25_deg_up(
 
 /** rct2: 0x008B04B0 */
 static void inverted_impulse_rc_track_60_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19688, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19688, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 93);
             break;
         case 1:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19689, 0, 0, 32, 2, 81, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19689, 0, 0, 32, 2, 81, height + 29, 0, 4,
                 height + 11);
             break;
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19690, 0, 0, 32, 2, 81, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19690, 0, 0, 32, 2, 81, height + 29, 0, 4,
                 height + 11);
             break;
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19691, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19691, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 93);
             break;
     }
@@ -186,29 +186,29 @@ static void inverted_impulse_rc_track_60_deg_up(
 
 /** rct2: 0x008B04C0 */
 static void inverted_impulse_rc_track_flat_to_25_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19664, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19664, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
         case 1:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19665, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19665, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19666, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19666, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19667, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19667, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
     }
@@ -219,19 +219,19 @@ static void inverted_impulse_rc_track_flat_to_25_deg_up(
     {
         case 0:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 6, 0, height + 54, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 6, 0, height + 54, session.TrackColours[SCHEME_SUPPORTS]);
             break;
         case 1:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 8, 0, height + 54, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 8, 0, height + 54, session.TrackColours[SCHEME_SUPPORTS]);
             break;
         case 2:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 7, 0, height + 54, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 7, 0, height + 54, session.TrackColours[SCHEME_SUPPORTS]);
             break;
         case 3:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 5, 0, height + 54, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 5, 0, height + 54, session.TrackColours[SCHEME_SUPPORTS]);
             break;
     }
 
@@ -248,35 +248,35 @@ static void inverted_impulse_rc_track_flat_to_25_deg_up(
 
 /** rct2: 0x008B04D0 */
 static void inverted_impulse_rc_track_25_deg_up_to_60_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19676, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19676, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 61);
             break;
         case 1:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19680, 0, 0, 32, 10, 49, height + 29, 0, 10,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19680, 0, 0, 32, 10, 49, height + 29, 0, 10,
                 height + 11);
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19677, 0, 0, 32, 2, 49, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19677, 0, 0, 32, 2, 49, height + 29, 0, 4,
                 height + 11);
             break;
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19681, 0, 0, 32, 10, 49, height + 29, 0, 10,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19681, 0, 0, 32, 10, 49, height + 29, 0, 10,
                 height + 11);
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19678, 0, 0, 32, 2, 49, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19678, 0, 0, 32, 2, 49, height + 29, 0, 4,
                 height + 11);
             break;
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19679, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19679, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 61);
             break;
     }
@@ -295,35 +295,35 @@ static void inverted_impulse_rc_track_25_deg_up_to_60_deg_up(
 
 /** rct2: 0x008B04E0 */
 static void inverted_impulse_rc_track_60_deg_up_to_25_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19682, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19682, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 61);
             break;
         case 1:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19686, 0, 0, 32, 10, 49, height + 29, 0, 10,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19686, 0, 0, 32, 10, 49, height + 29, 0, 10,
                 height + 11);
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19683, 0, 0, 32, 2, 49, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19683, 0, 0, 32, 2, 49, height + 29, 0, 4,
                 height + 11);
             break;
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19687, 0, 0, 32, 10, 49, height + 29, 0, 10,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19687, 0, 0, 32, 10, 49, height + 29, 0, 10,
                 height + 11);
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19684, 0, 0, 32, 2, 49, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19684, 0, 0, 32, 2, 49, height + 29, 0, 4,
                 height + 11);
             break;
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19685, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19685, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 61);
             break;
     }
@@ -342,29 +342,29 @@ static void inverted_impulse_rc_track_60_deg_up_to_25_deg_up(
 
 /** rct2: 0x008B04F0 */
 static void inverted_impulse_rc_track_25_deg_up_to_flat(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19668, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19668, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
         case 1:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19669, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19669, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19670, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19670, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19671, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19671, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 37);
             break;
     }
@@ -375,19 +375,19 @@ static void inverted_impulse_rc_track_25_deg_up_to_flat(
     {
         case 0:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 6, 0, height + 52, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 6, 0, height + 52, session.TrackColours[SCHEME_SUPPORTS]);
             break;
         case 1:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 8, 0, height + 52, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 8, 0, height + 52, session.TrackColours[SCHEME_SUPPORTS]);
             break;
         case 2:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 7, 0, height + 52, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 7, 0, height + 52, session.TrackColours[SCHEME_SUPPORTS]);
             break;
         case 3:
             metal_a_supports_paint_setup(
-                session, METAL_SUPPORTS_TUBES_INVERTED, 5, 0, height + 52, session->TrackColours[SCHEME_SUPPORTS]);
+                session, METAL_SUPPORTS_TUBES_INVERTED, 5, 0, height + 52, session.TrackColours[SCHEME_SUPPORTS]);
             break;
     }
 
@@ -404,58 +404,56 @@ static void inverted_impulse_rc_track_25_deg_up_to_flat(
 
 /** rct2: 0x008B0500 */
 static void inverted_impulse_rc_track_25_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_25_deg_up(session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_25_deg_up(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B0510 */
 static void inverted_impulse_rc_track_60_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_60_deg_up(session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_60_deg_up(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B0520 */
 static void inverted_impulse_rc_track_flat_to_25_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_25_deg_up_to_flat(session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_25_deg_up_to_flat(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B0530 */
 static void inverted_impulse_rc_track_25_deg_down_to_60_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_60_deg_up_to_25_deg_up(
-        session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_60_deg_up_to_25_deg_up(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B0540 */
 static void inverted_impulse_rc_track_60_deg_down_to_25_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_25_deg_up_to_60_deg_up(
-        session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_25_deg_up_to_60_deg_up(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B0550 */
 static void inverted_impulse_rc_track_25_deg_down_to_flat(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_flat_to_25_deg_up(session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_flat_to_25_deg_up(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B05A0 */
 static void inverted_impulse_rc_track_90_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (trackSequence)
     {
@@ -464,22 +462,22 @@ static void inverted_impulse_rc_track_90_deg_up(
             {
                 case 0:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19700, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19700, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 61);
                     break;
                 case 1:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19701, 0, 0, 32, 2, 31, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19701, 0, 0, 32, 2, 31, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 2:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19702, 0, 0, 32, 2, 31, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19702, 0, 0, 32, 2, 31, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 3:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19703, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19703, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 61);
                     break;
             }
@@ -495,16 +493,16 @@ static void inverted_impulse_rc_track_90_deg_up(
 
 /** rct2: 0x008B05B0 */
 static void inverted_impulse_rc_track_90_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_90_deg_up(session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_90_deg_up(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B0560 */
 static void inverted_impulse_rc_track_60_deg_up_to_90_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (trackSequence)
     {
@@ -513,22 +511,22 @@ static void inverted_impulse_rc_track_60_deg_up_to_90_deg_up(
             {
                 case 0:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19692, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19692, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 85);
                     break;
                 case 1:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19693, 0, 0, 32, 2, 55, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19693, 0, 0, 32, 2, 55, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 2:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19694, 0, 0, 32, 2, 55, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19694, 0, 0, 32, 2, 55, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 3:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19695, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19695, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 85);
                     break;
             }
@@ -548,38 +546,37 @@ static void inverted_impulse_rc_track_60_deg_up_to_90_deg_up(
 
 /** rct2: 0x008B0570 */
 static void inverted_impulse_rc_track_90_deg_down_to_60_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
-    inverted_impulse_rc_track_60_deg_up_to_90_deg_up(
-        session, rideIndex, trackSequence, (direction + 2) & 3, height, tileElement);
+    inverted_impulse_rc_track_60_deg_up_to_90_deg_up(session, ride, trackSequence, (direction + 2) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B0580 */
 static void inverted_impulse_rc_track_90_deg_up_to_60_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (direction)
     {
         case 0:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19696, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19696, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 85);
             break;
         case 1:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19697, 0, 0, 32, 2, 55, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19697, 0, 0, 32, 2, 55, height + 29, 0, 4,
                 height + 11);
             break;
         case 2:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19698, 0, 0, 32, 2, 55, height + 29, 0, 4,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19698, 0, 0, 32, 2, 55, height + 29, 0, 4,
                 height + 11);
             break;
         case 3:
             PaintAddImageAsParentRotated(
-                session, direction, session->TrackColours[SCHEME_TRACK] | 19699, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                session, direction, session.TrackColours[SCHEME_TRACK] | 19699, 0, 0, 32, 20, 3, height + 29, 0, 6,
                 height + 85);
             break;
     }
@@ -599,8 +596,8 @@ static void inverted_impulse_rc_track_90_deg_up_to_60_deg_up(
 
 /** rct2: 0x008B0590 */
 static void inverted_impulse_rc_track_60_deg_down_to_90_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (trackSequence)
     {
@@ -609,22 +606,22 @@ static void inverted_impulse_rc_track_60_deg_down_to_90_deg_down(
             {
                 case 0:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19698, 0, 0, 32, 2, 55, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19698, 0, 0, 32, 2, 55, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 1:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19699, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19699, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 85);
                     break;
                 case 2:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19696, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19696, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 85);
                     break;
                 case 3:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19697, 0, 0, 32, 2, 55, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19697, 0, 0, 32, 2, 55, height + 29, 0, 4,
                         height + 11);
                     break;
             }
@@ -643,8 +640,8 @@ static void inverted_impulse_rc_track_60_deg_down_to_90_deg_down(
 
 /** rct2: 0x008B05C0 */
 static void inverted_impulse_rc_track_left_quarter_turn_1_90_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (trackSequence)
     {
@@ -653,31 +650,31 @@ static void inverted_impulse_rc_track_left_quarter_turn_1_90_deg_up(
             {
                 case 0:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19708, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19708, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     break;
                 case 1:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19709, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19709, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19717, 0, 0, 2, 32, 31, height + 29, 4, 0,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19717, 0, 0, 2, 32, 31, height + 29, 4, 0,
                         height + 11);
                     break;
                 case 2:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19710, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19710, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19718, 0, 0, 32, 2, 31, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19718, 0, 0, 32, 2, 31, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 3:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19711, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19711, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19719, 0, 0, 32, 2, 31, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19719, 0, 0, 32, 2, 31, height + 29, 0, 4,
                         height + 11);
                     break;
             }
@@ -693,8 +690,8 @@ static void inverted_impulse_rc_track_left_quarter_turn_1_90_deg_up(
 
 /** rct2: 0x008B05D0 */
 static void inverted_impulse_rc_track_right_quarter_turn_1_90_deg_up(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     switch (trackSequence)
     {
@@ -703,31 +700,31 @@ static void inverted_impulse_rc_track_right_quarter_turn_1_90_deg_up(
             {
                 case 0:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19704, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19704, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19712, 0, 0, 32, 2, 31, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19712, 0, 0, 32, 2, 31, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 1:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19705, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19705, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19713, 0, 0, 32, 2, 31, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19713, 0, 0, 32, 2, 31, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 2:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19706, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19706, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19714, 0, 0, 32, 2, 31, height + 29, 0, 4,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19714, 0, 0, 32, 2, 31, height + 29, 0, 4,
                         height + 11);
                     break;
                 case 3:
                     PaintAddImageAsParentRotated(
-                        session, direction, session->TrackColours[SCHEME_TRACK] | 19707, 0, 0, 32, 20, 3, height + 29, 0, 6,
+                        session, direction, session.TrackColours[SCHEME_TRACK] | 19707, 0, 0, 32, 20, 3, height + 29, 0, 6,
                         height + 125);
                     break;
             }
@@ -743,20 +740,20 @@ static void inverted_impulse_rc_track_right_quarter_turn_1_90_deg_up(
 
 /** rct2: 0x008B05E0 */
 static void inverted_impulse_rc_track_left_quarter_turn_1_90_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     inverted_impulse_rc_track_right_quarter_turn_1_90_deg_up(
-        session, rideIndex, trackSequence, (direction + 1) & 3, height, tileElement);
+        session, ride, trackSequence, (direction + 1) & 3, height, trackElement);
 }
 
 /** rct2: 0x008B05F0 */
 static void inverted_impulse_rc_track_right_quarter_turn_1_90_deg_down(
-    paint_session* session, ride_id_t rideIndex, uint8_t trackSequence, uint8_t direction, int32_t height,
-    const TileElement* tileElement)
+    paint_session& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
+    const TrackElement& trackElement)
 {
     inverted_impulse_rc_track_left_quarter_turn_1_90_deg_up(
-        session, rideIndex, trackSequence, (direction - 1) & 3, height, tileElement);
+        session, ride, trackSequence, (direction - 1) & 3, height, trackElement);
 }
 
 TRACK_PAINT_FUNCTION get_track_paint_function_inverted_impulse_rc(int32_t trackType)

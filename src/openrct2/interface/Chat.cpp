@@ -13,6 +13,7 @@
 #include "../audio/AudioMixer.h"
 #include "../audio/audio.h"
 #include "../drawing/Drawing.h"
+#include "../localisation/Formatter.h"
 #include "../localisation/Formatting.h"
 #include "../localisation/Localisation.h"
 #include "../network/network.h"
@@ -143,7 +144,7 @@ void chat_draw(rct_drawpixelinfo* dpi, uint8_t chatBackgroundColor)
             { topLeft - ScreenCoordsXY{ 0, 5 }, bottomRight + ScreenCoordsXY{ 0, 5 } }); // Background area + Textbox
         gfx_filter_rect(
             dpi, { topLeft - ScreenCoordsXY{ 0, 5 }, bottomRight + ScreenCoordsXY{ 0, 5 } },
-            FilterPaletteID::Palette51); // Opaque gray background
+            FilterPaletteID::Palette51); // Opaque grey background
         gfx_fill_rect_inset(
             dpi, { topLeft - ScreenCoordsXY{ 0, 5 }, bottomRight + ScreenCoordsXY{ 0, 5 } }, chatBackgroundColor,
             INSET_RECT_FLAG_FILL_NONE);
@@ -189,9 +190,10 @@ void chat_draw(rct_drawpixelinfo* dpi, uint8_t chatBackgroundColor)
         screenCoords.y = _chatBottom - inputLineHeight - 5;
 
         auto lineCh = lineBuffer.c_str();
+        auto ft = Formatter();
+        ft.Add<const char*>(lineCh);
         inputLineHeight = DrawTextWrapped(
-            dpi, screenCoords + ScreenCoordsXY{ 0, 3 }, _chatWidth - 10, STR_STRING, static_cast<void*>(&lineCh),
-            { TEXT_COLOUR_255 });
+            dpi, screenCoords + ScreenCoordsXY{ 0, 3 }, _chatWidth - 10, STR_STRING, ft, { TEXT_COLOUR_255 });
         gfx_set_dirty_blocks({ screenCoords, { screenCoords + ScreenCoordsXY{ _chatWidth, inputLineHeight + 15 } } });
 
         // TODO: Show caret if the input text has multiple lines
@@ -206,7 +208,7 @@ void chat_draw(rct_drawpixelinfo* dpi, uint8_t chatBackgroundColor)
     }
 }
 
-void chat_history_add(const char* src)
+void chat_history_add(std::string_view s)
 {
     // Format a timestamp
     time_t timer{};
@@ -216,7 +218,7 @@ void chat_history_add(const char* src)
     strcatftime(timeBuffer, sizeof(timeBuffer), "[%H:%M] ", tmInfo);
 
     std::string buffer = timeBuffer;
-    buffer += src;
+    buffer += s;
 
     // Add to history list
     int32_t index = _chatHistoryIndex % CHAT_HISTORY_SIZE;
@@ -226,7 +228,7 @@ void chat_history_add(const char* src)
     _chatHistoryIndex++;
 
     // Log to file (src only as logging does its own timestamp)
-    network_append_chat_log(src);
+    network_append_chat_log(s);
 
     Mixer_Play_Effect(OpenRCT2::Audio::SoundId::NewsItem, 0, MIXER_VOLUME_MAX, 0.5f, 1.5f, true);
 }

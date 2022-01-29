@@ -7,8 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
-#ifndef _PAINT_SURFACE_H
-#define _PAINT_SURFACE_H
+#pragma once
 
 #include "../../common.h"
 #include "../../sprites.h"
@@ -78,7 +77,6 @@ enum
     SPR_TERRAIN_SELECTION_QUARTER = 3081,
     SPR_WATER_MASK = 5048,
     SPR_WATER_OVERLAY = 5053,
-    SPR_HEIGHT_MARKER_BASE = 5769,
 
     SPR_TERRAIN_BOUNDARY_FENCES_1 = 22872,
     SPR_TERRAIN_BOUNDARY_FENCES_2 = 22873,
@@ -104,5 +102,3 @@ enum
     SPR_RCT1_WATER_MASK = SPR_CSG_BEGIN + 46787,
     SPR_RCT1_WATER_OVERLAY = SPR_CSG_BEGIN + 46792,
 };
-
-#endif //_PAINT_SURFACE_H

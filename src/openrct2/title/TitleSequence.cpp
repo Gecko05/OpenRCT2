@@ -53,7 +53,7 @@ std::unique_ptr<TitleSequence> LoadTitleSequence(const std::string& path)
     auto ext = Path::GetExtension(path);
     if (String::Equals(ext, TITLE_SEQUENCE_EXTENSION))
     {
-        auto zip = std::unique_ptr<IZipArchive>(Zip::TryOpen(path, ZIP_ACCESS::READ));
+        auto zip = Zip::TryOpen(path, ZIP_ACCESS::READ);
         if (zip == nullptr)
         {
             Console::Error::WriteLine("Unable to open '%s'", path.c_str());
@@ -87,7 +87,7 @@ std::unique_ptr<TitleSequence> LoadTitleSequence(const std::string& path)
     auto commands = LegacyScriptRead(script, saves);
 
     auto seq = CreateTitleSequence();
-    seq->Name = Path::GetFileNameWithoutExtension(std::string(path));
+    seq->Name = Path::GetFileNameWithoutExtension(path);
     seq->Path = path;
     seq->Saves = saves;
     seq->Commands = commands;
@@ -103,7 +103,7 @@ std::unique_ptr<TitleSequenceParkHandle> TitleSequenceGetParkHandle(const TitleS
         const auto& filename = seq.Saves[index];
         if (seq.IsZip)
         {
-            auto zip = std::unique_ptr<IZipArchive>(Zip::TryOpen(seq.Path, ZIP_ACCESS::READ));
+            auto zip = Zip::TryOpen(seq.Path, ZIP_ACCESS::READ);
             if (zip != nullptr)
             {
                 auto data = zip->GetFileData(filename);
@@ -291,7 +291,7 @@ static std::vector<std::string> GetSaves(const std::string& directory)
 {
     std::vector<std::string> saves;
 
-    auto pattern = Path::Combine(directory, "*.sc6;*.sv6");
+    auto pattern = Path::Combine(directory, "*.sc6;*.sv6;*.park;*.sv4;*.sc4");
     auto scanner = Path::ScanDirectory(pattern, true);
     while (scanner->Next())
     {
@@ -309,7 +309,7 @@ static std::vector<std::string> GetSaves(IZipArchive* zip)
     {
         auto name = zip->GetFileName(i);
         auto ext = Path::GetExtension(name);
-        if (String::Equals(ext, ".sv6", true) || String::Equals(ext, ".sc6", true))
+        if (String::Equals(ext, ".sv6", true) || String::Equals(ext, ".sc6", true) || String::Equals(ext, ".park", true))
         {
             saves.push_back(std::move(name));
         }
@@ -425,7 +425,7 @@ static void LegacyScriptGetLine(OpenRCT2::IStream* stream, char* parts)
             parts[part * 128 + cindex] = 0;
             return;
         }
-        else if (c == '#')
+        if (c == '#')
         {
             parts[part * 128 + cindex] = 0;
             comment = 1;
